@@ -39,6 +39,18 @@ r.get('/stories', (_req, res) => {
   }
   res.json({ groups: [...groups.values()].sort((a, b) => b.last - a.last).map(({ last, ...g }) => g) });
 });
+/* partner videos (BongaCams feed) — newest first, optional ?tag= &performer= */
+r.get('/partner-videos', (req, res) => {
+  const F = require('../feeds');
+  const limit = Math.min(60, Math.max(1, parseInt(req.query.limit, 10) || 24)), offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  const tag = String(req.query.tag || '').slice(0, 40), performer = String(req.query.performer || '').slice(0, 60);
+  let rows = all('SELECT * FROM partner_videos WHERE hidden = 0 ORDER BY id DESC');
+  const tagCount = new Map();
+  rows.forEach(r => J(r.tags, []).forEach(t => { const k = t.toLowerCase(); const e = tagCount.get(k) || { tag: t, n: 0 }; e.n++; tagCount.set(k, e); }));
+  if (tag) rows = rows.filter(r => J(r.tags, []).some(t => t.toLowerCase() === tag.toLowerCase()));
+  if (performer) rows = rows.filter(r => r.performer === performer);
+  res.json({ total: rows.length, videos: rows.slice(offset, offset + limit).map(F.publicVideo), tags: [...tagCount.values()].sort((a, b) => b.n - a.n).slice(0, 24) });
+});
 r.get('/clips', (_req, res) => {
   const rows = all(`SELECT u.*, c.name AS cname FROM uploads u JOIN creators c ON c.id = u.creator_id
                     WHERE u.kind = 'gallery' AND u.status = 'approved' AND c.status = 'approved' AND u.mime LIKE 'video/%' ORDER BY u.id DESC LIMIT 60`);

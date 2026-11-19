@@ -200,6 +200,20 @@ CREATE TABLE IF NOT EXISTS clicks (
   created_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS clicks_ts ON clicks(created_at);
+CREATE TABLE IF NOT EXISTS partner_videos (
+  id          TEXT PRIMARY KEY,
+  site        TEXT NOT NULL,
+  performer   TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  tags        TEXT NOT NULL DEFAULT '[]',
+  thumbs      TEXT NOT NULL DEFAULT '[]',
+  url         TEXT NOT NULL,
+  source      TEXT NOT NULL DEFAULT '',
+  hidden      INTEGER NOT NULL DEFAULT 0,
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS partner_videos_perf ON partner_videos(performer);
 CREATE TABLE IF NOT EXISTS settings (
   key         TEXT PRIMARY KEY,
   value       TEXT NOT NULL,

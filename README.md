@@ -112,6 +112,13 @@ Your Chaturbate linking codes are built in (`shared/partners.js`): all three pro
 - **Chaturbate stats:** each link carries `track=<source>_<placement>` (e.g. `reddit-spring_footer_female`), so your Chaturbate affiliate stats break down by where on the site the click came from and which campaign brought the visitor. Change the format in Admin → Partners.
 - If a program doesn't offer a link type (Tokens has no join pages, for example), the nearest one it does offer is used and Admin → Partners says which.
 
+### BongaCams videos and links
+
+- **Videos page** (`#videos`, linked from Clips and the footer): teaser clips from your BongaCams video export (affiliate ID `846478`), with hover-scrub previews, tag chips and per-performer filtering. Each click goes through `/go/v/<id>` (counted in Admin → Traffic → Top partner videos) and then to the clip's own tracking link.
+- **Feed file:** `seed/partner-feeds/bongacams-videos.txt` is imported automatically on first start. Import newer exports in **Admin → Partners → BongaCams video feed** or with `npm run import:feed -- file.txt`. Re-imports update clips and keep your hide choices.
+- **Content filter:** clips whose title or tags imply a minor or non-consent (schoolgirl, teen, step-family, forced, asleep…) are never imported; the importer lists what it skipped.
+- **Creator links:** "Also live on BongaCams" uses `https://bongacams.com/track?c=846478&csurl=…/{room}` by default (Admin → Economy → Affiliates).
+
 ## Going to production
 
 1. Run behind a TLS proxy (Caddy, nginx or Cloudflare) with `NODE_ENV=production`, `COOKIE_SECURE=1` and `TRUST_PROXY=1`. Forward WebSocket upgrades on `/ws`.

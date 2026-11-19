@@ -154,6 +154,7 @@ async function traffic() {
     <div class="panel pad" style="margin-top:16px"><h3 class="t">Clicks per day</h3>${bars(t.series, (v, i) => `${new Date(Date.now() - (t.days - 1 - i) * 864e5).toISOString().slice(5, 10)} · ${v}`, 'blue')}</div>
     <div class="grid g3" style="margin-top:16px"><div class="panel pad"><h3 class="t">By site</h3><ul class="list">${t.bySite.map(x => `<li><span>${esc(x.site)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
       <div class="panel pad"><h3 class="t">By creator</h3><ul class="list">${t.byCreator.map(x => `<li><span>${esc(x.name || x.creator_id)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
+      <div class="panel pad"><h3 class="t">Top partner videos</h3><ul class="list">${(t.byVideo || []).map(x => `<li><span>${esc(x.performer || x.id)} <span class="dim">· ${esc((x.title || '').slice(0, 40))}</span></span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
       <div class="panel pad"><h3 class="t">By placement</h3><ul class="list">${(t.byPlacement || []).map(x => `<li><span class="mono">${esc(x.placement)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
       <div class="panel pad"><h3 class="t">By campaign</h3><ul class="list">${t.byCampaign.map(x => `<li><span>${esc(x.campaign)} <span class="dim">· ${esc(x.source)}</span></span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div></div>`;
 }
@@ -185,7 +186,9 @@ async function partners() {
         <td class="r">${fmt.num(clicks[p.key] || 0)}</td>
         <td style="max-width:320px">${p.url ? `<a class="mono" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;word-break:break-all;color:var(--mute)">${esc(p.url)} ↗</a>` : '<span class="dim">Not available</span>'}</td></tr>`).join('')}
     </tbody></table></div>
+    <div id="pvAdmin" style="margin-top:28px"></div>
     <p class="note" style="margin-top:10px">Links for "a room" use your Chaturbate room above. Creators add their own Chaturbate room name in Studio → Profile; their profile then shows an "Also live on Chaturbate" link. Test a link in a private window before you advertise it.</p>`;
+  partnerVideosPanel();
   $('#pOn').onclick = (e) => e.currentTarget.classList.toggle('on');
   $$('[data-pon]').forEach(b => b.onclick = () => b.classList.toggle('on'));
   $$('input[name=prog]').forEach(r => r.onchange = () => $$('input[name=prog]').forEach(x => x.closest('label').style.borderColor = x.checked ? 'var(--pink)' : ''));
@@ -197,6 +200,34 @@ async function partners() {
     await guard(() => X3API.put('/api/admin/config', { overrides: ov }), 'Partner links saved');
     partners();
   };
+}
+
+async function partnerVideosPanel() {
+  const box = $('#pvAdmin'); if (!box) return;
+  const d = await X3API.get('/api/admin/partner-videos');
+  let filter = '';
+  const rows = () => d.videos.filter(v => !filter || (v.performer + ' ' + v.title + ' ' + v.tags.join(' ')).toLowerCase().includes(filter));
+  const paint = () => {
+    const list = rows();
+    $('#pvRows').innerHTML = list.map(v => `<tr data-id="${esc(v.id)}"><td><img src="${esc(v.thumbs[0])}" alt="" loading="lazy" style="width:96px;height:60px;object-fit:cover;border-radius:8px;display:block;background:#000"></td>
+      <td><b>${esc(v.performer)}</b><div class="dim mono" style="font-size:11px">${esc(v.id)}</div></td><td style="max-width:380px">${esc(v.title)}<div class="dim" style="font-size:11px;margin-top:3px">${esc(v.tags.slice(0, 6).join(' · '))}</div></td>
+      <td class="r">${fmt.num(v.clicks30d)}</td><td><button class="switch ${v.hidden ? '' : 'on'}" data-pvon aria-label="Show ${esc(v.id)}"></button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No videos.</td></tr>';
+    $$('[data-pvon]', box).forEach(b => b.onclick = async () => { const id = b.closest('tr').dataset.id, v = d.videos.find(x => x.id === id); const hidden = b.classList.contains('on'); await guard(() => X3API.patch('/api/admin/partner-videos/' + encodeURIComponent(id), { hidden }), hidden ? 'Hidden from the site' : 'Shown on the site'); v.hidden = hidden; b.classList.toggle('on', !hidden); });
+  };
+  box.innerHTML = `<div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:12px"><div><h3 class="t" style="margin:0">BongaCams video feed <small>${fmt.num(d.total)} videos · ${fmt.num(d.hidden)} hidden · shown on the fan app's Videos page</small></h3><p class="note" style="margin:4px 0 0">Import the video export file from your BongaCams affiliate account. Re-importing updates existing clips and keeps your hide choices. Clips whose title or tags imply a minor or non-consent are never imported.</p></div>
+      <div class="row"><input class="inp" id="pvFilter" placeholder="Filter by performer, title, tag" style="width:240px"><label class="btn pri" style="cursor:pointer">Import feed file<input type="file" id="pvFile" accept=".txt,text/plain" hidden></label></div></div>
+    <div id="pvResult"></div>
+    <div class="panel tbl-wrap"><table class="tbl"><thead><tr><th>Preview</th><th>Performer</th><th>Title</th><th class="r">Clicks · 30d</th><th>On site</th></tr></thead><tbody id="pvRows"></tbody></table></div>`;
+  $('#pvFilter').oninput = (e) => { filter = e.target.value.trim().toLowerCase(); paint(); };
+  $('#pvFile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) return toast('Feed file is over 5 MB', 'err');
+    const text = await f.text();
+    const r = await guard(() => X3API.post('/api/admin/partner-videos/import', { text, name: f.name }));
+    $('#pvResult').innerHTML = `<div class="panel pad" style="margin-bottom:12px"><b>${fmt.num(r.added)} added · ${fmt.num(r.updated)} updated · ${fmt.num(r.skipped.length)} skipped</b>${r.skipped.length ? `<ul class="list" style="margin-top:8px">${r.skipped.slice(0, 20).map(s => `<li><span class="mono">${esc(s.id)}</span><span class="dim">${esc(s.reason)}</span></li>`).join('')}</ul>` : ''}</div>`;
+    const fresh = await X3API.get('/api/admin/partner-videos'); Object.assign(d, fresh); paint();
+  };
+  paint();
 }
 
 /* ---------------- economy ---------------- */

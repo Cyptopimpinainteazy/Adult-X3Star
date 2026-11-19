@@ -25,12 +25,13 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob:", "media-src 'self' data: blob:",
+    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https://v.bngprm.com", "media-src 'self' data: blob:",
     "connect-src 'self' ws: wss: data:", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
   ].join('; '));
   if (cfg.COOKIE_SECURE) res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   next();
 });
+app.use('/api/admin/partner-videos/import', express.json({ limit: '5mb' }));
 app.use(express.json({ limit: '256kb' }));
 app.use(A.attachUser);
 
@@ -68,6 +69,14 @@ app.get('/go/p/:placement', (req, res, next) => {
   if (!built) return next(new A.HttpError(404, 'not_found', 'Link not available'));
   logClick(req, 'CB', '', key, campaign, source);
   res.redirect(302, built.url);
+});
+/* partner videos (BongaCams feed): log, then forward to the feed's own tracking link */
+app.get('/go/v/:id', (req, res, next) => {
+  const v = /^[A-Z]{2}\d{5,12}$/.test(req.params.id) ? D.get('SELECT * FROM partner_videos WHERE id = ? AND hidden = 0', req.params.id) : null;
+  if (!v || !/^https:\/\/bongacams\.com\/track\?/.test(v.url)) return next(new A.HttpError(404, 'not_found', 'Video not available'));
+  const { campaign, source } = clickParams(req);
+  logClick(req, v.site, 'v:' + v.id, 'video', campaign, source);
+  res.redirect(302, v.url);
 });
 /* a creator's room on another site ("Also live on …") */
 app.get('/go/:site/:creator', (req, res, next) => {
@@ -123,6 +132,8 @@ app.use((err, req, res, _next) => {
 
 function start(port = cfg.PORT, host = cfg.HOST) {
   seed();
+  const feed = require('./feeds').importDirIfEmpty(path.join(__dirname, '..', 'seed', 'partner-feeds'));
+  if (feed) console.log(`Imported partner videos: ${feed.added} added, ${feed.skipped} skipped`);
   const server = http.createServer(app);
   hub.init(server);
   return new Promise((resolve) => server.listen(port, host, () => {

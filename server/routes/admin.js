@@ -188,6 +188,33 @@ r.get('/partners', (_req, res) => {
     tours: Object.entries(P.TOURS).map(([key, t]) => ({ key, label: t.label, room: !!t.room })),
     programs: Object.fromEntries(Object.entries(P.PROGRAMS).map(([k, v]) => [k, { label: v.label, terms: v.terms, tours: Object.keys(v.tours) }])) });
 });
+/* ---------- partner video feed (BongaCams export) ---------- */
+r.get('/partner-videos', (_req, res) => {
+  const F = require('../feeds');
+  const since = Date.now() - 30 * 864e5;
+  const clicks = Object.fromEntries(all("SELECT substr(creator_id, 3) AS id, COUNT(*) AS n FROM clicks WHERE creator_id LIKE 'v:%' AND created_at > ? GROUP BY creator_id", since).map(x => [x.id, x.n]));
+  const rows = all('SELECT * FROM partner_videos ORDER BY id DESC');
+  res.json({ total: rows.length, hidden: rows.filter(r => r.hidden).length, videos: rows.map(r => ({ ...F.publicVideo(r), hidden: !!r.hidden, source: r.source, url: r.url, clicks30d: clicks[r.id] || 0 })) });
+});
+r.post('/partner-videos/import', (req, res) => {
+  const F = require('../feeds');
+  const text = req.body && typeof req.body.text === 'string' ? req.body.text : '';
+  if (!text.trim()) throw bad('Send { text: "<feed file contents>" }');
+  const name = String((req.body && req.body.name) || 'upload').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 80) || 'upload';
+  const { videos, skipped } = F.parseBongaFeed(text);
+  if (!videos.length) throw bad(skipped.length ? `No usable videos: ${skipped[0].reason}` : 'No videos found. Expected the BongaCams video export format (id|thumbnails|link|title|).');
+  const r = F.importVideos(videos, name);
+  audit(req.user.id, 'partner_videos.import', name, { ...r, skipped: skipped.length });
+  res.json({ ...r, skipped });
+});
+r.patch('/partner-videos/:id', (req, res) => {
+  const v = get('SELECT id FROM partner_videos WHERE id = ?', String(req.params.id));
+  if (!v) throw new HttpError(404, 'not_found', 'No such video');
+  if (typeof (req.body || {}).hidden !== 'boolean') throw bad('Send { hidden: true|false }');
+  run('UPDATE partner_videos SET hidden = ?, updated_at = ? WHERE id = ?', req.body.hidden ? 1 : 0, Date.now(), v.id);
+  audit(req.user.id, req.body.hidden ? 'partner_videos.hide' : 'partner_videos.show', v.id, {});
+  res.json({ ok: true });
+});
 r.put('/config', (req, res) => {
   const overrides = req.body && typeof req.body.overrides === 'object' && !Array.isArray(req.body.overrides) ? req.body.overrides : null;
   if (!overrides) throw bad('Send { overrides: {...} }');
@@ -204,7 +231,8 @@ r.get('/traffic', (req, res) => {
     days, total: sum('SELECT COUNT(*) AS v FROM clicks WHERE created_at > ?', since), unique: sum('SELECT COUNT(DISTINCT ip_hash) AS v FROM clicks WHERE created_at > ?', since),
     series: Array.from({ length: days }, (_, i) => (daily.find(x => x.d === i) || {}).v || 0),
     bySite: all('SELECT site, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY site ORDER BY clicks DESC', since),
-    byCreator: all('SELECT c.name, k.creator_id, COUNT(*) AS clicks FROM clicks k LEFT JOIN creators c ON c.id = k.creator_id WHERE k.created_at > ? AND length(k.creator_id) > 0 GROUP BY k.creator_id ORDER BY clicks DESC LIMIT 20', since),
+    byCreator: all('SELECT c.name, k.creator_id, COUNT(*) AS clicks FROM clicks k LEFT JOIN creators c ON c.id = k.creator_id WHERE k.created_at > ? AND length(k.creator_id) > 0 AND instr(k.creator_id, ?) = 0 GROUP BY k.creator_id ORDER BY clicks DESC LIMIT 20', since, ':'),
+    byVideo: all("SELECT substr(k.creator_id, 3) AS id, v.performer, v.title, COUNT(*) AS clicks FROM clicks k LEFT JOIN partner_videos v ON v.id = substr(k.creator_id, 3) WHERE k.created_at > ? AND k.creator_id LIKE 'v:%' GROUP BY k.creator_id ORDER BY clicks DESC LIMIT 20", since),
     byPlacement: all("SELECT CASE WHEN placement = '' THEN 'room' ELSE placement END AS placement, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY 1 ORDER BY clicks DESC", since),
     byCampaign: all("SELECT CASE WHEN campaign = '' THEN '(none)' ELSE campaign END AS campaign, CASE WHEN source = '' THEN '(direct)' ELSE source END AS source, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY campaign, source ORDER BY clicks DESC LIMIT 30", since)
   });

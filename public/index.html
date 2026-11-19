@@ -1520,6 +1520,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
   <section class="section" id="sec-rewards" data-routes="rewards" style="padding-top:44px"><div class="wrap" id="rewardsInner"></div></section>
   <section class="section" id="sec-families" data-routes="families" style="padding-top:44px"><div class="wrap" id="familiesInner"></div></section>
   <section class="section" id="sec-clips" data-routes="clips" style="padding-top:30px"><div class="wrap" id="clipsInner"></div></section>
+  <section class="section" id="sec-videos" data-routes="videos" style="padding-top:44px"><div class="wrap" id="videosInner"></div></section>
 
   <!-- ================= DYNAMIC PAGES (member / post) ================= -->
   <section class="section" id="page" data-routes="member post thread" aria-live="polite"><div class="wrap" id="pageInner"></div></section>
@@ -1537,7 +1538,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
         <p>Live creators, creator coins and creator stores on one floor. Built on X3 Chain.</p>
         <div class="campaign" id="campaign"></div>
       </div>
-      <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="#blog">Journal</a></li></ul></div>
+      <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#videos">Videos</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="#blog">Journal</a></li></ul></div>
       <div><h5>Creators</h5><ul><li><a href="#creators">Become a creator</a></li><li><a href="#creators">Launch your coin</a></li><li><a href="#creators">Open a store</a></li><li><a href="#chat">Multi-site chat</a></li><li><a href="#account">My account</a></li></ul></div>
       <div class="foot-partners" id="footPartners" hidden><h5>More live cams</h5><ul></ul><small>Partner links · Chaturbate</small></div>
       <div><h5>Legal</h5><ul><li><a href="#legal-terms">Terms of service</a></li><li><a href="#legal-privacy">Privacy</a></li><li><a href="#legal-2257">18 U.S.C. 2257</a></li><li><a href="#legal-dmca">DMCA &amp; content removal</a></li></ul></div>
@@ -3584,9 +3585,9 @@ function bootPages() {
 /* =====================================================================
    Router — plain #name hashes
    ===================================================================== */
-const ROUTES = ['live', 'profiles', 'niches', 'chat', 'leaderboard', 'exchange', 'store', 'earn', 'blog', 'creators', 'account', 'rewards', 'families', 'clips'];
+const ROUTES = ['live', 'profiles', 'niches', 'chat', 'leaderboard', 'exchange', 'store', 'earn', 'blog', 'creators', 'account', 'rewards', 'families', 'clips', 'videos'];
 const NAV_FOR = { leaderboard: 'chat', member: 'profiles' };
-const PAGE_TITLES = { rewards: 'Rewards', families: 'Families', clips: 'Clips', creators: 'For creators', account: 'Your account', legal: 'Legal', thread: 'Lounge', blog: 'Journal' };
+const PAGE_TITLES = { rewards: 'Rewards', families: 'Families', clips: 'Clips', videos: 'Videos', creators: 'For creators', account: 'Your account', legal: 'Legal', thread: 'Lounge', blog: 'Journal' };
 function parseRoute() {
   const k = decodeURIComponent(location.hash.replace(/^#/, ''));
   if (ROUTES.includes(k)) return { name: k };
@@ -3665,7 +3666,7 @@ function boot() {
 }
 let booted = false; const readyFns = [];
 
-window.X3STAR = { onReady: (fn) => (booted ? fn() : readyFns.push(fn)), ui: { $, $$, el, esc, fmt, toast, openModal, drawer, store, track, poster, videoSrc, meName, addMsg, observeReveals, setRangeFill }, byId, stage, renderStage, offline: OFFLINE, config: CONFIG, bus, market, wallet, hooks, track, events: EVENTS, models: MODELS, adapters: { WebSocketAdapter, SimulatedAdapter }, openProfile, openTip, openTrade, openDM };
+window.X3STAR = { onReady: (fn) => (booted ? fn() : readyFns.push(fn)), ui: { $, $$, el, esc, fmt, toast, openModal, drawer, store, track, poster, videoSrc, meName, addMsg, observeReveals, setRangeFill }, byId, stage, renderStage, offline: OFFLINE, config: CONFIG, bus, market, wallet, hooks, track, campaign: CAMPAIGN, events: EVENTS, models: MODELS, adapters: { WebSocketAdapter, SimulatedAdapter }, openProfile, openTip, openTrade, openDM };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>

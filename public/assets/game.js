@@ -800,7 +800,7 @@ async function renderClips() {
   else clips = X.models.map(m => ({ id: 'c-' + m.id, creator: { id: m.id, name: m.name }, type: 'video', url: U.videoSrc(m), poster: U.poster(m), caption: m.bio, likes: null }));
   const items = [];
   clips.forEach((c, i) => { items.push(c); if (i % 4 === 3) items.push({ sponsor: true }); });
-  root.innerHTML = `<div class="clips" id="clipFeed">${items.length ? items.map((c, i) => c.sponsor
+  root.innerHTML = (API ? '<div class="pv-cta"><a href="#videos">More videos from partner creators →</a></div>' : '') + `<div class="clips" id="clipFeed">${items.length ? items.map((c, i) => c.sponsor
     ? `<div class="clip sponsor" data-i="${i}"><div class="clip-empty"><div><b class="serif" style="font-size:34px;font-style:italic">x3STAR VIP</b><p>Black VIP unlocks the Galaxy gift and a holographic name.</p><a class="btn btn--primary" href="#rewards">See VIP</a></div></div><div class="clip-meta"><b>Sponsored</b></div></div>`
     : `<div class="clip" data-i="${i}" data-c="${esc(c.creator.id)}">${c.type === 'video' ? `<video src="${c.url}" ${c.poster ? `poster="${c.poster}"` : ''} loop muted playsinline preload="none"></video>` : `<img src="${c.url}" alt="">`}
       <div class="clip-meta"><b>${esc(c.creator.name)}</b><p>${esc(c.caption || '')}</p></div>
@@ -811,6 +811,52 @@ async function renderClips() {
     $('[data-open]', c).onclick = () => (X.byId[id] ? X.openProfile(id) : (location.hash = '#member-' + id));
     $('[data-like]', c).onclick = (e) => { const b = e.currentTarget; b.classList.toggle('on'); $('span', b).style.color = b.classList.contains('on') ? 'var(--pink)' : ''; burstAt(b, 8); };
   });
+}
+
+/* =====================================================================
+   Partner videos (BongaCams feed). Thumbnails scrub on hover / cycle in
+   view on touch; every click goes through /go/v/<id> so it is counted
+   before the visitor lands on the partner site.
+   ===================================================================== */
+const pv = { tag: '', performer: '', offset: 0, items: [], total: 0, tags: [], loading: false };
+async function renderVideos(more) {
+  const root = $('#videosInner'); if (!root) return;
+  if (!API) { root.innerHTML = `<div class="pv-head"><div><span class="eyebrow">Partner videos</span><h2>More to <em>watch</em>.</h2></div></div><p class="pv-note">Partner videos load from the x3STAR server.</p>`; return; }
+  if (pv.loading) return; pv.loading = true;
+  if (!more) { pv.offset = 0; pv.items = []; }
+  try {
+    const q = new URLSearchParams({ limit: 24, offset: pv.offset }); if (pv.tag) q.set('tag', pv.tag); if (pv.performer) q.set('performer', pv.performer);
+    const d = await X3API.get('/api/partner-videos?' + q);
+    pv.items = pv.items.concat(d.videos); pv.total = d.total; pv.tags = d.tags; pv.offset = pv.items.length;
+  } catch { pv.loading = false; root.innerHTML = '<p class="pv-note">Videos could not be loaded. Try again in a moment.</p>'; return; }
+  pv.loading = false;
+  const camp = (window.X3STAR && X3STAR.campaign) || {};
+  const qs = (() => { const q = new URLSearchParams(); if (camp.utm_campaign) q.set('c', camp.utm_campaign); if (camp.utm_source) q.set('s', camp.utm_source); const s = q.toString(); return s ? '?' + s : ''; })();
+  const chip = (t, on) => `<button class="pv-chip ${on ? 'on' : ''}" data-tag="${esc(t)}">${esc(t || 'All')}</button>`;
+  root.innerHTML = `<div class="pv-head"><div><span class="eyebrow">Partner videos · BongaCams</span><h2>More to <em>watch</em>.</h2></div><p>${fmt.num(pv.total)} ${pv.performer ? `clips from <b>${esc(pv.performer)}</b> <button class="pv-x" data-perf="">✕</button>` : 'teaser clips'}. Hover to preview; tap through to watch the full video on BongaCams.</p></div>
+    <div class="pv-chips">${chip('', !pv.tag)}${pv.tags.map(t => chip(t.tag, pv.tag.toLowerCase() === t.tag.toLowerCase())).join('')}</div>
+    <div class="pv-grid">${pv.items.map(v => `<article class="pv-card">
+      <a class="pv-media" href="${esc(v.href + qs)}" target="_blank" rel="sponsored noopener" data-pv="${esc(v.id)}" data-thumbs="${esc(JSON.stringify(v.thumbs))}"><img src="${esc(v.thumbs[0])}" alt="" loading="lazy"><span class="pv-bar"><i></i></span><span class="pv-play">▶ Watch</span></a>
+      <div class="pv-body"><button class="pv-perf" data-perf="${esc(v.performer)}">${esc(v.performer)}</button><p>${esc(v.title)}</p>${v.tags.length ? `<div class="pv-tags">${v.tags.slice(0, 4).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}</div></article>`).join('') || '<p class="pv-note">No videos match this filter.</p>'}</div>
+    ${pv.items.length < pv.total ? '<div class="pv-more"><button class="btn btn--ghost" id="pvMore">Load more</button></div>' : ''}
+    <p class="pv-note">Partner content hosted on BongaCams. x3STAR may earn a commission when you sign up there.</p>`;
+  $$('[data-tag]', root).forEach(b => b.onclick = () => { pv.tag = b.dataset.tag; renderVideos(); });
+  $$('[data-perf]', root).forEach(b => b.onclick = () => { pv.performer = b.dataset.perf; pv.tag = ''; renderVideos(); root.scrollIntoView({ behavior: 'smooth' }); });
+  const moreBtn = $('#pvMore'); if (moreBtn) moreBtn.onclick = () => renderVideos(true);
+  const frame = (a, i) => { const th = JSON.parse(a.dataset.thumbs); const k = ((i % th.length) + th.length) % th.length; const img = $('img', a); if (img.dataset.k != k) { img.src = th[k]; img.dataset.k = k; } $('.pv-bar i', a).style.width = ((k + 1) / th.length * 100) + '%'; };
+  $$('.pv-media', root).forEach(a => {
+    const n = JSON.parse(a.dataset.thumbs).length;
+    a.addEventListener('mousemove', (e) => { const r = a.getBoundingClientRect(); frame(a, Math.floor((e.clientX - r.left) / r.width * n)); });
+    a.addEventListener('mouseleave', () => frame(a, 0));
+    a.addEventListener('click', () => { if (X.track) X.track('partner_video_click', { id: a.dataset.pv }); });
+  });
+  if (matchMedia('(hover: none)').matches) {
+    const timers = new Map();
+    const io = new IntersectionObserver(es => es.forEach(e => { const a = e.target;
+      if (e.isIntersecting && !timers.has(a)) { let i = 0; timers.set(a, setInterval(() => frame(a, ++i), 900)); }
+      else if (!e.isIntersecting && timers.has(a)) { clearInterval(timers.get(a)); timers.delete(a); frame(a, 0); } }), { threshold: .6 });
+    $$('.pv-media', root).forEach(a => io.observe(a));
+  }
 }
 
 /* =====================================================================
@@ -831,6 +877,7 @@ function onRoute(r) {
   if (r.name === 'rewards') renderRewards();
   if (r.name === 'families') renderFamilies();
   if (r.name === 'clips') renderClips();
+  if (r.name === 'videos') renderVideos();
   if (['home', 'profiles', 'live'].includes(r.name)) renderStories();
   if (r.name === 'live') mountPK();
   if (r.name !== 'live') { const c = gp.combo; if (c) { c.node.remove(); gp.combo = null; } }

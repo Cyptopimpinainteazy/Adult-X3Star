@@ -162,6 +162,35 @@ test('partner placements: boot data, redirects, admin settings', async () => {
   await call('ad', 'PUT', '/api/admin/config', { overrides: cur });
 });
 
+test('partner videos: bundled feed on first boot, list, filters, redirect, admin hide and import', async () => {
+  const list = await call('anon', 'GET', '/api/partner-videos?limit=5');
+  assert.equal(list.status, 200); assert.ok(list.data.total >= 95); assert.equal(list.data.videos.length, 5);
+  const v = list.data.videos[0];
+  assert.match(v.href, /^\/go\/v\/BC\d+$/); assert.equal(v.thumbs.length, 10); assert.ok(!('url' in v), 'raw affiliate URL stays server-side');
+  const byPerf = await call('anon', 'GET', '/api/partner-videos?performer=wild41&limit=60');
+  assert.ok(byPerf.data.videos.length > 30 && byPerf.data.videos.every(x => x.performer === 'wild41'));
+  const byTag = await call('anon', 'GET', '/api/partner-videos?tag=pov&limit=60');
+  assert.ok(byTag.data.total > 0 && byTag.data.videos.every(x => x.tags.some(t => t.toLowerCase() === 'pov')));
+  const go = await call('anon', 'GET', v.href + '?s=reddit');
+  assert.equal(go.status, 302); assert.match(go.headers.get('location'), /^https:\/\/bongacams\.com\/track\?c=846478&ps=video_export&csurl=/);
+  assert.equal((await call('anon', 'GET', '/go/v/BC1')).status, 404);
+  assert.equal((await call('ad', 'PATCH', '/api/admin/partner-videos/' + v.id, { hidden: true })).status, 200);
+  assert.equal((await call('anon', 'GET', v.href)).status, 404);
+  assert.ok(!(await call('anon', 'GET', '/api/partner-videos?limit=60')).data.videos.some(x => x.id === v.id));
+  const adm = await call('ad', 'GET', '/api/admin/partner-videos');
+  assert.equal(adm.data.hidden, 1); assert.equal(adm.data.videos.find(x => x.id === v.id).clicks30d, 1);
+  const thumbs = Array.from({ length: 10 }, (_, i) => `https://v.bngprm.com/mv/a/b/c/v3999999/x_image_${i}.jpg`).join(';');
+  const imp = await call('ad', 'POST', '/api/admin/partner-videos/import', { name: 'new.txt', text: `3999999|${thumbs};|https://bongacams.com/track?c=846478&ps=video_export&csurl=https%3A%2F%2Fbongacams.com%2Ftubechat%2FNewGirl%2Fv3999999|Hello there|\n3999998|${thumbs};|https://bongacams.com/track?c=846478&ps=video_export&csurl=https%3A%2F%2Fbongacams.com%2Ftubechat%2FNewGirl%2Fv3999998|Schoolgirl cosplay|` });
+  assert.equal(imp.data.added, 1); assert.equal(imp.data.skipped.length, 1);
+  const again = await call('ad', 'POST', '/api/admin/partner-videos/import', { text: (await call('ad', 'GET', '/api/admin/partner-videos')).data.videos.length ? `3999999|${thumbs};|https://bongacams.com/track?c=846478&csurl=https%3A%2F%2Fbongacams.com%2Ftubechat%2FNewGirl%2Fv3999999|Renamed|` : '' });
+  assert.equal(again.data.updated, 1);
+  assert.equal((await call('ad', 'GET', '/api/admin/partner-videos')).data.hidden, 1, 'hide flags survive re-import');
+  assert.equal((await call('ad', 'POST', '/api/admin/partner-videos/import', { text: 'not a feed' })).status, 400);
+  const t = await call('ad', 'GET', '/api/admin/traffic');
+  assert.equal(t.data.byVideo[0].id, v.id);
+  assert.equal((await call('pfan', 'GET', '/api/admin/partner-videos')).status, 403);
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

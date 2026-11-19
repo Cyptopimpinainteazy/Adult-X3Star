@@ -160,7 +160,7 @@
                                      // Chaturbate is driven by `partners` (shared/partners.js) unless partners.CB.enabled is false.
       CB: { name: 'Chaturbate', url: '' },
       SC: { name: 'Stripchat', url: '' },
-      BC: { name: 'BongaCams', url: '' },
+      BC: { name: 'BongaCams', url: 'https://bongacams.com/track?c=846478&csurl=https%3A%2F%2Fbongacams.com%2F{room}' },
       C4: { name: 'CAM4', url: '' }
     }
   };
