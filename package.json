@@ -1,0 +1,21 @@
+{
+  "name": "adult-x3star",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "x3STAR — gamified adult live-cam, creator coin and creator-store platform: fan app, creator studio, admin dashboard.",
+  "main": "server/index.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "seed": "node server/seed.js",
+    "test": "node --test test/*.test.js",
+    "build:standalone": "node scripts/build-standalone.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "ws": "^8.18.3"
+  }
+}
