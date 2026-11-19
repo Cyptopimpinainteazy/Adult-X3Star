@@ -103,6 +103,16 @@ See [`.env.example`](.env.example). The important ones:
 
 All economy values (prices, odds, rewards, payout rates, affiliate links) are edited live in **Admin → Economy**.
 
+### Affiliate partners and rankings (Admin → Affiliates)
+
+One place for every network or store you promote:
+
+- **Rankings** for 7 days / 30 days / 90 days / 12 months: clicks and unique visitors (from x3STAR's own click log), sign-ups, spenders or orders, earnings, **EPC** (earnings per click — the fair way to compare partners that pay differently), join rate, $ per sign-up, and a daily clicks/earnings trend. Sort by any column; "Stats ↗" opens the partner's own dashboard.
+- **Partners:** add any network or shop with a short code, status (**active / pending / paused / rejected**), payout plan, affiliate ID and notes. Only **active** partners show links on the site, so you can add a program while it's waiting for approval and switch it on later. Pausing Chaturbate or BongaCams hides all of their links and videos at once.
+- **Links:** per partner, add affiliate links and place them in the footer, under the creator application, or in an ad slot's rotation. Clicks go through `/go/a/<id>`; `{placement}` `{source}` `{campaign}` in a link are filled in so the partner's own stats can break down by where the click came from.
+- **Reported results:** enter sign-ups, spenders/orders, sales and earnings per day, or import the partner's CSV export (needs `date` and `earnings`/`commission`/`payout` columns; sign-ups, orders and revenue/sales columns are picked up by name).
+- Pre-loaded: Chaturbate and BongaCams (active), Streamate/CamBuilder and the GoAffPro doll store (pending, waiting for approval and referral links).
+
 ### Chaturbate affiliate links
 
 Your Chaturbate linking codes are built in (`shared/partners.js`): all three programs (Revshare, Pay per sign-up, Tokens) with campaign `Ji03i` and your room `cock_da_hammer`. The default program is **Revshare**; switch it in **Admin → Partners**.

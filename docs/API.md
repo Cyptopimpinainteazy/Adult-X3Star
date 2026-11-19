@@ -15,6 +15,7 @@ JSON over HTTPS. Sessions use an `httpOnly` cookie (`x3s_sid`). State-changing r
 | GET | `/api/pk` · `/api/war` | Current PK battle, family war window |
 | POST | `/api/apply` | Creator/agent application `{ email, stage, niche, hours, sites[], note, adult:true, agentCode? }` |
 | GET | `/go/:site/:creator?c=&s=` | Logs a click on a creator's "Also live on" link and redirects (302). Chaturbate uses the partner config; other sites use their URL template |
+| GET | `/go/a/:id?c=&s=` | Logs a click on an Affiliates-registry link and redirects (302) — active partners only |
 | GET | `/go/v/:id?c=&s=` | Logs a partner-video click and redirects (302) to the clip's BongaCams tracking link |
 | GET | `/api/partner-videos?tag=&performer=&limit=&offset=` | Partner videos (newest first) with the top tags |
 | GET | `/go/p/:placement?c=&s=` | Logs a click on a site partner placement (footer, partner ad, apply page) and redirects (302) to the Chaturbate affiliate URL |

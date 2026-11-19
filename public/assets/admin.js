@@ -22,14 +22,14 @@ async function refreshCounts() {
   try { const o = await X3API.get('/api/admin/overview'); Q = o.queues; ['applications', 'uploads', 'payouts', 'reports'].forEach(k => { const n = $(`[data-cnt="${k}"]`); if (n) { n.textContent = Q[k] || ''; n.hidden = !Q[k]; } }); return o; } catch { return null; }
 }
 function shell() {
-  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['traffic', 'Traffic'], ['partners', 'Partners'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
+  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['affiliates', 'Affiliates'], ['traffic', 'Traffic'], ['partners', 'Partners'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
   app.innerHTML = `<div class="shell"><aside class="side" id="side"><div class="brand">x3<span>STAR</span><small>Admin</small></div>
     ${nav.map(([k, l, c]) => `<a class="nav" href="#${k}" data-v="${k}">${l}${c ? `<span class="cnt" data-cnt="${c}" hidden></span>` : ''}</a>`).join('')}
     <div class="foot"><span>${esc(me.name)} · admin</span><a href="/" target="_blank" rel="noopener">Open fan app ↗</a><a href="/studio" target="_blank" rel="noopener">Creator Studio ↗</a><button class="btn sm" id="out">Sign out</button></div></aside>
     <button class="btn burger" id="burger" aria-label="Menu">☰</button><main class="main" id="main"></main></div>`;
   $('#out').onclick = async () => { await X3API.post('/api/auth/logout'); location.href = '/'; };
   $('#burger').onclick = () => $('#side').classList.toggle('open');
-  router({ overview, applications, users, creators, moderation, payouts, reports, traffic, partners, economy, ledger, audit }, 'overview');
+  router({ overview, applications, users, creators, moderation, payouts, reports, affiliates, traffic, partners, economy, ledger, audit }, 'overview');
   refreshCounts(); setInterval(refreshCounts, 30000);
 }
 const main = () => $('#main');
@@ -144,6 +144,119 @@ async function reports() {
     `<div class="panel tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Reporter</th><th>Target</th><th>Reason</th><th></th></tr></thead><tbody>${rows.map(r => `<tr><td>${fmt.date(r.created_at)}</td><td>${esc(r.reporter || '—')}</td><td><span class="tag">${esc(r.target_type)}</span> <span class="mono">${esc(r.target_id)}</span></td><td>${esc(r.reason)}</td><td class="r">${r.status === 'open' ? `<div class="row" style="justify-content:flex-end"><button class="btn sm grn" data-s="resolved" data-id="${r.id}">Resolve</button><button class="btn sm" data-s="dismissed" data-id="${r.id}">Dismiss</button></div>` : `<span class="tag ${r.status}">${r.status}</span>`}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No reports.</td></tr>'}</tbody></table></div>`;
   wireTabs('rTabs', (t) => { rTab = t; reports(); });
   $$('[data-s]').forEach(b => b.onclick = async () => { await guard(() => X3API.post('/api/admin/reports/' + b.dataset.id, { status: b.dataset.s }), 'Updated'); reports(); refreshCounts(); });
+}
+
+/* ---------------- affiliates: rankings, partners, links, stats ---------------- */
+let affDays = 30, affSort = 'earnings';
+const PAYOUT_LABEL = { revshare: 'Revenue share', per_join: 'Per join', per_spender: 'Per spender', hybrid_join: 'Per join + revshare', hybrid_spender: 'Per spender + revshare', commission: 'Commission on sales', flat: 'Flat fee', unknown: 'Not set' };
+const SLOT_LABEL = { footer: 'Footer · More live cams', apply: 'Creator apply page', 'ad:728x90': 'Ad · 728×90 banner', 'ad:300x600': 'Ad · 300×600 tower', 'ad:970x250': 'Ad · 970×250 footer', none: 'Not placed (link only)' };
+const money = (n) => '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const statusTag = (s) => `<span class="tag ${s === 'active' ? 'live' : s}">${esc(s)}</span>`;
+function spark(clicks, earnings) {
+  const max = Math.max(1, ...clicks), w = 96, h = 28, n = clicks.length, bw = w / n;
+  const emax = Math.max(0.01, ...earnings);
+  const line = earnings.map((e, i) => `${(i + 0.5) * bw},${h - 2 - (e / emax) * (h - 4)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">${clicks.map((c, i) => `<rect x="${i * bw + 0.5}" y="${h - (c / max) * h}" width="${Math.max(1, bw - 1)}" height="${(c / max) * h}" fill="rgba(90,184,255,.45)"/>`).join('')}${earnings.some(e => e > 0) ? `<polyline points="${line}" fill="none" stroke="var(--green)" stroke-width="1.5"/>` : ''}</svg>`;
+}
+async function affiliates() {
+  const [rk, reg] = await Promise.all([X3API.get('/api/admin/affiliates/rankings?days=' + affDays), X3API.get('/api/admin/affiliates')]);
+  const cols = [['rank', '#'], ['name', 'Partner'], ['clicks', 'Clicks'], ['unique', 'Unique'], ['joins', 'Sign-ups'], ['joinRate', 'Join rate'], ['conversions', 'Spenders / orders'], ['earnings', 'Earnings'], ['epc', 'EPC'], ['perJoin', '$ / sign-up']];
+  const rows = rk.partners.slice().sort((a, b) => affSort === 'name' ? a.name.localeCompare(b.name) : affSort === 'rank' ? a.rank - b.rank : (b[affSort] || 0) - (a[affSort] || 0));
+  const best = rk.partners.filter(p => p.clicks >= 20 && p.earnings > 0).sort((a, b) => b.epc - a.epc)[0];
+  main().innerHTML = head('Affiliate <em>rankings</em>', 'Every partner you promote, ranked. Clicks come from x3STAR\'s own click log; sign-ups, spenders and earnings come from what each partner reports. Enter them per day or import the partner\'s CSV under Manage.', '<button class="btn pri" id="affAdd">Add partner</button>') +
+    tabs('affDays', [['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '12 months']], String(affDays)) + `
+    <div class="grid g3" style="grid-template-columns:repeat(4,1fr)">
+      <div class="panel kpi"><small>Earnings · ${affDays}d</small><b>${money(rk.totals.earnings)}</b><span>${fmt.num(rk.totals.conversions)} spenders / orders</span></div>
+      <div class="panel kpi"><small>Partner clicks</small><b>${fmt.num(rk.totals.clicks)}</b><span>${fmt.num(rk.totals.joins)} sign-ups</span></div>
+      <div class="panel kpi"><small>Earnings per click</small><b>${money(rk.totals.epc)}</b><span>all partners</span></div>
+      <div class="panel kpi"><small>Best EPC</small><b>${best ? esc(best.name) : '—'}</b><span>${best ? money(best.epc) + ' per click' : 'needs 20+ clicks and reported earnings'}</span></div>
+    </div>
+    <div class="panel tbl-wrap" style="margin-top:16px"><table class="tbl"><thead><tr>${cols.map(([k, l]) => `<th class="${k === 'name' ? '' : 'r'}" data-sort="${k}" style="cursor:pointer;${affSort === k ? 'color:var(--pink-2)' : ''}">${l}${affSort === k ? ' ↓' : ''}</th>`).join('')}<th>Clicks / earnings</th><th></th></tr></thead><tbody>
+      ${rows.map(p => `<tr>
+        <td class="r"><b style="font:500 20px var(--serif)">${p.rank}</b></td>
+        <td style="min-width:230px"><button class="pv-link" data-manage="${esc(p.id)}" style="all:unset;cursor:pointer;font-weight:700">${esc(p.name)}</button> ${statusTag(p.status)}<div class="dim" title="${esc(p.program || '')}" style="font-size:11px;margin-top:3px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.program || PAYOUT_LABEL[p.payout] || '')}</div></td>
+        <td class="r">${fmt.num(p.clicks)}</td><td class="r">${fmt.num(p.unique)}</td><td class="r">${fmt.num(p.joins)}</td><td class="r">${p.clicks ? p.joinRate + '%' : '—'}</td>
+        <td class="r">${fmt.num(p.conversions)}</td><td class="r"><b>${money(p.earnings)}</b>${p.reportedDays ? `<div class="dim" style="font-size:10.5px">${p.reportedDays} day${p.reportedDays === 1 ? '' : 's'} reported</div>` : '<div class="dim" style="font-size:10.5px">nothing reported</div>'}</td>
+        <td class="r">${p.clicks ? money(p.epc) : '—'}</td><td class="r">${p.joins ? money(p.perJoin) : '—'}</td>
+        <td>${spark(p.series.clicks, p.series.earnings)}</td>
+        <td class="r"><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">${p.dashboardUrl ? `<a class="btn sm" href="${esc(p.dashboardUrl)}" target="_blank" rel="noopener noreferrer">Stats ↗</a>` : ''}<button class="btn sm" data-manage="${esc(p.id)}">Manage</button></div></td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="note" style="margin-top:10px">EPC = earnings ÷ clicks — the fairest way to compare partners that pay differently. Blue bars are daily clicks, the green line is daily earnings. Pending, paused and rejected partners show no links on the site.</p>`;
+  wireTabs('affDays', (d) => { affDays = Number(d); affiliates(); });
+  $$('[data-sort]').forEach(th => th.onclick = () => { affSort = th.dataset.sort; affiliates(); });
+  $$('[data-manage]').forEach(b => b.onclick = () => managePartner(reg, b.dataset.manage));
+  $('#affAdd').onclick = () => editPartner(reg, null);
+}
+function partnerForm(reg, p) {
+  const opt = (list, cur, labels) => list.map(v => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(labels ? labels[v] || v : v)}</option>`).join('');
+  return `<div class="grid g2" style="gap:12px">
+    ${p ? '' : '<label class="field"><span>Code (2–8 letters/digits)</span><input class="inp mono" name="id" maxlength="8" placeholder="e.g. SM"></label>'}
+    <label class="field"><span>Name</span><input class="inp" name="name" maxlength="60" value="${esc(p ? p.name : '')}"></label>
+    <label class="field"><span>Status</span><select class="inp" name="status">${opt(reg.statuses, p ? p.status : 'pending')}</select></label>
+    <label class="field"><span>Type</span><select class="inp" name="kind">${opt(reg.kinds, p ? p.kind : 'cam', { cam: 'Cam network', shop: 'Shop / products', other: 'Other' })}</select></label>
+    <label class="field"><span>Payout plan</span><select class="inp" name="payout">${opt(reg.payouts, p ? p.payout : 'unknown', PAYOUT_LABEL)}</select></label>
+    <label class="field"><span>Revenue share / commission %</span><input class="inp" type="number" step="any" min="0" max="100" name="revshare_pct" value="${esc(p ? p.revshare_pct : 0)}"></label>
+    <label class="field"><span>$ per join</span><input class="inp" type="number" step="any" min="0" name="per_join_usd" value="${esc(p ? p.per_join_usd : 0)}"></label>
+    <label class="field"><span>$ per spender</span><input class="inp" type="number" step="any" min="0" name="per_spender_usd" value="${esc(p ? p.per_spender_usd : 0)}"></label>
+    <label class="field"><span>Affiliate ID / campaign</span><input class="inp mono" name="affiliate_id" maxlength="80" value="${esc(p ? p.affiliate_id : '')}"></label>
+    <label class="field"><span>Website</span><input class="inp" name="website" placeholder="https://" value="${esc(p ? p.website : '')}"></label>
+    <label class="field"><span>Partner stats dashboard</span><input class="inp" name="dashboard_url" placeholder="https://" value="${esc(p ? p.dashboard_url : '')}"></label>
+    <label class="field" style="grid-column:1/-1"><span>Program (as the partner describes it)</span><input class="inp" name="program" maxlength="300" value="${esc(p ? p.program : '')}"></label>
+    <label class="field" style="grid-column:1/-1"><span>Notes</span><textarea class="inp" name="notes" maxlength="2000">${esc(p ? p.notes : '')}</textarea></label></div>`;
+}
+const formData = (root) => Object.fromEntries($$('[name]', root).map(i => [i.name, i.type === 'number' ? Number(i.value || 0) : i.value]));
+function editPartner(reg, p) {
+  const m = modal(`<h3>${p ? 'Edit ' + esc(p.name) : 'Add affiliate partner'}</h3>${partnerForm(reg, p)}<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-n>Cancel</button><button class="btn pri" data-y>${p ? 'Save' : 'Add partner'}</button></div>`);
+  m.root.style.width = 'min(760px, calc(100vw - 32px))';
+  $('[data-n]', m.root).onclick = m.close;
+  $('[data-y]', m.root).onclick = async () => {
+    const body = formData(m.root);
+    await guard(() => p ? X3API.put('/api/admin/affiliates/' + p.id, body) : X3API.post('/api/admin/affiliates', body), p ? 'Partner saved' : 'Partner added');
+    m.close(); affiliates();
+  };
+}
+async function managePartner(reg, id) {
+  const fresh = await X3API.get('/api/admin/affiliates'); Object.assign(reg, fresh);
+  const p = reg.partners.find(x => x.id === id); if (!p) return;
+  const { rows } = await X3API.get('/api/admin/affiliates/' + id + '/stats');
+  const m = modal(`<div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(p.name)} ${statusTag(p.status)}</h3><div class="row"><button class="btn sm" data-edit>Edit details</button>${p.builtin ? '' : '<button class="btn sm red" data-del>Delete</button>'}</div></div>
+    <p class="note" style="margin:6px 0 14px">${esc(p.program || PAYOUT_LABEL[p.payout])}${p.affiliate_id ? ` · ID <span class="mono">${esc(p.affiliate_id)}</span>` : ''}${p.notes ? '<br>' + esc(p.notes) : ''}</p>
+    ${p.id === 'CB' ? '<p class="note">Chaturbate links and placements are set up in <a href="#partners" style="color:var(--pink-2)">Partners</a>. Links added here are extra.</p>' : ''}
+    <h4 style="margin:10px 0 8px">Links on the site</h4>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>On</th><th>Text</th><th>Where</th><th>URL</th><th class="r">Clicks · 30d</th><th></th></tr></thead><tbody>
+      ${p.links.map(l => `<tr data-l="${l.id}"><td><button class="switch ${l.active ? 'on' : ''}" data-lon aria-label="Link on"></button></td><td>${esc(l.label)}${l.sub ? `<div class="dim" style="font-size:11px">${esc(l.sub)}</div>` : ''}</td><td>${esc(SLOT_LABEL[l.slot] || l.slot)}</td><td style="max-width:240px"><span class="mono dim" style="font-size:11px;word-break:break-all">${esc(l.url)}</span></td><td class="r">${fmt.num(l.clicks30d)}</td><td class="r"><button class="btn sm" data-ldel>Remove</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">No links yet.</td></tr>'}
+    </tbody></table></div>
+    <div class="grid g2" style="gap:10px;margin-top:10px" id="newLink">
+      <input class="inp" name="label" placeholder="Link text, e.g. Shop realistic dolls" maxlength="120">
+      <select class="inp" name="slot">${reg.slots.map(s => `<option value="${s}">${esc(SLOT_LABEL[s])}</option>`).join('')}</select>
+      <input class="inp mono" name="url" placeholder="https://… your affiliate link (optional {placement} {source} {campaign})" style="grid-column:1/-1">
+      <input class="inp" name="sub" placeholder="Subtitle (ads only, optional)" maxlength="120"><button class="btn pri" data-ladd>Add link</button>
+    </div>
+    ${p.status !== 'active' ? `<p class="note" style="margin-top:8px">This partner is <b>${esc(p.status)}</b>, so its links stay hidden on the site until you set it to active.</p>` : ''}
+    <h4 style="margin:22px 0 8px">Reported results</h4>
+    <div class="grid g2" style="gap:10px;grid-template-columns:repeat(5,1fr)" id="newStat">
+      <label class="field"><span>Day</span><input class="inp" type="date" name="day" value="${new Date().toISOString().slice(0, 10)}"></label>
+      <label class="field"><span>Sign-ups</span><input class="inp" type="number" min="0" name="joins" value="0"></label>
+      <label class="field"><span>${p.kind === 'shop' ? 'Orders' : 'Spenders'}</span><input class="inp" type="number" min="0" name="conversions" value="0"></label>
+      <label class="field"><span>${p.kind === 'shop' ? 'Sales $' : 'Revenue $'}</span><input class="inp" type="number" step="any" min="0" name="sales" value="0"></label>
+      <label class="field"><span>Your earnings $</span><input class="inp" type="number" step="any" min="0" name="earnings" value="0"></label>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" data-sadd>Save day</button><label class="btn" style="cursor:pointer">Import CSV<input type="file" accept=".csv,text/csv,text/plain" data-csv hidden></label><span class="note">CSV columns: date, earnings (required), plus any of signups/joins, spenders/orders, revenue/sales.</span></div>
+    <div class="tbl-wrap" style="max-height:240px;overflow:auto;margin-top:10px"><table class="tbl"><thead><tr><th>Day</th><th class="r">Sign-ups</th><th class="r">${p.kind === 'shop' ? 'Orders' : 'Spenders'}</th><th class="r">${p.kind === 'shop' ? 'Sales' : 'Revenue'}</th><th class="r">Earnings</th><th>Source</th><th></th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td class="mono">${esc(r.day)}</td><td class="r">${fmt.num(r.joins)}</td><td class="r">${fmt.num(r.conversions)}</td><td class="r">${money(r.sales)}</td><td class="r"><b>${money(r.earnings)}</b></td><td><span class="tag">${esc(r.source)}</span></td><td class="r"><button class="btn sm" data-sdel="${esc(r.day)}">Delete</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing reported yet.</td></tr>'}
+    </tbody></table></div>
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-n>Close</button></div>`);
+  m.root.style.width = 'min(900px, calc(100vw - 32px))'; m.root.style.maxHeight = 'calc(100vh - 40px)'; m.root.style.overflow = 'auto';
+  const reopen = () => { m.close(); managePartner(reg, id); };
+  $('[data-n]', m.root).onclick = () => { m.close(); affiliates(); };
+  $('[data-edit]', m.root).onclick = () => { m.close(); editPartner(reg, p); };
+  const del = $('[data-del]', m.root); if (del) del.onclick = async () => { if (!(await confirmBox('Delete ' + p.name + '?', 'Its links and reported results are removed. Click history stays in Traffic.', 'Delete', true))) return; await guard(() => X3API.del('/api/admin/affiliates/' + id), 'Partner deleted'); m.close(); affiliates(); };
+  $$('[data-lon]', m.root).forEach(b => b.onclick = async () => { const lid = b.closest('tr').dataset.l; await guard(() => X3API.put('/api/admin/affiliates/links/' + lid, { active: !b.classList.contains('on') })); b.classList.toggle('on'); });
+  $$('[data-ldel]', m.root).forEach(b => b.onclick = async () => { await guard(() => X3API.del('/api/admin/affiliates/links/' + b.closest('tr').dataset.l), 'Link removed'); reopen(); });
+  $('[data-ladd]', m.root).onclick = async () => { await guard(() => X3API.post('/api/admin/affiliates/' + id + '/links', formData($('#newLink', m.root))), 'Link added'); reopen(); };
+  $('[data-sadd]', m.root).onclick = async () => { const d = formData($('#newStat', m.root)); await guard(() => X3API.put('/api/admin/affiliates/' + id + '/stats/' + d.day, d), 'Saved'); reopen(); };
+  $$('[data-sdel]', m.root).forEach(b => b.onclick = async () => { await guard(() => X3API.del('/api/admin/affiliates/' + id + '/stats/' + b.dataset.sdel), 'Deleted'); reopen(); });
+  $('[data-csv]', m.root).onchange = async (e) => { const f = e.target.files[0]; if (!f) return; const csv = await f.text(); const r = await guard(() => X3API.post('/api/admin/affiliates/' + id + '/stats/import', { csv })); toast(`Imported ${r.imported} day${r.imported === 1 ? '' : 's'}`, 'ok'); reopen(); };
 }
 
 /* ---------------- traffic ---------------- */

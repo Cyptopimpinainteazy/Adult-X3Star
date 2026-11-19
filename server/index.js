@@ -32,6 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use('/api/admin/partner-videos/import', express.json({ limit: '5mb' }));
+app.use(/^\/api\/admin\/affiliates\/[A-Za-z0-9]+\/stats\/import$/, express.json({ limit: '2mb' }));
 app.use(express.json({ limit: '256kb' }));
 app.use(A.attachUser);
 
@@ -65,15 +66,26 @@ const trackSource = (source, campaign) => [source, campaign].filter(Boolean).joi
 app.get('/go/p/:placement', (req, res, next) => {
   const pc = S.econConfig().partners, key = String(req.params.placement);
   const { campaign, source } = clickParams(req);
-  const built = /^[a-z0-9_]{1,40}$/.test(key) ? S.P.placementUrl(pc, key, { source: trackSource(source, campaign) }) : null;
+  const built = /^[a-z0-9_]{1,40}$/.test(key) && require('./affiliates').isLive('CB') ? S.P.placementUrl(pc, key, { source: trackSource(source, campaign) }) : null;
   if (!built) return next(new A.HttpError(404, 'not_found', 'Link not available'));
   logClick(req, 'CB', '', key, campaign, source);
   res.redirect(302, built.url);
 });
+/* partner links from the Affiliates registry */
+app.get('/go/a/:id', (req, res, next) => {
+  const AF = require('./affiliates');
+  const l = /^\d{1,9}$/.test(req.params.id) ? D.get("SELECT l.* FROM affiliate_links l JOIN affiliate_partners p ON p.id = l.partner_id WHERE l.id = ? AND l.active = 1 AND p.status = 'active'", Number(req.params.id)) : null;
+  if (!l) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  const { campaign, source } = clickParams(req);
+  const url = AF.fillLink(l.url, { placement: 'a' + l.id, source, campaign });
+  if (!/^https:\/\//.test(url)) return next(new A.HttpError(500, 'bad_affiliate_url', 'Affiliate URL must be https'));
+  logClick(req, l.partner_id, '', 'a' + l.id, campaign, source);
+  res.redirect(302, url);
+});
 /* partner videos (BongaCams feed): log, then forward to the feed's own tracking link */
 app.get('/go/v/:id', (req, res, next) => {
   const v = /^[A-Z]{2}\d{5,12}$/.test(req.params.id) ? D.get('SELECT * FROM partner_videos WHERE id = ? AND hidden = 0', req.params.id) : null;
-  if (!v || !/^https:\/\/bongacams\.com\/track\?/.test(v.url)) return next(new A.HttpError(404, 'not_found', 'Video not available'));
+  if (!v || !require('./affiliates').isLive(v.site) || !/^https:\/\/bongacams\.com\/track\?/.test(v.url)) return next(new A.HttpError(404, 'not_found', 'Video not available'));
   const { campaign, source } = clickParams(req);
   logClick(req, v.site, 'v:' + v.id, 'video', campaign, source);
   res.redirect(302, v.url);
@@ -83,7 +95,7 @@ app.get('/go/:site/:creator', (req, res, next) => {
   const site = String(req.params.site).toUpperCase(), cfgNow = S.econConfig(), aff = (cfgNow.affiliates || {})[site];
   const c = D.get("SELECT * FROM creators WHERE id = ? AND status = 'approved'", req.params.creator);
   const handle = c ? (D.J(c.handles, {})[site] || '') : '';
-  if (!aff || !handle) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  if (!aff || !handle || !require('./affiliates').isLive(site)) return next(new A.HttpError(404, 'not_found', 'Link not available'));
   const { campaign, source } = clickParams(req);
   let url = null;
   if (site === 'CB' && cfgNow.partners && cfgNow.partners.CB && cfgNow.partners.CB.enabled) {
@@ -132,6 +144,7 @@ app.use((err, req, res, _next) => {
 
 function start(port = cfg.PORT, host = cfg.HOST) {
   seed();
+  require('./affiliates').ensureDefaults();
   const feed = require('./feeds').importDirIfEmpty(path.join(__dirname, '..', 'seed', 'partner-feeds'));
   if (feed) console.log(`Imported partner videos: ${feed.added} added, ${feed.skipped} skipped`);
   const server = http.createServer(app);

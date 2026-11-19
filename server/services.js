@@ -98,14 +98,15 @@ function publicCreator(c, opts = {}) {
 const cbEnabled = () => !!(econConfig().partners && econConfig().partners.CB && econConfig().partners.CB.enabled);
 /** Partner placements the fan app may render: key -> { slot, label, sub, href } (only ones that resolve). */
 function partnerPlacements() {
+  const AF = require('./affiliates');
   const pc = econConfig().partners, out = {};
-  for (const [k, p] of Object.entries(pc.placements || {})) if (P.placementUrl(pc, k, {})) out[k] = { slot: p.slot || '', label: p.label, sub: p.sub || '', site: 'CB', href: `/go/p/${k}` };
-  return out;
+  if (AF.isLive('CB')) for (const [k, p] of Object.entries(pc.placements || {})) if (P.placementUrl(pc, k, {})) out[k] = { slot: p.slot || '', label: p.label, sub: p.sub || '', site: 'CB', siteName: 'Chaturbate', kind: 'cam', href: `/go/p/${k}` };
+  return Object.assign(out, AF.sitePlacements());
 }
 function goLinks(c) {
   const aff = econConfig().affiliates || {}, handles = J(c.handles, {}), out = {};
   for (const [site, h] of Object.entries(handles)) {
-    if (!h || !aff[site]) continue;
+    if (!h || !aff[site] || !require('./affiliates').isLive(site)) continue;
     const ok = site === 'CB' && cbEnabled() ? !!P.roomUrl(econConfig().partners, h, {}) : !!aff[site].url;
     if (ok) out[site] = { name: aff[site].name, href: `/go/${site}/${c.id}` };
   }

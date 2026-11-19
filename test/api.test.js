@@ -191,6 +191,61 @@ test('partner videos: bundled feed on first boot, list, filters, redirect, admin
   assert.equal((await call('pfan', 'GET', '/api/admin/partner-videos')).status, 403);
 });
 
+test('affiliates: registry, status gating, links, reported stats, CSV import, rankings', async () => {
+  const reg = await call('ad', 'GET', '/api/admin/affiliates');
+  const ids = reg.data.partners.map(p => p.id);
+  assert.ok(['CB', 'BC', 'SM', 'SD'].every(id => ids.includes(id)));
+  assert.equal(reg.data.partners.find(p => p.id === 'SM').status, 'pending');
+  // add a shop partner with a footer link; pending → hidden
+  const add = await call('ad', 'POST', '/api/admin/affiliates', { id: 'dolls', name: 'Doll Shop', kind: 'shop', status: 'pending', payout: 'commission', revshare_pct: 15, dashboard_url: 'https://partner.example/dash' });
+  assert.equal(add.status, 200); assert.equal(add.data.partner.id, 'DOLLS');
+  assert.equal((await call('ad', 'POST', '/api/admin/affiliates', { id: 'DOLLS', name: 'Dup' })).status, 400);
+  assert.equal((await call('ad', 'POST', '/api/admin/affiliates/DOLLS/links', { label: 'Shop dolls', url: 'http://insecure.example', slot: 'footer' })).status, 400);
+  const link = await call('ad', 'POST', '/api/admin/affiliates/DOLLS/links', { label: 'Shop dolls', url: 'https://shop.example/?ref=josh&sub={placement}-{source}', slot: 'footer' });
+  const lid = link.data.link.id;
+  assert.equal((await call('anon', 'GET', `/go/a/${lid}`)).status, 404, 'pending partner links are hidden');
+  let boot = JSON.parse((await (await fetch(base + '/')).text()).match(/window\.X3STAR_BOOT=(\{.*?\});<\/script>/s)[1]);
+  assert.ok(!boot.partners['a' + lid]);
+  // approve → live
+  assert.equal((await call('ad', 'PUT', '/api/admin/affiliates/DOLLS', { status: 'active' })).status, 200);
+  boot = JSON.parse((await (await fetch(base + '/')).text()).match(/window\.X3STAR_BOOT=(\{.*?\});<\/script>/s)[1]);
+  assert.deepEqual(boot.partners['a' + lid], { slot: 'footer', label: 'Shop dolls', sub: 'Doll Shop', site: 'DOLLS', siteName: 'Doll Shop', kind: 'shop', href: `/go/a/${lid}` });
+  const go = await call('anon', 'GET', `/go/a/${lid}?s=reddit`);
+  assert.equal(go.status, 302); assert.equal(go.headers.get('location'), `https://shop.example/?ref=josh&sub=a${lid}-reddit`);
+  await call('anon', 'GET', `/go/a/${lid}`);
+  // pausing a built-in partner hides its links everywhere
+  await call('ad', 'PUT', '/api/admin/affiliates/CB', { status: 'paused' });
+  assert.equal((await call('anon', 'GET', '/go/p/footer_female')).status, 404);
+  assert.equal((await call('anon', 'GET', '/go/CB/luna')).status, 404);
+  await call('ad', 'PUT', '/api/admin/affiliates/CB', { status: 'active' });
+  assert.equal((await call('anon', 'GET', '/go/p/footer_female')).status, 302);
+  await call('ad', 'PUT', '/api/admin/affiliates/BC', { status: 'paused' });
+  assert.equal((await call('anon', 'GET', '/api/partner-videos')).data.total, 0);
+  await call('ad', 'PUT', '/api/admin/affiliates/BC', { status: 'active' });
+  // reported stats: manual day + CSV import (upserts)
+  const today = new Date().toISOString().slice(0, 10), yday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  assert.equal((await call('ad', 'PUT', `/api/admin/affiliates/DOLLS/stats/${today}`, { joins: 0, conversions: 2, sales: 400, earnings: 60 })).status, 200);
+  assert.equal((await call('ad', 'PUT', '/api/admin/affiliates/DOLLS/stats/2999-01-01', { earnings: 1 })).status, 400);
+  const csv = `Date,Orders,Sales,Commission\n${yday},1,"$1,000.00",$150.00\n${today},3,600,90`;
+  const imp = await call('ad', 'POST', '/api/admin/affiliates/DOLLS/stats/import', { csv });
+  assert.equal(imp.status, 200); assert.equal(imp.data.imported, 2);
+  assert.equal((await call('ad', 'POST', '/api/admin/affiliates/DOLLS/stats/import', { csv: 'foo,bar\n1,2' })).status, 400);
+  const st = await call('ad', 'GET', '/api/admin/affiliates/DOLLS/stats');
+  assert.deepEqual(st.data.rows.map(r => [r.day, r.conversions, r.sales, r.earnings, r.source]), [[today, 3, 600, 90, 'csv'], [yday, 1, 1000, 150, 'csv']]);
+  // rankings: DOLLS has the most earnings → rank 1; EPC = 240 / 2 clicks
+  const rk = await call('ad', 'GET', '/api/admin/affiliates/rankings?days=7');
+  const d = rk.data.partners[0];
+  assert.equal(d.id, 'DOLLS'); assert.equal(d.rank, 1); assert.equal(d.clicks, 2); assert.equal(d.earnings, 240); assert.equal(d.epc, 120); assert.equal(d.conversions, 4);
+  assert.equal(d.series.clicks.length, 7); assert.equal(d.series.clicks[6], 2); assert.equal(d.series.earnings[6], 90); assert.equal(d.series.earnings[5], 150);
+  assert.ok(rk.data.partners.find(p => p.id === 'CB').clicks > 0, 'Chaturbate clicks from earlier tests are counted');
+  assert.equal(rk.data.totals.earnings, 240);
+  // delete: built-ins are protected, custom partners go with their links
+  assert.equal((await call('ad', 'DELETE', '/api/admin/affiliates/CB')).status, 400);
+  assert.equal((await call('ad', 'DELETE', '/api/admin/affiliates/DOLLS')).status, 200);
+  assert.equal((await call('anon', 'GET', `/go/a/${lid}`)).status, 404);
+  assert.equal((await call('pfan', 'GET', '/api/admin/affiliates/rankings')).status, 403);
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

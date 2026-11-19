@@ -44,7 +44,7 @@ r.get('/partner-videos', (req, res) => {
   const F = require('../feeds');
   const limit = Math.min(60, Math.max(1, parseInt(req.query.limit, 10) || 24)), offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
   const tag = String(req.query.tag || '').slice(0, 40), performer = String(req.query.performer || '').slice(0, 60);
-  let rows = all('SELECT * FROM partner_videos WHERE hidden = 0 ORDER BY id DESC');
+  let rows = all('SELECT * FROM partner_videos WHERE hidden = 0 ORDER BY id DESC').filter(r => require('../affiliates').isLive(r.site));
   const tagCount = new Map();
   rows.forEach(r => J(r.tags, []).forEach(t => { const k = t.toLowerCase(); const e = tagCount.get(k) || { tag: t, n: 0 }; e.n++; tagCount.set(k, e); }));
   if (tag) rows = rows.filter(r => J(r.tags, []).some(t => t.toLowerCase() === tag.toLowerCase()));

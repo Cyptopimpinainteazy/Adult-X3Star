@@ -1540,7 +1540,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
       </div>
       <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#videos">Videos</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="#blog">Journal</a></li></ul></div>
       <div><h5>Creators</h5><ul><li><a href="#creators">Become a creator</a></li><li><a href="#creators">Launch your coin</a></li><li><a href="#creators">Open a store</a></li><li><a href="#chat">Multi-site chat</a></li><li><a href="#account">My account</a></li></ul></div>
-      <div class="foot-partners" id="footPartners" hidden><h5>More live cams</h5><ul></ul><small>Partner links · Chaturbate</small></div>
+      <div class="foot-partners" id="footPartners" hidden><h5 id="footPartnerHead">More live cams</h5><ul></ul><small id="footPartnerNames">Partner links</small></div>
       <div><h5>Legal</h5><ul><li><a href="#legal-terms">Terms of service</a></li><li><a href="#legal-privacy">Privacy</a></li><li><a href="#legal-2257">18 U.S.C. 2257</a></li><li><a href="#legal-dmca">DMCA &amp; content removal</a></li></ul></div>
     </div>
     <div class="foot-big" aria-hidden="true">x3STAR</div>
@@ -2073,6 +2073,9 @@ function renderPartners() {
   const foot = partnersFor('footer'), box = $('#footPartners');
   if (box && foot.length) {
     $('ul', box).innerHTML = foot.map(([k, p]) => `<li><a href="${esc(partnerHref(p))}" target="_blank" rel="sponsored noopener" data-partner="${esc(k)}">${esc(p.label)} ↗</a></li>`).join('');
+    const names = [...new Set(foot.map(([, p]) => p.siteName || p.site).filter(Boolean))];
+    $('#footPartnerHead').textContent = foot.every(([, p]) => (p.kind || 'cam') === 'cam') ? 'More live cams' : 'Partners';
+    $('#footPartnerNames').textContent = 'Partner links' + (names.length ? ' · ' + names.join(', ') : '');
     box.hidden = false;
   }
   const ap = partnersFor('apply')[0], apEl = $('#applyPartner');
@@ -2081,8 +2084,7 @@ function renderPartners() {
 }
 function renderAd(slot) {
   const size = slot.dataset.adSize, list = (HOUSE_ADS[size] || HOUSE_ADS['728x90']).map(([t, s]) => ({ t, s }));
-  const partner = partnersFor('ad:' + size)[0];
-  if (partner) list.splice(1, 0, { t: partnerLabel(partner[1].label), s: partner[1].sub, href: partnerHref(partner[1]), key: partner[0] });
+  partnersFor('ad:' + size).forEach(([k, p], j) => list.splice(1 + j * 2, 0, { t: partnerLabel(p.label), s: p.sub, href: partnerHref(p), key: k }));
   let i = 0;
   const paint = () => {
     const { t, s, href, key } = list[i++ % list.length];

@@ -214,6 +214,46 @@ CREATE TABLE IF NOT EXISTS partner_videos (
   updated_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS partner_videos_perf ON partner_videos(performer);
+CREATE TABLE IF NOT EXISTS affiliate_partners (
+  id              TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  kind            TEXT NOT NULL DEFAULT 'cam',
+  status          TEXT NOT NULL DEFAULT 'pending',
+  website         TEXT NOT NULL DEFAULT '',
+  dashboard_url   TEXT NOT NULL DEFAULT '',
+  affiliate_id    TEXT NOT NULL DEFAULT '',
+  payout          TEXT NOT NULL DEFAULT 'unknown',
+  revshare_pct    REAL NOT NULL DEFAULT 0,
+  per_join_usd    REAL NOT NULL DEFAULT 0,
+  per_spender_usd REAL NOT NULL DEFAULT 0,
+  program         TEXT NOT NULL DEFAULT '',
+  notes           TEXT NOT NULL DEFAULT '',
+  builtin         INTEGER NOT NULL DEFAULT 0,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS affiliate_links (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  partner_id  TEXT NOT NULL REFERENCES affiliate_partners(id) ON DELETE CASCADE,
+  label       TEXT NOT NULL,
+  sub         TEXT NOT NULL DEFAULT '',
+  url         TEXT NOT NULL,
+  slot        TEXT NOT NULL DEFAULT 'footer',
+  active      INTEGER NOT NULL DEFAULT 1,
+  sort        INTEGER NOT NULL DEFAULT 0,
+  created_at  INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS affiliate_stats (
+  partner_id    TEXT NOT NULL REFERENCES affiliate_partners(id) ON DELETE CASCADE,
+  day           TEXT NOT NULL,
+  joins         INTEGER NOT NULL DEFAULT 0,
+  conversions   INTEGER NOT NULL DEFAULT 0,
+  sales_usd     REAL NOT NULL DEFAULT 0,
+  earnings_usd  REAL NOT NULL DEFAULT 0,
+  source        TEXT NOT NULL DEFAULT 'manual',
+  updated_at    INTEGER NOT NULL,
+  PRIMARY KEY (partner_id, day)
+);
 CREATE TABLE IF NOT EXISTS settings (
   key         TEXT PRIMARY KEY,
   value       TEXT NOT NULL,

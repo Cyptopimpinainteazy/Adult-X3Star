@@ -6,7 +6,8 @@ const { all, get, run, tx, J, audit } = require('../db');
 const A = require('../auth');
 const S = require('../services');
 const U = require('../uploads');
-const { HttpError, bad, str, intIn, oneOf } = require('./common');
+const { HttpError, bad, str, intIn, numIn, oneOf } = require('./common');
+const AF = require('../affiliates');
 
 const r = express.Router();
 r.use(A.requireRole('admin'));
@@ -188,6 +189,103 @@ r.get('/partners', (_req, res) => {
     tours: Object.entries(P.TOURS).map(([key, t]) => ({ key, label: t.label, room: !!t.room })),
     programs: Object.fromEntries(Object.entries(P.PROGRAMS).map(([k, v]) => [k, { label: v.label, terms: v.terms, tours: Object.keys(v.tours) }])) });
 });
+/* ---------- affiliate registry, links, stats, rankings ---------- */
+const httpsOrEmpty = (v, name) => { const s = str(v, name, 0, 500); if (s && !/^https:\/\/[^\s]+$/.test(s)) throw bad(`${name} must start with https://`); return s; };
+function partnerBody(b, cur) {
+  const v = (k, d) => (b[k] !== undefined ? b[k] : cur ? cur[k] : d);
+  return {
+    name: str(v('name', ''), 'Name', 2, 60), kind: oneOf(v('kind', 'cam'), 'Kind', AF.KINDS), status: oneOf(v('status', 'pending'), 'Status', AF.STATUSES),
+    website: httpsOrEmpty(v('website', ''), 'Website'), dashboard_url: httpsOrEmpty(v('dashboard_url', ''), 'Dashboard URL'),
+    affiliate_id: str(v('affiliate_id', ''), 'Affiliate ID', 0, 80), payout: oneOf(v('payout', 'unknown'), 'Payout plan', AF.PAYOUTS),
+    revshare_pct: numIn(v('revshare_pct', 0), 'Revenue share %', 0, 100), per_join_usd: numIn(v('per_join_usd', 0), 'Per join $', 0, 10000), per_spender_usd: numIn(v('per_spender_usd', 0), 'Per spender $', 0, 10000),
+    program: str(v('program', ''), 'Program', 0, 300), notes: str(v('notes', ''), 'Notes', 0, 2000)
+  };
+}
+function linkBody(b, cur) {
+  const v = (k, d) => (b[k] !== undefined ? b[k] : cur ? cur[k] : d);
+  const url = str(v('url', ''), 'Link URL', 10, 1000);
+  if (!/^https:\/\/[^\s]+$/.test(url)) throw bad('Link URL must start with https://');
+  return { label: str(v('label', ''), 'Link text', 2, 120), sub: str(v('sub', ''), 'Subtitle', 0, 120), url, slot: oneOf(v('slot', 'footer'), 'Placement', AF.SLOTS), active: v('active', 1) ? 1 : 0, sort: intIn(v('sort', 0), 'Order', -1000, 1000) };
+}
+const loadPartner = (id) => { const p = AF.partnerById(String(id).toUpperCase()); if (!p) throw new HttpError(404, 'not_found', 'No such partner'); return p; };
+
+r.get('/affiliates/rankings', (req, res) => res.json(AF.rankings(intIn(req.query.days || 30, 'days', 1, 365))));
+r.get('/affiliates', (_req, res) => {
+  const links = all('SELECT * FROM affiliate_links ORDER BY sort, id');
+  const clicks = Object.fromEntries(all("SELECT placement, COUNT(*) AS n FROM clicks WHERE placement LIKE 'a%' AND created_at > ? GROUP BY placement", Date.now() - 30 * 864e5).map(x => [x.placement, x.n]));
+  res.json({ statuses: AF.STATUSES, kinds: AF.KINDS, payouts: AF.PAYOUTS, slots: AF.SLOTS,
+    partners: all('SELECT * FROM affiliate_partners ORDER BY name').map(p => ({ ...p, builtin: !!p.builtin, links: links.filter(l => l.partner_id === p.id).map(l => ({ ...l, active: !!l.active, clicks30d: clicks['a' + l.id] || 0, href: `/go/a/${l.id}` })) })) });
+});
+r.post('/affiliates', (req, res) => {
+  const b = req.body || {}, id = String(b.id || '').trim().toUpperCase();
+  if (!AF.ID_RE.test(id)) throw bad('Code must be 2–8 capital letters or digits, e.g. SM or DOLLS');
+  if (AF.partnerById(id)) throw bad(`A partner with code ${id} already exists`);
+  const p = partnerBody(b), now = Date.now();
+  run(`INSERT INTO affiliate_partners (id, name, kind, status, website, dashboard_url, affiliate_id, payout, revshare_pct, per_join_usd, per_spender_usd, program, notes, builtin, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)`,
+    id, p.name, p.kind, p.status, p.website, p.dashboard_url, p.affiliate_id, p.payout, p.revshare_pct, p.per_join_usd, p.per_spender_usd, p.program, p.notes, now, now);
+  audit(req.user.id, 'affiliate.create', id, { name: p.name, status: p.status });
+  res.json({ partner: AF.partnerById(id) });
+});
+r.put('/affiliates/:id', (req, res) => {
+  const cur = loadPartner(req.params.id), p = partnerBody(req.body || {}, cur);
+  run('UPDATE affiliate_partners SET name=?, kind=?, status=?, website=?, dashboard_url=?, affiliate_id=?, payout=?, revshare_pct=?, per_join_usd=?, per_spender_usd=?, program=?, notes=?, updated_at=? WHERE id=?',
+    p.name, p.kind, p.status, p.website, p.dashboard_url, p.affiliate_id, p.payout, p.revshare_pct, p.per_join_usd, p.per_spender_usd, p.program, p.notes, Date.now(), cur.id);
+  audit(req.user.id, 'affiliate.update', cur.id, { status: p.status, statusBefore: cur.status });
+  res.json({ partner: AF.partnerById(cur.id) });
+});
+r.delete('/affiliates/:id', (req, res) => {
+  const cur = loadPartner(req.params.id);
+  if (cur.builtin) throw bad(`${cur.name} is built in; pause it instead`);
+  run('DELETE FROM affiliate_partners WHERE id = ?', cur.id);
+  audit(req.user.id, 'affiliate.delete', cur.id, { name: cur.name });
+  res.json({ ok: true });
+});
+r.post('/affiliates/:id/links', (req, res) => {
+  const p = loadPartner(req.params.id), l = linkBody(req.body || {});
+  const info = run('INSERT INTO affiliate_links (partner_id, label, sub, url, slot, active, sort, created_at) VALUES (?,?,?,?,?,?,?,?)', p.id, l.label, l.sub, l.url, l.slot, l.active, l.sort, Date.now());
+  audit(req.user.id, 'affiliate.link.create', p.id, { label: l.label, slot: l.slot });
+  res.json({ link: get('SELECT * FROM affiliate_links WHERE id = ?', Number(info.lastInsertRowid)) });
+});
+r.put('/affiliates/links/:linkId', (req, res) => {
+  const cur = get('SELECT * FROM affiliate_links WHERE id = ?', Number(req.params.linkId)); if (!cur) throw new HttpError(404, 'not_found', 'No such link');
+  const l = linkBody(req.body || {}, cur);
+  run('UPDATE affiliate_links SET label=?, sub=?, url=?, slot=?, active=?, sort=? WHERE id=?', l.label, l.sub, l.url, l.slot, l.active, l.sort, cur.id);
+  audit(req.user.id, 'affiliate.link.update', cur.partner_id, { id: cur.id });
+  res.json({ link: get('SELECT * FROM affiliate_links WHERE id = ?', cur.id) });
+});
+r.delete('/affiliates/links/:linkId', (req, res) => {
+  const cur = get('SELECT * FROM affiliate_links WHERE id = ?', Number(req.params.linkId)); if (!cur) throw new HttpError(404, 'not_found', 'No such link');
+  run('DELETE FROM affiliate_links WHERE id = ?', cur.id);
+  audit(req.user.id, 'affiliate.link.delete', cur.partner_id, { id: cur.id, label: cur.label });
+  res.json({ ok: true });
+});
+r.get('/affiliates/:id/stats', (req, res) => {
+  const p = loadPartner(req.params.id);
+  res.json({ rows: all('SELECT day, joins, conversions, sales_usd AS sales, earnings_usd AS earnings, source FROM affiliate_stats WHERE partner_id = ? ORDER BY day DESC LIMIT 400', p.id) });
+});
+r.put('/affiliates/:id/stats/:day', (req, res) => {
+  const p = loadPartner(req.params.id), day = String(req.params.day), b = req.body || {};
+  if (!AF.DAY_RE.test(day) || !Number.isFinite(Date.parse(day + 'T00:00:00Z'))) throw bad('Day must be YYYY-MM-DD');
+  if (Date.parse(day + 'T00:00:00Z') > Date.now() + 864e5) throw bad('Day cannot be in the future');
+  AF.upsertStat(p.id, { day, joins: intIn(b.joins || 0, 'Sign-ups', 0, 1e7), conversions: intIn(b.conversions || 0, 'Spenders/orders', 0, 1e7), sales: numIn(b.sales || 0, 'Sales $', 0, 1e9), earnings: numIn(b.earnings || 0, 'Earnings $', 0, 1e9) }, 'manual');
+  audit(req.user.id, 'affiliate.stats', p.id, { day });
+  res.json({ ok: true });
+});
+r.delete('/affiliates/:id/stats/:day', (req, res) => {
+  const p = loadPartner(req.params.id);
+  run('DELETE FROM affiliate_stats WHERE partner_id = ? AND day = ?', p.id, String(req.params.day));
+  res.json({ ok: true });
+});
+r.post('/affiliates/:id/stats/import', (req, res) => {
+  const p = loadPartner(req.params.id);
+  const text = req.body && typeof req.body.csv === 'string' ? req.body.csv : '';
+  const rows = AF.parseStatsCsv(text);
+  if (rows.length > 3660) throw bad('At most 3660 rows per import');
+  const n = AF.importStats(p.id, rows, 'csv');
+  audit(req.user.id, 'affiliate.stats.import', p.id, { rows: n });
+  res.json({ imported: n });
+});
+
 /* ---------- partner video feed (BongaCams export) ---------- */
 r.get('/partner-videos', (_req, res) => {
   const F = require('../feeds');
