@@ -66,6 +66,7 @@ function embedSrc(r, { program, campaign } = {}) {
     if (u.protocol !== 'https:' || !/(^|\.)chaturbate\.com$/i.test(u.hostname)) return '';
     if (campaign && u.searchParams.get('campaign') !== campaign) return '';
     u.searchParams.set('disable_sound', '1');
+    u.searchParams.set('bgcolor', 'black');   // matches the dark site instead of a white frame
     u.searchParams.set('track', 'card_embed');
     return u.href;
   } catch { return ''; }

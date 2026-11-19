@@ -94,8 +94,8 @@ test('cblive: live embed comes from the API iframe and must be our campaign on c
   process.env.DATA_DIR = process.env.DATA_DIR || require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'x3s-cbl-'));
   const { embedSrc } = require('../server/cblive');
   const r = { iframe_embed: '<iframe src="https://chaturbate.com/in/?tour=9oGW&amp;campaign=Ji03i&amp;track=embed&amp;room=amy" height=528 width=850 style="border: none;"></iframe>', iframe_embed_revshare: "<iframe src='https://chaturbate.com/in/?tour=x1y2&campaign=Ji03i&track=embed&room=amy'></iframe>" };
-  assert.equal(embedSrc(r, { program: 'pps', campaign: 'Ji03i' }), 'https://chaturbate.com/in/?tour=9oGW&campaign=Ji03i&track=card_embed&room=amy&disable_sound=1');
-  assert.equal(embedSrc(r, { program: 'revshare', campaign: 'Ji03i' }), 'https://chaturbate.com/in/?tour=x1y2&campaign=Ji03i&track=card_embed&room=amy&disable_sound=1');
+  assert.equal(embedSrc(r, { program: 'pps', campaign: 'Ji03i' }), 'https://chaturbate.com/in/?tour=9oGW&campaign=Ji03i&track=card_embed&room=amy&disable_sound=1&bgcolor=black');
+  assert.equal(embedSrc(r, { program: 'revshare', campaign: 'Ji03i' }), 'https://chaturbate.com/in/?tour=x1y2&campaign=Ji03i&track=card_embed&room=amy&disable_sound=1&bgcolor=black');
   assert.equal(embedSrc({ iframe_embed: '<iframe src="https://evil.example/in/?campaign=Ji03i">' }, { campaign: 'Ji03i' }), '');
   assert.equal(embedSrc({ iframe_embed: '<iframe src="https://chaturbate.com/in/?campaign=OTHER">' }, { campaign: 'Ji03i' }), '', 'someone else\'s campaign is never embedded');
   assert.equal(embedSrc({}, { campaign: 'Ji03i' }), '');
