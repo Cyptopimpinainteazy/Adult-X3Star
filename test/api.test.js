@@ -246,6 +246,23 @@ test('affiliates: registry, status gating, links, reported stats, CSV import, ra
   assert.equal((await call('pfan', 'GET', '/api/admin/affiliates/rankings')).status, 403);
 });
 
+test('cam model guide, robots.txt and sitemap', async () => {
+  const r = await fetch(base + '/cam-model-guide'); const html = await r.text();
+  assert.equal(r.status, 200);
+  assert.match(html, /<h1>How to become a <em>cam model<\/em>\.<\/h1>/);
+  assert.match(html, /"@type":"FAQPage"/);
+  assert.match(html, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:\d+\/cam-model-guide">/);
+  assert.ok(html.includes('$0.008') && html.includes('$40'), 'pay figures come from the economy config');
+  assert.ok(html.includes('href="/#creators"'));
+  assert.equal((await call('ad', 'PUT', '/api/admin/config', { overrides: { beanUsd: 0.01 } })).status, 200);
+  assert.ok((await (await fetch(base + '/cam-model-guide')).text()).includes('$50'), 'min payout follows the new bean value');
+  await call('ad', 'PUT', '/api/admin/config', { overrides: {} });
+  assert.equal((await fetch(base + '/become-a-cam-model', { redirect: 'manual' })).headers.get('location'), '/cam-model-guide');
+  const robots = await (await fetch(base + '/robots.txt')).text();
+  assert.match(robots, /Disallow: \/admin/); assert.match(robots, /Sitemap: http:\/\/127\.0\.0\.1:\d+\/sitemap\.xml/);
+  assert.match(await (await fetch(base + '/sitemap.xml')).text(), /<loc>http:\/\/127\.0\.0\.1:\d+\/cam-model-guide<\/loc>/);
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

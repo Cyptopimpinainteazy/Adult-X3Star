@@ -129,6 +129,19 @@ const sendIndex = (req, res) => {
   res.type('html').send(indexHtml().replace('<!--X3STAR_BOOT-->', `<script>window.X3STAR_BOOT=${json};</script>`));
 };
 app.get(['/', '/index.html'], sendIndex);
+
+/* indexable pages + crawler files */
+const baseUrl = (req) => `${req.protocol}://${req.get('host')}`;
+app.get(['/cam-model-guide', '/become-a-cam-model'], (req, res) => {
+  if (req.path !== '/cam-model-guide') return res.redirect(301, '/cam-model-guide');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.type('html').send(require('./pages/guide').renderGuide({ econ: S.econConfig(), baseUrl: baseUrl(req) }));
+});
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /api/\nDisallow: /admin\nDisallow: /studio\nDisallow: /go/\nDisallow: /uploads/\nSitemap: ${baseUrl(req)}/sitemap.xml\n`));
+app.get('/sitemap.xml', (req, res) => {
+  const b = baseUrl(req), day = new Date().toISOString().slice(0, 10);
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/cam-model-guide'].map(p => `  <url><loc>${b}${p}</loc><lastmod>${day}</lastmod></url>`).join('\n')}\n</urlset>\n`);
+});
 app.use('/shared', express.static(cfg.SHARED_DIR, { maxAge: cfg.NODE_ENV === 'production' ? '1h' : 0 }));
 app.use(express.static(cfg.PUBLIC_DIR, { index: false, extensions: ['html'], maxAge: cfg.NODE_ENV === 'production' ? '1h' : 0 }));
 
