@@ -75,3 +75,17 @@ test('cblive: client IP handling and stale cache fallback', async () => {
     assert.equal(again.stale, true); assert.equal(again.rooms[0].room, 'zoe'); assert.equal(n, 2);
   } finally { Date.now = realNow; CBL.setFetcher(null); }
 });
+
+test('cblive: promo display names, links in subjects and youth-emphasis tags are cleaned', () => {
+  process.env.DATA_DIR = process.env.DATA_DIR || require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'x3s-cbl-'));
+  const { normalize } = require('../server/cblive');
+  const base = { username: 'vanandjuani', gender: 'f', num_users: 30335, current_show: 'public', image_url_360x270: 'https://thumb.live.mmcdn.com/ri/vanandjuani.jpg' };
+  const r = normalize({ ...base, display_name: 't.me/vanandjuani2023 (ONLY THIS ONE IS L', room_subject: 'TWERK /menu join t.me/abc and mysite.com/x now #new', tags: ['new', 'blonde', '18', 'bigboobs', 'young'] });
+  assert.equal(r.name, 'vanandjuani');
+  assert.equal(r.subject, 'TWERK /menu join and now #new');
+  assert.deepEqual(r.tags, ['new', 'blonde', 'bigboobs']);
+  assert.equal(normalize({ ...base, display_name: 'Avie 💕' }).name, 'Avie 💕');
+  assert.equal(normalize({ ...base, display_name: 'Avie | my telegram' }).name, 'vanandjuani');
+  assert.equal(normalize({ ...base, display_name: 'Avie onlyfans' }).name, 'vanandjuani');
+  assert.equal(normalize({ ...base, display_name: '' }).name, 'vanandjuani');
+});

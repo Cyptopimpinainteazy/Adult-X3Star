@@ -39,7 +39,19 @@ function clientIp(raw) {
 function safeImg(u) {
   try { const x = new URL(String(u || '')); return x.protocol === 'https:' && IMG_HOST_RE.test(x.hostname) ? x.href : ''; } catch { return ''; }
 }
-const cleanText = (s, n) => String(s || '').replace(/<[^>]*>/g, ' ').replace(/https?:\/\/\S+/gi, '').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+/* Off-platform promo performers put in names/subjects: links, bare domains, Telegram/WhatsApp/socials handles. */
+const PROMO_RE = /\b(?:https?:\/\/\S+|(?:t|telegram|wa)\.me\/\S*|[a-z0-9-]+\.(?:com|net|org|me|io|tv|xyz|link|ly|gg|co|app|site|online|club|fans)(?:\/\S*)?)/gi;
+const PROMO_WORD_RE = /\b(telegram|whatsapp|onlyfans|fansly|snapchat|snap|insta(gram)?|tg|kik|discord)\b/i;
+const cleanText = (s, n) => String(s || '').replace(/<[^>]*>/g, ' ').replace(PROMO_RE, '').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+/* Tags that sell youth rather than an act. Not shown on cards (minor-implying words drop the whole room via BLOCK_RE). */
+const HIDDEN_TAGS = new Set(['18', '19', '18yo', '19yo', 'young', 'younger', 'youngest', 'barely18', 'barelylegal', 'schoolgirl', 'student', 'college']);
+/** Display name, unless it's an ad (links, socials, too long) — then the room name. */
+function displayName(raw, room) {
+  const s = String(raw || '');
+  if (!s.trim() || s.length > 24 || PROMO_RE.test(s) || PROMO_WORD_RE.test(s) || /[/@|]/.test(s)) { PROMO_RE.lastIndex = 0; return room; }
+  PROMO_RE.lastIndex = 0;
+  return cleanText(s, 24) || room;
+}
 
 /** Normalise one API room; null if it must not be shown. */
 function normalize(r) {
@@ -55,12 +67,12 @@ function normalize(r) {
   if (!thumb) return null;
   return {
     room: r.username,
-    name: cleanText(r.display_name, 40) || r.username,
+    name: displayName(r.display_name, r.username),
     age: age >= 18 && age < 100 ? Math.floor(age) : null,
     gender: GENDERS[String(r.gender || '').toLowerCase()] || '',
     viewers: Math.max(0, Math.floor(Number(r.num_users) || 0)),
     followers: Math.max(0, Math.floor(Number(r.num_followers) || 0)),
-    subject, tags: tags.slice(0, 5), thumb,
+    subject, tags: tags.filter(t => !HIDDEN_TAGS.has(t)).slice(0, 5), thumb,
     hd: !!r.is_hd, isNew: !!r.is_new, show,
     location: cleanText(r.location, 40),
     minutesOnline: Math.max(0, Math.floor((Number(r.seconds_online) || 0) / 60))
