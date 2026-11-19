@@ -132,7 +132,8 @@
       campaign: 'Ji03i',          // your affiliate campaign code
       houseRoom: 'cock_da_hammer',// your own Chaturbate room
       roomTour: 'room_home',      // tour used for creator "Also live on Chaturbate" links
-      track: '{source}_{placement}' // Chaturbate sub-ID; placeholders {placement} {source} {creator}
+      track: '{source}_{placement}', // Chaturbate sub-ID; placeholders {placement} {source} {creator}
+      liveGrid: true              // "Live now on Chaturbate" grid (online-rooms API) on Home / Live / Niches
     },
     placements: DEFAULT_PLACEMENTS
   };
@@ -193,7 +194,7 @@
   function roomUrl(cfg, room, opts) {
     const cb = (cfg && cfg.CB) || {};
     const tour = TOURS[cb.roomTour] && TOURS[cb.roomTour].room ? cb.roomTour : 'room_home';
-    return cbUrl(cfg, { tour, room, placement: 'room', source: opts && opts.source, creator: opts && opts.creator });
+    return cbUrl(cfg, { tour, room, placement: (opts && opts.placement) || 'room', source: opts && opts.source, creator: opts && opts.creator });
   }
 
   /** Throws Error(message) when the config is unusable. */
@@ -206,6 +207,7 @@
     if (cb.houseRoom && !ROOM_RE.test(cb.houseRoom)) fail('House room must be letters, digits or underscores');
     if (!TOURS[cb.roomTour] || !TOURS[cb.roomTour].room) fail('Creator room tour must be one of: room, room_home, full_room');
     if (typeof cb.track !== 'string' || cb.track.length > 80) fail('Track format must be a short string');
+    if (cb.liveGrid !== undefined && typeof cb.liveGrid !== 'boolean') fail('Live grid setting must be true or false');
     for (const [k, p] of Object.entries(cfg.placements || {})) {
       if (!/^[a-z0-9_]{1,40}$/.test(k)) fail(`Placement key "${k}" must be lowercase letters, digits or underscores`);
       if (!p || !TOURS[p.tour]) fail(`Placement ${k}: unknown tour "${p && p.tour}"`);

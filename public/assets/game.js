@@ -814,6 +814,43 @@ async function renderClips() {
 }
 
 /* =====================================================================
+   Live now on Chaturbate — real live rooms from the online-rooms API.
+   Clicks go through /go/CB/r/<room> (counted, then the affiliate link).
+   ===================================================================== */
+const CB_TABS = [['women', 'Women', { gender: 'f' }], ['couples', 'Couples', { gender: 'c' }], ['trans', 'Trans', { gender: 't' }], ['men', 'Men', { gender: 'm' }],
+  ['bigboobs', 'Big boobs', { gender: 'f', tag: 'bigboobs' }], ['goth', 'Goth', { gender: 'f', tag: 'goth' }], ['femdom', 'Femdom', { tag: 'femdom' }]];
+const cbl = { tab: 'women', shown: 12, data: null, timer: null, loading: false };
+async function renderCbLive(force) {
+  const sec = $('#sec-cblive'), root = $('#cbLiveInner'); if (!sec || !root) return;
+  if (!API) { sec.hidden = true; return; }
+  if (cbl.loading) return; cbl.loading = true;
+  const [, , q] = CB_TABS.find(t => t[0] === cbl.tab) || CB_TABS[0];
+  try { cbl.data = await X3API.get('/api/cb/live?' + new URLSearchParams({ ...q, limit: 48 })); }
+  catch { cbl.data = { enabled: true, rooms: [], error: 'Live rooms are unavailable right now' }; }
+  cbl.loading = false;
+  const d = cbl.data;
+  if (!d.enabled) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const camp = (window.X3STAR && X3STAR.campaign) || {};
+  const qs = (() => { const p = new URLSearchParams(); if (camp.utm_campaign) p.set('c', camp.utm_campaign); if (camp.utm_source) p.set('s', camp.utm_source); const s = p.toString(); return s ? '?' + s : ''; })();
+  const rooms = d.rooms.slice(0, cbl.shown);
+  root.innerHTML = `<div class="pv-head"><div><span class="eyebrow">Partner rooms · Chaturbate</span><h2>Live <em>right now</em>.</h2></div><p>${d.rooms.length ? `${fmt.num(d.total)} rooms streaming in this category. Free to watch — tap a room to open it on Chaturbate.` : (d.error || 'Nobody is live in this category right now. Try another tab.')}</p></div>
+    <div class="pv-chips" role="tablist">${CB_TABS.map(([k, l]) => `<button class="pv-chip ${k === cbl.tab ? 'on' : ''}" role="tab" aria-selected="${k === cbl.tab}" data-cbtab="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="cb-grid">${rooms.map(r => `<a class="cb-card" href="${esc(r.href + qs)}" target="_blank" rel="sponsored noopener" data-cbroom="${esc(r.room)}">
+      <span class="cb-media"><img src="${esc(r.thumb)}" alt="${esc(r.name)} live on Chaturbate" loading="lazy" decoding="async">
+        <span class="cb-badges">${r.show === 'public' ? '<b class="cb-live">LIVE</b>' : `<b class="cb-priv">${esc(r.show)}</b>`}${r.hd ? '<b>HD</b>' : ''}${r.isNew ? '<b class="cb-new">NEW</b>' : ''}</span>
+        <span class="cb-viewers">👁 ${fmt.num(r.viewers)}</span></span>
+      <span class="cb-body"><span class="cb-name">${esc(r.name)}${r.age ? `<i>${r.age}</i>` : ''}</span>${r.subject ? `<span class="cb-subj">${esc(r.subject)}</span>` : ''}${r.tags.length ? `<span class="cb-tags">${r.tags.slice(0, 3).map(t => `#${esc(t)}`).join(' ')}</span>` : ''}</span></a>`).join('')}</div>
+    ${d.rooms.length > cbl.shown ? '<div class="pv-more"><button class="btn btn--ghost" id="cbMore">Show more live rooms</button></div>' : ''}
+    <p class="pv-note">Partner rooms hosted on Chaturbate. All performers are 18+. x3STAR may earn a commission when you join there.</p>`;
+  $$('[data-cbtab]', root).forEach(b => b.onclick = () => { cbl.tab = b.dataset.cbtab; cbl.shown = 12; renderCbLive(true); });
+  const more = $('#cbMore'); if (more) more.onclick = () => { cbl.shown += 12; renderCbLive(true); };
+  $$('[data-cbroom]', root).forEach(a => a.addEventListener('click', () => { if (X.track) X.track('cb_live_click', { room: a.dataset.cbroom, tab: cbl.tab }); }));
+  clearInterval(cbl.timer);
+  cbl.timer = setInterval(() => { if (!document.hidden && !sec.hidden && sec.offsetParent) renderCbLive(true); }, 90000);
+}
+
+/* =====================================================================
    Partner videos (BongaCams feed). Thumbnails scrub on hover / cycle in
    view on touch; every click goes through /go/v/<id> so it is counted
    before the visitor lands on the partner site.
@@ -878,6 +915,7 @@ function onRoute(r) {
   if (r.name === 'families') renderFamilies();
   if (r.name === 'clips') renderClips();
   if (r.name === 'videos') renderVideos();
+  if (['home', 'live', 'niches'].includes(r.name)) renderCbLive();
   if (['home', 'profiles', 'live'].includes(r.name)) renderStories();
   if (r.name === 'live') mountPK();
   if (r.name !== 'live') { const c = gp.combo; if (c) { c.node.remove(); gp.combo = null; } }

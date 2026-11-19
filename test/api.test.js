@@ -263,6 +263,53 @@ test('cam model guide, robots.txt and sitemap', async () => {
   assert.match(await (await fetch(base + '/sitemap.xml')).text(), /<loc>http:\/\/127\.0\.0\.1:\d+\/cam-model-guide<\/loc>/);
 });
 
+test('live Chaturbate grid: API call, cleaning, caching, stale fallback, click link, switch', async () => {
+  const CBL = require('../server/cblive');
+  const calls = [];
+  const room = (o) => ({ username: 'amy_rose', display_name: 'Amy', age: 24, gender: 'f', num_users: 120, num_followers: 900, room_subject: 'Hi <b>guys</b> #goal https://spam.example', tags: ['bigboobs', 'lovense'], current_show: 'public', is_hd: true, is_new: false, location: 'Colombia', seconds_online: 3600, image_url: 'https://roomimg.stream.highwebmedia.com/ri/amy_rose.jpg', image_url_360x270: 'https://thumb.live.mmcdn.com/riw/amy_rose.jpg', ...o });
+  let payload = { count: 6, results: [
+    room({}),
+    room({ username: 'bella', num_users: 900 }),
+    room({ username: 'kid_x', age: 17 }),                                   // under 18 → dropped
+    room({ username: 'tina', tags: ['teen'] }),                             // blocked tag → dropped
+    room({ username: 'evil', image_url_360x270: 'https://evil.example/x.jpg', image_url: 'http://insecure/x.jpg' }),  // foreign/insecure thumbnail → dropped
+    room({ username: 'away_girl', current_show: 'away' })                   // away → dropped
+  ] };
+  let fail = false;
+  CBL.setFetcher(async (url) => { calls.push(url); if (fail) throw new Error('down'); return { ok: true, json: async () => payload }; });
+  const r = await call('anon', 'GET', '/api/cb/live?gender=female&tag=bigboobs');
+  assert.equal(r.status, 200); assert.equal(r.data.enabled, true);
+  assert.deepEqual(r.data.rooms.map(x => x.room), ['bella', 'amy_rose'], 'sorted by viewers, unsafe rooms removed');
+  const a = r.data.rooms[1];
+  assert.equal(a.subject, 'Hi guys #goal'); assert.equal(a.thumb, 'https://thumb.live.mmcdn.com/riw/amy_rose.jpg'); assert.equal(a.href, '/go/CB/r/amy_rose'); assert.equal(a.minutesOnline, 60);
+  const u = new URL(calls[0]);
+  assert.equal(u.origin + u.pathname, 'https://chaturbate.com/api/public/affiliates/onlinerooms/');
+  assert.equal(u.searchParams.get('wm'), 'Ji03i'); assert.equal(u.searchParams.get('gender'), 'f'); assert.equal(u.searchParams.get('tag'), 'bigboobs'); assert.equal(u.searchParams.get('client_ip'), 'request_ip');
+  await call('anon', 'GET', '/api/cb/live?gender=f&tag=bigboobs');
+  assert.equal(calls.length, 1, 'second request within a minute is served from cache');
+  await call('anon', 'GET', '/api/cb/live?gender=trans');
+  assert.equal(new URL(calls[1]).searchParams.get('gender'), 's', 'trans is "s" in the affiliate API');
+  // API down → nothing cached for this filter → empty with a friendly error
+  fail = true;
+  const down = await call('anon', 'GET', '/api/cb/live?gender=c');
+  assert.equal(down.data.rooms.length, 0); assert.match(down.data.error, /unavailable/);
+  // click goes through our counter to the affiliate room link
+  const go = await call('anon', 'GET', '/go/CB/r/amy_rose?s=reddit');
+  assert.equal(go.status, 302); assert.equal(go.headers.get('location'), 'https://chaturbate.com/in/?tour=LQps&campaign=Ji03i&track=reddit_live_grid&room=amy_rose');
+  assert.equal((await call('anon', 'GET', '/go/CB/r/bad%20room')).status, 404);
+  // admin switch turns the grid off
+  const cur = (await call('ad', 'GET', '/api/admin/config')).data.overrides;
+  await call('ad', 'PUT', '/api/admin/config', { overrides: { ...cur, partners: { ...(cur.partners || {}), CB: { ...((cur.partners || {}).CB || {}), liveGrid: false } } } });
+  assert.deepEqual((await call('anon', 'GET', '/api/cb/live')).data, { enabled: false, rooms: [], total: 0 });
+  await call('ad', 'PUT', '/api/admin/config', { overrides: cur });
+  // pausing Chaturbate in Affiliates also hides it
+  await call('ad', 'PUT', '/api/admin/affiliates/CB', { status: 'paused' });
+  assert.equal((await call('anon', 'GET', '/api/cb/live')).data.enabled, false);
+  assert.equal((await call('anon', 'GET', '/go/CB/r/amy_rose')).status, 404);
+  await call('ad', 'PUT', '/api/admin/affiliates/CB', { status: 'active' });
+  CBL.setFetcher(null);
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

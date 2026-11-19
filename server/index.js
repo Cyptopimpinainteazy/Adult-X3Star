@@ -25,7 +25,7 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https://v.bngprm.com", "media-src 'self' data: blob:",
+    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https://v.bngprm.com https://*.highwebmedia.com https://*.mmcdn.com", "media-src 'self' data: blob:",
     "connect-src 'self' ws: wss: data:", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
   ].join('; '));
   if (cfg.COOKIE_SECURE) res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
@@ -69,6 +69,15 @@ app.get('/go/p/:placement', (req, res, next) => {
   const built = /^[a-z0-9_]{1,40}$/.test(key) && require('./affiliates').isLive('CB') ? S.P.placementUrl(pc, key, { source: trackSource(source, campaign) }) : null;
   if (!built) return next(new A.HttpError(404, 'not_found', 'Link not available'));
   logClick(req, 'CB', '', key, campaign, source);
+  res.redirect(302, built.url);
+});
+/* "Live now on Chaturbate" grid: count the click, then your affiliate link to that room */
+app.get('/go/CB/r/:room', (req, res, next) => {
+  const pc = S.econConfig().partners, room = String(req.params.room);
+  const { campaign, source } = clickParams(req);
+  const built = require('./cblive').ROOM_RE.test(room) && require('./affiliates').isLive('CB') ? S.P.roomUrl(pc, room, { source: trackSource(source, campaign), placement: 'live_grid' }) : null;
+  if (!built) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  logClick(req, 'CB', '', 'live_grid', campaign, source);
   res.redirect(302, built.url);
 });
 /* partner links from the Affiliates registry */

@@ -56,3 +56,22 @@ test('validate rejects bad settings', () => {
   assert.throws(() => P.validate(cfg({}, { a: { tour: 'nope', label: 'x' } })), /unknown tour/);
   assert.throws(() => P.validate(cfg({}, { a: { tour: 'home', label: '' } })), /label/);
 });
+
+test('cblive: client IP handling and stale cache fallback', async () => {
+  process.env.DATA_DIR = process.env.DATA_DIR || require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'x3s-cbl-'));
+  const CBL = require('../server/cblive');
+  assert.equal(CBL.clientIp('::ffff:203.0.113.9'), '203.0.113.9');
+  assert.equal(CBL.clientIp('192.168.0.30'), 'request_ip');
+  assert.equal(CBL.clientIp('127.0.0.1'), 'request_ip');
+  assert.equal(CBL.clientIp('2001:db8::1'), '2001:db8::1');
+  let n = 0, fail = false;
+  CBL.setFetcher(async () => { n++; if (fail) throw new Error('down'); return { ok: true, json: async () => [{ username: 'zoe', age: 30, gender: 'f', num_users: 5, image_url: 'https://roomimg.stream.highwebmedia.com/ri/zoe.jpg', tags: [] }] }; });
+  const first = await CBL.liveRooms({ campaign: 'Ji03i', gender: 'f', ip: '203.0.113.9' });
+  assert.equal(first.rooms[0].room, 'zoe'); assert.equal(n, 1);
+  // force expiry of the fresh window, then fail: the stale copy is served
+  const realNow = Date.now; Date.now = () => realNow() + 2 * 60_000; fail = true;
+  try {
+    const again = await CBL.liveRooms({ campaign: 'Ji03i', gender: 'f', ip: '203.0.113.9' });
+    assert.equal(again.stale, true); assert.equal(again.rooms[0].room, 'zoe'); assert.equal(n, 2);
+  } finally { Date.now = realNow; CBL.setFetcher(null); }
+});

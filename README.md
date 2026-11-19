@@ -117,6 +117,10 @@ One place for every network or store you promote:
 - **Reported results:** enter sign-ups, spenders/orders, sales and earnings per day, or import the partner's CSV export (needs `date` and `earnings`/`commission`/`payout` columns; sign-ups, orders and revenue/sales columns are picked up by name).
 - Pre-loaded: Chaturbate and BongaCams (active), Streamate/CamBuilder and the GoAffPro doll store (pending, waiting for approval and referral links).
 
+### Live now on Chaturbate (real performers)
+
+Home, Live and Niches show a grid of rooms that are live on Chaturbate right now: thumbnail, name, age, viewers, LIVE/HD/NEW badges, room subject and tags, with tabs for Women, Couples, Trans, Men, Big boobs, Goth and Femdom. The server fetches Chaturbate's affiliate online-rooms API with your campaign code and the visitor's IP (so Chaturbate's geo rules apply), caches it for a minute, and serves the last good copy for up to 15 minutes if the API is down. Rooms under 18, away, with insecure/foreign images or with blocked tags/subjects (minor- or non-consent-implying words) are dropped. Clicks go through `/go/CB/r/<room>` → your room link with `track=<source>_live_grid`. Turn it off in Admin → Partners, or pause Chaturbate in Admin → Affiliates.
+
 ### Chaturbate affiliate links
 
 Your Chaturbate linking codes are built in (`shared/partners.js`): all three programs (Revshare, Pay per sign-up, Tokens) with campaign `Ji03i` and your room `cock_da_hammer`. The default program is **Revshare**; switch it in **Admin → Partners**.
