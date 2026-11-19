@@ -26,6 +26,8 @@ say()  { printf '\n\033[1;35m▸ %s\033[0m\n' "$*"; }
 die()  { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 need_sudo() { if [ "$(id -u)" -ne 0 ]; then sudo -v || die "This script needs sudo for packages, systemd and Caddy."; fi; }
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+# Wait up to 10 minutes if unattended-upgrades (or another apt) holds the dpkg lock, instead of failing.
+APT="$SUDO apt-get -o DPkg::Lock::Timeout=600"
 
 command -v apt-get >/dev/null || die "This script supports Debian/Ubuntu (apt-get) only."
 need_sudo
@@ -36,13 +38,13 @@ if node_ok; then
   say "Node.js $(node -v) is new enough"
 else
   say "Installing Node.js 22"
-  $SUDO apt-get update -qq
-  $SUDO apt-get install -y -qq ca-certificates curl gnupg git
+  $APT update -qq
+  $APT install -y -qq ca-certificates curl gnupg git
   if [ -n "$SUDO" ]; then curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -; else curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; fi
-  $SUDO apt-get install -y -qq nodejs
+  $APT install -y -qq nodejs
   node_ok || die "Node.js install did not produce v22.13+ (got $(node -v 2>/dev/null || echo none))."
 fi
-command -v git >/dev/null || $SUDO apt-get install -y -qq git
+command -v git >/dev/null || $APT install -y -qq git
 
 # ── 2. App code ─────────────────────────────────────────────────────
 if [ -d "$APP_DIR/.git" ]; then
@@ -145,11 +147,11 @@ say "x3star is running on 127.0.0.1:$APP_PORT"
 # ── 5. Caddy (HTTPS) ────────────────────────────────────────────────
 if ! command -v caddy >/dev/null; then
   say "Installing Caddy"
-  $SUDO apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl gnupg
+  $APT install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl gnupg
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | $SUDO gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | $SUDO tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
-  $SUDO apt-get update -qq
-  $SUDO apt-get install -y -qq caddy
+  $APT update -qq
+  $APT install -y -qq caddy
 fi
 say "Configuring Caddy for $DOMAIN and www.$DOMAIN"
 [ -f /etc/caddy/Caddyfile ] && $SUDO cp /etc/caddy/Caddyfile "/etc/caddy/Caddyfile.bak.$(date +%s)"
