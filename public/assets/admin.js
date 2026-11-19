@@ -22,14 +22,14 @@ async function refreshCounts() {
   try { const o = await X3API.get('/api/admin/overview'); Q = o.queues; ['applications', 'uploads', 'payouts', 'reports'].forEach(k => { const n = $(`[data-cnt="${k}"]`); if (n) { n.textContent = Q[k] || ''; n.hidden = !Q[k]; } }); return o; } catch { return null; }
 }
 function shell() {
-  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['traffic', 'Traffic'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
+  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['traffic', 'Traffic'], ['partners', 'Partners'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
   app.innerHTML = `<div class="shell"><aside class="side" id="side"><div class="brand">x3<span>STAR</span><small>Admin</small></div>
     ${nav.map(([k, l, c]) => `<a class="nav" href="#${k}" data-v="${k}">${l}${c ? `<span class="cnt" data-cnt="${c}" hidden></span>` : ''}</a>`).join('')}
     <div class="foot"><span>${esc(me.name)} · admin</span><a href="/" target="_blank" rel="noopener">Open fan app ↗</a><a href="/studio" target="_blank" rel="noopener">Creator Studio ↗</a><button class="btn sm" id="out">Sign out</button></div></aside>
     <button class="btn burger" id="burger" aria-label="Menu">☰</button><main class="main" id="main"></main></div>`;
   $('#out').onclick = async () => { await X3API.post('/api/auth/logout'); location.href = '/'; };
   $('#burger').onclick = () => $('#side').classList.toggle('open');
-  router({ overview, applications, users, creators, moderation, payouts, reports, traffic, economy, ledger, audit }, 'overview');
+  router({ overview, applications, users, creators, moderation, payouts, reports, traffic, partners, economy, ledger, audit }, 'overview');
   refreshCounts(); setInterval(refreshCounts, 30000);
 }
 const main = () => $('#main');
@@ -149,12 +149,54 @@ async function reports() {
 /* ---------------- traffic ---------------- */
 async function traffic() {
   const t = await X3API.get('/api/admin/traffic?days=14');
-  main().innerHTML = head('Affiliate <em>traffic</em>', 'Clicks on "Also live on" links. Each click is logged, then forwarded to your affiliate URL for that site (set them in Economy → Affiliates).') + `
+  main().innerHTML = head('Affiliate <em>traffic</em>', 'Clicks on partner links: creator "Also live on" rooms plus the footer, ad and apply-page placements set in Partners. Each click is logged here, then forwarded to the affiliate URL.') + `
     <div class="grid g3"><div class="panel kpi"><small>Clicks · 14d</small><b>${fmt.num(t.total)}</b></div><div class="panel kpi"><small>Unique visitors</small><b>${fmt.num(t.unique)}</b></div><div class="panel kpi"><small>Top site</small><b>${esc(t.bySite[0] ? t.bySite[0].site : '—')}</b><span>${t.bySite[0] ? fmt.num(t.bySite[0].clicks) + ' clicks' : ''}</span></div></div>
     <div class="panel pad" style="margin-top:16px"><h3 class="t">Clicks per day</h3>${bars(t.series, (v, i) => `${new Date(Date.now() - (t.days - 1 - i) * 864e5).toISOString().slice(5, 10)} · ${v}`, 'blue')}</div>
     <div class="grid g3" style="margin-top:16px"><div class="panel pad"><h3 class="t">By site</h3><ul class="list">${t.bySite.map(x => `<li><span>${esc(x.site)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
       <div class="panel pad"><h3 class="t">By creator</h3><ul class="list">${t.byCreator.map(x => `<li><span>${esc(x.name || x.creator_id)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
+      <div class="panel pad"><h3 class="t">By placement</h3><ul class="list">${(t.byPlacement || []).map(x => `<li><span class="mono">${esc(x.placement)}</span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div>
       <div class="panel pad"><h3 class="t">By campaign</h3><ul class="list">${t.byCampaign.map(x => `<li><span>${esc(x.campaign)} <span class="dim">· ${esc(x.source)}</span></span><b>${fmt.num(x.clicks)}</b></li>`).join('') || '<li class="dim">No clicks yet</li>'}</ul></div></div>`;
+}
+
+/* ---------------- partners (Chaturbate affiliate) ---------------- */
+async function partners() {
+  const [d, t, cfgRes] = await Promise.all([X3API.get('/api/admin/partners'), X3API.get('/api/admin/traffic?days=30'), X3API.get('/api/admin/config')]);
+  const cb = d.config, overrides = cfgRes.overrides;
+  const clicks = Object.fromEntries((t.byPlacement || []).map(x => [x.placement, x.clicks]));
+  const progs = d.programs, tourOpts = (sel, roomOnly) => d.tours.filter(x => !roomOnly || x.room).map(x => `<option value="${esc(x.key)}" ${x.key === sel ? 'selected' : ''}>${esc(x.label)}</option>`).join('');
+  const slotName = { footer: 'Footer · More live cams', 'ad:728x90': 'Ad · 728×90 banner', 'ad:300x600': 'Ad · 300×600 tower', 'ad:970x250': 'Ad · 970×250 footer', apply: 'Creator apply page' };
+  main().innerHTML = head('Partner <em>links</em>', 'Your Chaturbate affiliate links. Every link on the site goes through /go/… so the click is counted here first, and carries a <span class="mono">track</span> tag so the same placement shows up in your Chaturbate stats.', '<button class="btn pri" id="pSave">Save partner settings</button>') + `
+    <div class="panel pad"><div class="row" style="justify-content:space-between"><div><h3 class="t" style="margin:0">Chaturbate</h3><p class="note" style="margin:4px 0 0">Turn off to hide every Chaturbate link on the site.</p></div><button class="switch ${cb.enabled ? 'on' : ''}" id="pOn" role="switch" aria-checked="${cb.enabled}" aria-label="Chaturbate links on"></button></div></div>
+    <h3 class="t" style="margin:22px 0 10px">Program <small>which payout plan your links earn under</small></h3>
+    <div class="grid g3">${Object.entries(progs).map(([k, p]) => `<label class="panel pad" style="cursor:pointer;display:flex;gap:12px;align-items:flex-start;${k === cb.program ? 'border-color:var(--pink)' : ''}"><input type="radio" name="prog" value="${k}" ${k === cb.program ? 'checked' : ''} style="margin-top:4px"><span><b>${esc(p.label)}</b><span class="note" style="display:block;margin-top:4px">${esc(p.terms)}</span><span class="note" style="display:block;margin-top:6px">${p.tours.length} link types</span></span></label>`).join('')}</div>
+    <div class="grid g2" style="margin-top:16px">
+      <label class="panel pad field"><span>Campaign code</span><input class="inp mono" id="pCamp" value="${esc(cb.campaign)}" maxlength="20"></label>
+      <label class="panel pad field"><span>Your Chaturbate room</span><input class="inp mono" id="pHouse" value="${esc(cb.houseRoom || '')}" maxlength="60" placeholder="room name"></label>
+      <label class="panel pad field"><span>Creator "Also live on Chaturbate" link opens</span><select class="inp" id="pRoomTour">${tourOpts(cb.roomTour, true)}</select></label>
+      <label class="panel pad field"><span>Track tag <small class="dim">{placement} {source} {creator}</small></span><input class="inp mono" id="pTrack" value="${esc(cb.track)}" maxlength="80"></label>
+    </div>
+    ${d.roomSample ? `<p class="note mono" style="margin:10px 2px;word-break:break-all">Creator room example: ${esc(d.roomSample)}</p>` : ''}
+    <div class="panel tbl-wrap" style="margin-top:16px"><table class="tbl"><thead><tr><th>On</th><th>Where</th><th>Text</th><th>Links to</th><th class="r">Clicks · 30d</th><th>Resolved URL</th></tr></thead><tbody>
+      ${d.placements.map(p => `<tr data-pl="${esc(p.key)}">
+        <td><button class="switch ${p.on ? 'on' : ''}" data-pon aria-label="Show ${esc(p.key)}"></button></td>
+        <td><b>${esc(slotName[p.slot] || p.slot)}</b><div class="dim mono" style="font-size:11px">${esc(p.key)}</div></td>
+        <td><input class="inp" data-plabel value="${esc(p.label)}" maxlength="120" style="min-width:180px"></td>
+        <td><select class="inp" data-ptour style="min-width:200px">${tourOpts(p.tour)}</select>${p.usedTour && p.usedTour !== p.tour ? `<div class="note" style="margin-top:4px">Not in this program — uses “${esc((d.tours.find(x => x.key === p.usedTour) || {}).label || p.usedTour)}”</div>` : ''}</td>
+        <td class="r">${fmt.num(clicks[p.key] || 0)}</td>
+        <td style="max-width:320px">${p.url ? `<a class="mono" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;word-break:break-all;color:var(--mute)">${esc(p.url)} ↗</a>` : '<span class="dim">Not available</span>'}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="note" style="margin-top:10px">Links for "a room" use your Chaturbate room above. Creators add their own Chaturbate room name in Studio → Profile; their profile then shows an "Also live on Chaturbate" link. Test a link in a private window before you advertise it.</p>`;
+  $('#pOn').onclick = (e) => e.currentTarget.classList.toggle('on');
+  $$('[data-pon]').forEach(b => b.onclick = () => b.classList.toggle('on'));
+  $$('input[name=prog]').forEach(r => r.onchange = () => $$('input[name=prog]').forEach(x => x.closest('label').style.borderColor = x.checked ? 'var(--pink)' : ''));
+  $('#pSave').onclick = async () => {
+    const ov = JSON.parse(JSON.stringify(overrides));
+    ov.partners = ov.partners || {};
+    ov.partners.CB = { enabled: $('#pOn').classList.contains('on'), program: ($('input[name=prog]:checked') || {}).value, campaign: $('#pCamp').value.trim(), houseRoom: $('#pHouse').value.trim(), roomTour: $('#pRoomTour').value, track: $('#pTrack').value.trim() };
+    ov.partners.placements = Object.fromEntries($$('[data-pl]').map(tr => { const cur = d.placements.find(p => p.key === tr.dataset.pl); return [tr.dataset.pl, { slot: cur.slot, tour: $('[data-ptour]', tr).value, label: $('[data-plabel]', tr).value.trim(), sub: cur.sub || '', on: $('[data-pon]', tr).classList.contains('on'), ...(cur.room ? { room: cur.room } : {}) }]; }));
+    await guard(() => X3API.put('/api/admin/config', { overrides: ov }), 'Partner links saved');
+    partners();
+  };
 }
 
 /* ---------------- economy ---------------- */
@@ -164,7 +206,7 @@ async function economy() {
   const quick = [['welcomeDiamonds', 'Welcome diamonds'], ['beanUsd', 'Bean cash-out value (USD)'], ['minPayoutBeans', 'Minimum payout (beans)'], ['payoutWeeklyCapBeans', 'Weekly payout cap (beans)'], ['firstPurchaseMultiplier', 'First purchase multiplier'], ['defaultDailyCapUsd', 'Default daily purchase cap (USD)'], ['vipRenewRate', 'VIP renew price (fraction of list)'], ['agencyCommissionPct', 'Agency commission (%)'], ['dayOffsetMinutes', 'Day reset offset (minutes from UTC)']];
   main().innerHTML = head('Economy', 'Every number in the diamond economy. Changes apply instantly to the server and every fan app on next load.', '<button class="btn pri" id="saveQ">Save quick settings</button>') + `
     <div class="grid g3">${quick.map(([k, l]) => `<label class="panel pad field"><span>${esc(l)}</span><input class="inp" type="number" step="any" data-q="${k}" value="${esc(q(k))}"></label>`).join('')}</div>
-    <div class="panel pad" style="margin-top:16px"><h3 class="t">Affiliates <small>{room} {campaign} {source} placeholders · https only</small></h3><div class="grid g2">${Object.entries(effective.affiliates || {}).map(([site, a]) => `<label class="field"><span>${esc(a.name)} (${site})</span><input class="inp" data-aff="${site}" value="${esc(a.url)}" placeholder="https://… your affiliate link with {room}"></label>`).join('')}</div></div>
+    <div class="panel pad" style="margin-top:16px"><h3 class="t">Affiliates <small>{room} {campaign} {source} placeholders · https only</small></h3><p class="note" style="margin:0 0 12px">Chaturbate links are managed in <a href="#partners" style="color:var(--pink-2)">Partners</a>${(effective.partners && effective.partners.CB && effective.partners.CB.enabled) ? '' : ' (currently turned off there, so the template below is used)'}.</p><div class="grid g2">${Object.entries(effective.affiliates || {}).filter(([site]) => site !== 'CB' || !(effective.partners && effective.partners.CB && effective.partners.CB.enabled)).map(([site, a]) => `<label class="field"><span>${esc(a.name)} (${site})</span><input class="inp" data-aff="${site}" value="${esc(a.url)}" placeholder="https://… your affiliate link with {room}"></label>`).join('')}</div></div>
     <div class="panel pad" style="margin-top:16px"><h3 class="t">Advanced overrides <small>JSON merged over defaults · gifts, VIP, boxes, odds, packs, items…</small></h3><textarea class="inp code" id="ov">${esc(JSON.stringify(overrides, null, 2))}</textarea><div class="row" style="margin-top:10px"><button class="btn pri" id="saveJ">Validate & save JSON</button><button class="btn" id="showEff">View effective config</button><span class="note">Box odds must sum to 1. Arrays replace the default list entirely.</span></div></div>`;
   const save = async (ov) => { await guard(() => X3API.put('/api/admin/config', { overrides: ov }), 'Economy updated'); economy(); };
   $('#saveQ').onclick = () => {

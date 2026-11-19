@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS clicks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   site        TEXT NOT NULL,
   creator_id  TEXT NOT NULL,
+  placement   TEXT NOT NULL DEFAULT '',
   campaign    TEXT NOT NULL DEFAULT '',
   source      TEXT NOT NULL DEFAULT '',
   user_id     INTEGER,
@@ -207,7 +208,7 @@ CREATE TABLE IF NOT EXISTS settings (
 `);
 
 /* lightweight migrations for databases created by earlier versions */
-for (const [t, c, d] of [['creators', 'handles', "TEXT NOT NULL DEFAULT '{}'"]]) { try { db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`); } catch {} }
+for (const [t, c, d] of [['creators', 'handles', "TEXT NOT NULL DEFAULT '{}'"], ['clicks', 'placement', "TEXT NOT NULL DEFAULT ''"]]) { try { db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`); } catch {} }
 
 const all = (sql, ...p) => db.prepare(sql).all(...p);
 const get = (sql, ...p) => db.prepare(sql).get(...p);

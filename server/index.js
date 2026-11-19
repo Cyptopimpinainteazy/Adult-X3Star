@@ -52,17 +52,40 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api', require('./routes/social'));
 app.use('/api', (_req, _res, next) => next(new A.HttpError(404, 'not_found', 'No such endpoint')));
 
-/* affiliate go-links: log the click, forward to the configured affiliate URL */
-app.get('/go/:site/:creator', (req, res, next) => {
-  const site = String(req.params.site).toUpperCase(), aff = (S.econConfig().affiliates || {})[site];
-  const c = require('./db').get("SELECT * FROM creators WHERE id = ? AND status = 'approved'", req.params.creator);
-  const handle = c ? (require('./db').J(c.handles, {})[site] || '') : '';
-  if (!aff || !aff.url || !handle) return next(new A.HttpError(404, 'not_found', 'Link not available'));
-  const campaign = String(req.query.c || '').slice(0, 80), source = String(req.query.s || '').slice(0, 80);
+/* affiliate go-links: log the click, then forward to the partner/affiliate URL */
+const D = require('./db');
+const clickParams = (req) => ({ campaign: String(req.query.c || '').slice(0, 80), source: String(req.query.s || '').slice(0, 80) });
+function logClick(req, site, creatorId, placement, campaign, source) {
   const ipHash = require('node:crypto').createHash('sha256').update(String(req.ip || '') + (process.env.CLICK_SALT || 'x3s')).digest('hex').slice(0, 16);
-  require('./db').run('INSERT INTO clicks (site, creator_id, campaign, source, user_id, ip_hash, created_at) VALUES (?,?,?,?,?,?,?)', site, c.id, campaign, source, req.user ? req.user.id : null, ipHash, Date.now());
-  const url = aff.url.replace(/\{room\}/g, encodeURIComponent(handle)).replace(/\{campaign\}/g, encodeURIComponent(campaign || 'x3star')).replace(/\{source\}/g, encodeURIComponent(source || 'site'));
+  D.run('INSERT INTO clicks (site, creator_id, placement, campaign, source, user_id, ip_hash, created_at) VALUES (?,?,?,?,?,?,?,?)', site, creatorId, placement, campaign, source, req.user ? req.user.id : null, ipHash, Date.now());
+}
+const trackSource = (source, campaign) => [source, campaign].filter(Boolean).join('-') || 'x3s';
+/* site-level partner placements (footer links, partner ads, broadcaster sign-up) */
+app.get('/go/p/:placement', (req, res, next) => {
+  const pc = S.econConfig().partners, key = String(req.params.placement);
+  const { campaign, source } = clickParams(req);
+  const built = /^[a-z0-9_]{1,40}$/.test(key) ? S.P.placementUrl(pc, key, { source: trackSource(source, campaign) }) : null;
+  if (!built) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  logClick(req, 'CB', '', key, campaign, source);
+  res.redirect(302, built.url);
+});
+/* a creator's room on another site ("Also live on …") */
+app.get('/go/:site/:creator', (req, res, next) => {
+  const site = String(req.params.site).toUpperCase(), cfgNow = S.econConfig(), aff = (cfgNow.affiliates || {})[site];
+  const c = D.get("SELECT * FROM creators WHERE id = ? AND status = 'approved'", req.params.creator);
+  const handle = c ? (D.J(c.handles, {})[site] || '') : '';
+  if (!aff || !handle) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  const { campaign, source } = clickParams(req);
+  let url = null;
+  if (site === 'CB' && cfgNow.partners && cfgNow.partners.CB && cfgNow.partners.CB.enabled) {
+    const built = S.P.roomUrl(cfgNow.partners, handle, { source: trackSource(source, campaign), creator: c.id });
+    url = built && built.url;
+  } else if (aff.url) {
+    url = aff.url.replace(/\{room\}/g, encodeURIComponent(handle)).replace(/\{campaign\}/g, encodeURIComponent(campaign || 'x3star')).replace(/\{source\}/g, encodeURIComponent(source || 'site'));
+  }
+  if (!url) return next(new A.HttpError(404, 'not_found', 'Link not available'));
   if (!/^https:\/\//.test(url)) return next(new A.HttpError(500, 'bad_affiliate_url', 'Affiliate URL must be https'));
+  logClick(req, site, c.id, 'room', campaign, source);
   res.redirect(302, url);
 });
 
@@ -77,7 +100,7 @@ function indexHtml() {
 }
 function bootPayload(req) {
   const rows = all("SELECT * FROM creators WHERE status = 'approved' ORDER BY featured DESC, base_viewers DESC").map(c => S.publicCreator(c));
-  return { api: true, creators: rows.filter(c => c.live), offline: rows.filter(c => !c.live), me: req.user ? S.publicUser(req.user) : null, economy: S.econConfig(), payments: cfg.PAYMENTS_MODE, demoTraffic: cfg.DEMO_TRAFFIC };
+  return { api: true, creators: rows.filter(c => c.live), offline: rows.filter(c => !c.live), me: req.user ? S.publicUser(req.user) : null, economy: S.econConfig(), partners: S.partnerPlacements(), payments: cfg.PAYMENTS_MODE, demoTraffic: cfg.DEMO_TRAFFIC };
 }
 const sendIndex = (req, res) => {
   const json = JSON.stringify(bootPayload(req)).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16));

@@ -31,6 +31,7 @@
 - Overview: KPIs, queues, 14-day signups / gifts / revenue, top creators and gifters
 - Applications (approval creates the account and shows a one-time temporary password), users (role, ban, grant diamonds/items), creators (status, KYC, live, featured, viewer baseline, "open their Studio")
 - **Content moderation** queue: nothing a creator uploads is public until approved
+- **Partners**: your Chaturbate affiliate links (program, campaign code, your room, every placement on the site with its live URL and click count)
 - Payouts, reports, affiliate **traffic** analytics, the full **economy editor** (quick fields, affiliate URL templates, JSON overrides with validation), ledger, audit log
 
 ## Quick start
@@ -101,6 +102,15 @@ See [`.env.example`](.env.example). The important ones:
 | `DATA_DIR` | `./data` | SQLite database + uploads. **Back this up.** |
 
 All economy values (prices, odds, rewards, payout rates, affiliate links) are edited live in **Admin → Economy**.
+
+### Chaturbate affiliate links
+
+Your Chaturbate linking codes are built in (`shared/partners.js`): all three programs (Revshare, Pay per sign-up, Tokens) with campaign `Ji03i` and your room `cock_da_hammer`. The default program is **Revshare**; switch it in **Admin → Partners**.
+
+- **Where links appear:** footer "More live cams" (Female, Couple, Trans, Male, your room, Join free), one partner creative in each ad slot's rotation (marked *Partner*), and "Broadcast on Chaturbate too" under the creator application. Creators who enter their Chaturbate room in Studio → Profile also get an "Also live on Chaturbate" link on their profile.
+- **Counting:** every link goes through `/go/p/<placement>` or `/go/CB/<creator>`, so the click is logged in Admin → Traffic before the redirect.
+- **Chaturbate stats:** each link carries `track=<source>_<placement>` (e.g. `reddit-spring_footer_female`), so your Chaturbate affiliate stats break down by where on the site the click came from and which campaign brought the visitor. Change the format in Admin → Partners.
+- If a program doesn't offer a link type (Tokens has no join pages, for example), the nearest one it does offer is used and Admin → Partners says which.
 
 ## Going to production
 

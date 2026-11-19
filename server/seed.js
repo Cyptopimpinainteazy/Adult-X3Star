@@ -63,7 +63,7 @@ function seedDemo() {
       run(`INSERT INTO creators (id, user_id, name, ticker, niche, tags, bio, sites, hues, vhue, price, status, kyc, live, featured, base_viewers, tip_menu, goal, demo, created_at)
            VALUES (?,?,?,?,?,?,?,?,?,?,?,'approved','verified',1,?,?,?,?,1,?)`,
         id, uid, name, ticker, niche, JSON.stringify(tags), bio, JSON.stringify(sites), JSON.stringify(hues), vhue, price, i < 2 ? 1 : 0, viewers, JSON.stringify(TIP_MENU), JSON.stringify({ label: GOALS[id], target: 2500 }), now - (3 + i * 3) * 30 * DAY);
-      run('UPDATE creators SET handles = ? WHERE id = ?', JSON.stringify(Object.fromEntries(sites.filter(s => s !== 'X3').map(s => [s, id + '_x3']))), id);
+      run('UPDATE creators SET handles = ? WHERE id = ?', JSON.stringify(Object.fromEntries(sites.filter(s => s !== 'X3' && s !== 'CB').map(s => [s, id + '_x3']))), id);
     });
     OFFLINE.forEach(([id, name, ticker, niche, tags, hues, back]) => {
       const uid = mkUser(`${id}@demo.x3star.local`, id + '_x3', 'creator');

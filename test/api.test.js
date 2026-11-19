@@ -122,12 +122,44 @@ test('admin: overview, application approval creates creator, economy validation'
 });
 
 test('affiliate go-links redirect only when configured and log clicks', async () => {
-  assert.equal((await call('anon', 'GET', '/go/CB/luna')).status, 404);
-  await call('ad', 'PUT', '/api/admin/config', { overrides: { welcomeDiamonds: 250, affiliates: { CB: { name: 'Chaturbate', url: 'https://example.com/in/?track={campaign}&room={room}' } } } });
-  const r = await call('anon', 'GET', '/go/CB/luna?c=spring&s=reddit');
-  assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://example.com/in/?track=spring&room=luna_vex');
+  // Chaturbate: built from the partner config (campaign Ji03i) once the creator has a CB room
+  assert.equal((await call('anon', 'GET', '/go/CB/luna')).status, 302);
+  const cb = await call('anon', 'GET', '/go/CB/luna?c=spring&s=reddit');
+  assert.equal(cb.headers.get('location'), 'https://chaturbate.com/in/?tour=LQps&campaign=Ji03i&track=reddit-spring_room&room=luna_vex');
+  // other sites use their URL template and 404 until one is set
+  assert.equal((await call('anon', 'GET', '/go/SC/luna')).status, 404);
+  await call('cr', 'PUT', '/api/studio/profile', { handles: { CB: 'luna_vex', SC: 'luna_sc' } });
+  await call('ad', 'PUT', '/api/admin/config', { overrides: { welcomeDiamonds: 250, affiliates: { SC: { name: 'Stripchat', url: 'https://example.com/in/?track={campaign}&room={room}' } } } });
+  const sc = await call('anon', 'GET', '/go/SC/luna?c=spring&s=reddit');
+  assert.equal(sc.status, 302); assert.equal(sc.headers.get('location'), 'https://example.com/in/?track=spring&room=luna_sc');
+  const bad = await call('ad', 'PUT', '/api/admin/config', { overrides: { affiliates: { SC: { name: 'Stripchat', url: 'http://insecure.example' } } } });
+  assert.equal(bad.status, 400);
   const t = await call('ad', 'GET', '/api/admin/traffic');
-  assert.equal(t.data.total, 1); assert.equal(t.data.byCampaign[0].campaign, 'spring');
+  assert.equal(t.data.total, 3); assert.equal(t.data.byPlacement[0].placement, 'room');
+});
+
+test('partner placements: boot data, redirects, admin settings', async () => {
+  const html = await (await fetch(base + '/')).text();
+  const boot = JSON.parse(html.match(/window\.X3STAR_BOOT=(\{.*?\});<\/script>/s)[1]);
+  assert.equal(boot.partners.footer_female.href, '/go/p/footer_female');
+  assert.ok(!html.includes('chaturbate.com/in/'), 'raw affiliate URLs are not in the page; clicks go through /go/p');
+  const r = await call('anon', 'GET', '/go/p/footer_female?s=tiktok');
+  assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://chaturbate.com/in/?tour=IsSO&campaign=Ji03i&track=tiktok_footer_female');
+  assert.equal((await call('anon', 'GET', '/go/p/nope')).status, 404);
+  assert.equal((await call('anon', 'GET', '/go/p/..%2F')).status, 404);
+  const p = await call('ad', 'GET', '/api/admin/partners');
+  assert.equal(p.data.config.campaign, 'Ji03i'); assert.equal(Object.keys(p.data.programs).length, 3);
+  assert.ok(p.data.placements.every(x => x.url && x.url.startsWith('https://chaturbate.com/in/')));
+  // switch program to pay-per-signup and turn the footer female link off
+  const cur = (await call('ad', 'GET', '/api/admin/config')).data.overrides;
+  const ov = { ...cur, partners: { CB: { program: 'pps' }, placements: { footer_female: { on: false } } } };
+  assert.equal((await call('ad', 'PUT', '/api/admin/config', { overrides: ov })).status, 200);
+  assert.equal((await call('anon', 'GET', '/go/p/footer_female')).status, 404);
+  assert.equal((await call('anon', 'GET', '/go/p/apply_broadcaster')).headers.get('location'), 'https://chaturbate.com/in/?tour=5zjT&campaign=Ji03i&track=x3s_apply_broadcaster');
+  assert.equal((await call('ad', 'PUT', '/api/admin/config', { overrides: { ...cur, partners: { CB: { campaign: 'bad code!' } } } })).status, 400);
+  await login('pfan', 'fan@demo.x3star.local', 'demo-pass-123');
+  assert.equal((await call('pfan', 'GET', '/api/admin/partners')).status, 403);
+  await call('ad', 'PUT', '/api/admin/config', { overrides: cur });
 });
 
 test('families: create costs diamonds, join, leaderboard', async () => {

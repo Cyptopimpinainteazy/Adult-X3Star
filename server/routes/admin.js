@@ -176,6 +176,18 @@ r.post('/reports/:id', (req, res) => {
 
 /* ---------- economy config ---------- */
 r.get('/config', (_req, res) => res.json({ overrides: S.econOverrides(), effective: S.econConfig(), defaults: S.E.DEFAULT_CONFIG }));
+/* partner (Chaturbate) catalog + resolved preview URLs for every placement */
+r.get('/partners', (_req, res) => {
+  const pc = S.econConfig().partners, P = S.P;
+  const placements = Object.entries(pc.placements || {}).map(([key, p]) => {
+    const built = P.cbUrl(pc, { tour: p.tour, room: P.TOURS[p.tour] && P.TOURS[p.tour].room ? (p.room || pc.CB.houseRoom) : '', placement: key, source: 'x3s' });
+    return { key, ...p, url: built ? built.url : null, usedTour: built ? built.tour : null };
+  });
+  const sample = P.roomUrl(pc, pc.CB.houseRoom || 'example_room', { source: 'x3s', creator: 'sample' });
+  res.json({ config: pc.CB, placements, roomSample: sample ? sample.url : null,
+    tours: Object.entries(P.TOURS).map(([key, t]) => ({ key, label: t.label, room: !!t.room })),
+    programs: Object.fromEntries(Object.entries(P.PROGRAMS).map(([k, v]) => [k, { label: v.label, terms: v.terms, tours: Object.keys(v.tours) }])) });
+});
 r.put('/config', (req, res) => {
   const overrides = req.body && typeof req.body.overrides === 'object' && !Array.isArray(req.body.overrides) ? req.body.overrides : null;
   if (!overrides) throw bad('Send { overrides: {...} }');
@@ -192,7 +204,8 @@ r.get('/traffic', (req, res) => {
     days, total: sum('SELECT COUNT(*) AS v FROM clicks WHERE created_at > ?', since), unique: sum('SELECT COUNT(DISTINCT ip_hash) AS v FROM clicks WHERE created_at > ?', since),
     series: Array.from({ length: days }, (_, i) => (daily.find(x => x.d === i) || {}).v || 0),
     bySite: all('SELECT site, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY site ORDER BY clicks DESC', since),
-    byCreator: all('SELECT c.name, k.creator_id, COUNT(*) AS clicks FROM clicks k LEFT JOIN creators c ON c.id = k.creator_id WHERE k.created_at > ? GROUP BY k.creator_id ORDER BY clicks DESC LIMIT 20', since),
+    byCreator: all('SELECT c.name, k.creator_id, COUNT(*) AS clicks FROM clicks k LEFT JOIN creators c ON c.id = k.creator_id WHERE k.created_at > ? AND length(k.creator_id) > 0 GROUP BY k.creator_id ORDER BY clicks DESC LIMIT 20', since),
+    byPlacement: all("SELECT CASE WHEN placement = '' THEN 'room' ELSE placement END AS placement, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY 1 ORDER BY clicks DESC", since),
     byCampaign: all("SELECT CASE WHEN campaign = '' THEN '(none)' ELSE campaign END AS campaign, CASE WHEN source = '' THEN '(direct)' ELSE source END AS source, COUNT(*) AS clicks FROM clicks WHERE created_at > ? GROUP BY campaign, source ORDER BY clicks DESC LIMIT 30", since)
   });
 });

@@ -30,7 +30,7 @@ All rules live in one file, [`shared/economy.js`](../shared/economy.js). The ser
 - **Cosmetics:** view and camera **filters**, avatar frames, chat bubbles, entrance effects, name colours and badges. Some are for sale, some come only from boxes, VIP, levels or events.
 - **Host tiers:** Rising, Official (+5%), Star (+10%) and Icon (+15%) bonus beans on every gift, based on beans earned in the last 30 days. The platform funds the bonus.
 - **Agency:** agents earn `agencyCommissionPct` (default 20%) of their recruited hosts' gift beans. The platform funds this too; it is never deducted from hosts.
-- **Affiliate go-links:** "Also live on" buttons route through `/go/<site>/<creator>`, log the click with its campaign, and forward to your affiliate URL template.
+- **Affiliate go-links:** "Also live on" buttons route through `/go/<site>/<creator>`, log the click with its campaign, and forward to the affiliate URL. Chaturbate links are built from `partners` (program, campaign, track format, placements; see `shared/partners.js`), other sites from their URL template.
 
 ## Default unit economics
 

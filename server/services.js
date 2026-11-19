@@ -2,6 +2,8 @@
 /* Shared server services: economy config, per-user economy state, creator/upload mapping. */
 const crypto = require('node:crypto');
 const E = require('../shared/economy.js');
+const P = require('../shared/partners.js');
+const BASE_CONFIG = E.mergeConfig(E.DEFAULT_CONFIG, { partners: P.DEFAULTS });
 const { all, get, run, tx, J } = require('./db');
 
 /* ---------- economy config (defaults + admin overrides) ---------- */
@@ -9,11 +11,11 @@ let econCache = null;
 function econConfig() {
   if (econCache) return econCache;
   const row = get("SELECT value FROM settings WHERE key = 'economy'");
-  econCache = E.mergeConfig(E.DEFAULT_CONFIG, J(row && row.value, {}));
+  econCache = E.mergeConfig(BASE_CONFIG, J(row && row.value, {}));
   return econCache;
 }
 function setEconOverrides(overrides) {
-  const merged = E.mergeConfig(E.DEFAULT_CONFIG, overrides);
+  const merged = E.mergeConfig(BASE_CONFIG, overrides);
   validateEcon(merged);
   run("INSERT INTO settings (key, value, updated_at) VALUES ('economy', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", JSON.stringify(overrides), Date.now());
   econCache = null;
@@ -27,6 +29,8 @@ function validateEcon(c) {
   c.gifts.forEach(g => { if (!g.id || !g.name) throw Object.assign(new Error('every gift needs id and name'), { status: 400, code: 'bad_config' }); pos(g.price, `gift ${g.id} price`); });
   c.gacha.boxes.forEach(b => { const s = E.RARITIES.reduce((a, r) => a + (b.odds[r] || 0), 0); if (Math.abs(s - 1) > 0.001) throw Object.assign(new Error(`box ${b.id} odds must sum to 1 (got ${s.toFixed(3)})`), { status: 400, code: 'bad_config' }); });
   c.diamondPacks.forEach(p => { pos(p.usd, `pack ${p.id} usd`); pos(p.diamonds, `pack ${p.id} diamonds`); });
+  P.validate(c.partners);
+  for (const [site, a] of Object.entries(c.affiliates || {})) if (a && a.url && !/^https:\/\/[^\s]+$/.test(a.url)) throw Object.assign(new Error(`${site} affiliate URL must start with https://`), { status: 400, code: 'bad_config' });
 }
 const rng = () => crypto.randomInt(0, 2 ** 32) / 2 ** 32;
 
@@ -91,9 +95,20 @@ function publicCreator(c, opts = {}) {
   }
   return out;
 }
+const cbEnabled = () => !!(econConfig().partners && econConfig().partners.CB && econConfig().partners.CB.enabled);
+/** Partner placements the fan app may render: key -> { slot, label, sub, href } (only ones that resolve). */
+function partnerPlacements() {
+  const pc = econConfig().partners, out = {};
+  for (const [k, p] of Object.entries(pc.placements || {})) if (P.placementUrl(pc, k, {})) out[k] = { slot: p.slot || '', label: p.label, sub: p.sub || '', site: 'CB', href: `/go/p/${k}` };
+  return out;
+}
 function goLinks(c) {
   const aff = econConfig().affiliates || {}, handles = J(c.handles, {}), out = {};
-  for (const [site, h] of Object.entries(handles)) if (h && aff[site] && aff[site].url) out[site] = { name: aff[site].name, href: `/go/${site}/${c.id}` };
+  for (const [site, h] of Object.entries(handles)) {
+    if (!h || !aff[site]) continue;
+    const ok = site === 'CB' && cbEnabled() ? !!P.roomUrl(econConfig().partners, h, {}) : !!aff[site].url;
+    if (ok) out[site] = { name: aff[site].name, href: `/go/${site}/${c.id}` };
+  }
   return out;
 }
 function publicProduct(p) { const img = approvedUpload(p.upload_id); return { id: p.id, creatorId: p.creator_id, name: p.name, kind: p.kind, price: p.price, note: p.note, partner: p.partner, image: uploadUrl(img) }; }
@@ -128,4 +143,4 @@ function uniqueTicker(name) {
 }
 const refCode = () => crypto.randomBytes(4).toString('hex').toUpperCase();
 
-module.exports = { E, econConfig, setEconOverrides, econOverrides, rng, loadEcon, withEcon, summaryFor, uploadUrl, approvedUpload, beans30d, publicCreator, publicProduct, topFans, publicUser, chatIdentity, uniqueSlug, uniqueTicker, refCode, viewersFor };
+module.exports = { E, P, partnerPlacements, econConfig, setEconOverrides, econOverrides, rng, loadEcon, withEcon, summaryFor, uploadUrl, approvedUpload, beans30d, publicCreator, publicProduct, topFans, publicUser, chatIdentity, uniqueSlug, uniqueTicker, refCode, viewersFor };

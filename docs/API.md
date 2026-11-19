@@ -14,7 +14,8 @@ JSON over HTTPS. Sessions use an `httpOnly` cookie (`x3s_sid`). State-changing r
 | GET | `/api/families` · `/api/families/:id` | Family leaderboard (week points), roster |
 | GET | `/api/pk` · `/api/war` | Current PK battle, family war window |
 | POST | `/api/apply` | Creator/agent application `{ email, stage, niche, hours, sites[], note, adult:true, agentCode? }` |
-| GET | `/go/:site/:creator?c=&s=` | Logs an affiliate click and redirects (302) to the configured template |
+| GET | `/go/:site/:creator?c=&s=` | Logs a click on a creator's "Also live on" link and redirects (302). Chaturbate uses the partner config; other sites use their URL template |
+| GET | `/go/p/:placement?c=&s=` | Logs a click on a site partner placement (footer, partner ad, apply page) and redirects (302) to the Chaturbate affiliate URL |
 
 ## Auth & account
 `POST /api/auth/register { email, name, password, adult:true, ref? }` · `POST /api/auth/login` · `POST /api/auth/logout` · `POST /api/auth/password { current, next }` · `GET /api/me` · `POST /api/me/avatar` (multipart `file`) · `GET /api/me/history` · `POST /api/reports { targetType, targetId, reason }`

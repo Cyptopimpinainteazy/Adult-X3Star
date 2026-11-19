@@ -157,6 +157,7 @@
     ],
     pk: { durationSec: 180, cooldownSec: 20 },
     affiliates: {                    // outbound "also live on" links. Placeholders: {room} {campaign} {source}. Empty url = hidden.
+                                     // Chaturbate is driven by `partners` (shared/partners.js) unless partners.CB.enabled is false.
       CB: { name: 'Chaturbate', url: '' },
       SC: { name: 'Stripchat', url: '' },
       BC: { name: 'BongaCams', url: '' },

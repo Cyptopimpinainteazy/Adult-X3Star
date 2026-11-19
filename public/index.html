@@ -542,7 +542,13 @@ select.sel option{background:var(--bg-2)}
    Footer
    ========================================================= */
 footer{position:relative;z-index:1;margin-top:90px;border-top:1px solid var(--line);background:linear-gradient(180deg,transparent,rgba(255,45,135,.03))}
-.foot-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:40px;padding:70px 0 40px}
+.foot-grid{display:grid;grid-template-columns:1.6fr repeat(4,1fr);gap:40px;padding:70px 0 40px}
+.foot-partners[hidden]{display:none}
+.foot-partners small{display:block;margin-top:14px;font:500 10px/1.5 var(--mono);color:var(--dim);letter-spacing:.06em}
+.house--v .tag-partner{margin:0 auto 10px}
+.house .tag-partner{display:block;width:max-content;margin-bottom:6px;padding:2px 7px;border:1px solid var(--line);border-radius:6px;font:500 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.apply-partner{margin-top:14px;font-size:13px;color:var(--mute)}
+.apply-partner a{color:var(--pink-2);text-decoration:underline;text-underline-offset:3px}
 .foot-grid h5{margin:0 0 16px;font:500 10.5px var(--mono);letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
 .foot-grid ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:var(--mute)}
 .foot-grid a:hover{color:var(--pink)}
@@ -1495,6 +1501,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
         <label class="attest full"><input type="checkbox" name="adult" required> I confirm I am at least 18 years old and will complete government ID and age verification before streaming.</label>
         <div class="full" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><button class="btn btn--primary btn--lg">Submit application</button><span class="note" id="applyMsg"></span></div>
       </form>
+      <p class="apply-partner" id="applyPartner" hidden></p>
     </div>
   </section>
 
@@ -1532,6 +1539,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
       </div>
       <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="#blog">Journal</a></li></ul></div>
       <div><h5>Creators</h5><ul><li><a href="#creators">Become a creator</a></li><li><a href="#creators">Launch your coin</a></li><li><a href="#creators">Open a store</a></li><li><a href="#chat">Multi-site chat</a></li><li><a href="#account">My account</a></li></ul></div>
+      <div class="foot-partners" id="footPartners" hidden><h5>More live cams</h5><ul></ul><small>Partner links · Chaturbate</small></div>
       <div><h5>Legal</h5><ul><li><a href="#legal-terms">Terms of service</a></li><li><a href="#legal-privacy">Privacy</a></li><li><a href="#legal-2257">18 U.S.C. 2257</a></li><li><a href="#legal-dmca">DMCA &amp; content removal</a></li></ul></div>
     </div>
     <div class="foot-big" aria-hidden="true">x3STAR</div>
@@ -1557,6 +1565,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
 </div>
 
 <!--X3STAR_BOOT-->
+<script src="shared/partners.js"></script>
 <script src="shared/economy.js"></script>
 <script src="assets/api.js"></script>
 <script>
@@ -2036,13 +2045,49 @@ const HOUSE_ADS = {
   '300x600': [['Private nights,<br>priority access.', 'VIP members skip the waitlist'], ['Hold 500 X3S.<br>Earn 1.5×.', 'Rewarded views, boosted']],
   '970x250': [['Own the room.', 'Advertise to high-intent night traffic · CPM & rev-share'], ['Creators earn on every order.', 'Open a dropship store in minutes']]
 };
+/* ---------------------------------------------------------------------
+   Partner links (Chaturbate affiliate). With the server, every link goes
+   through /go/p/<placement> so the click is logged before the redirect;
+   standalone/local mode builds the affiliate URL directly.
+   --------------------------------------------------------------------- */
+const PARTNERS = (() => {
+  if (BOOT && BOOT.partners) return BOOT.partners;
+  const P = window.X3Partners, E = window.X3Economy;
+  if (!P || !E) return {};
+  const cfg = E.mergeConfig(P.DEFAULTS, (BOOT && BOOT.economy && BOOT.economy.partners) || {}), out = {};
+  for (const [k, p] of Object.entries(cfg.placements)) {
+    const built = P.placementUrl(cfg, k, { source: [CAMPAIGN.utm_source, CAMPAIGN.utm_campaign].filter(Boolean).join('-') || 'x3s' });
+    if (built) out[k] = { slot: p.slot, label: p.label, sub: p.sub || '', site: 'CB', href: built.url, direct: true };
+  }
+  return out;
+})();
+function partnerHref(p) {
+  if (p.direct) return p.href;
+  const q = new URLSearchParams(); if (CAMPAIGN.utm_campaign) q.set('c', CAMPAIGN.utm_campaign); if (CAMPAIGN.utm_source) q.set('s', CAMPAIGN.utm_source);
+  return p.href + (q.toString() ? '?' + q : '');
+}
+const partnerLabel = (t) => esc(t).replace(/\n/g, '<br>');
+const partnersFor = (slot) => Object.entries(PARTNERS).filter(([, p]) => p.slot === slot);
+function renderPartners() {
+  const foot = partnersFor('footer'), box = $('#footPartners');
+  if (box && foot.length) {
+    $('ul', box).innerHTML = foot.map(([k, p]) => `<li><a href="${esc(partnerHref(p))}" target="_blank" rel="sponsored noopener" data-partner="${esc(k)}">${esc(p.label)} ↗</a></li>`).join('');
+    box.hidden = false;
+  }
+  const ap = partnersFor('apply')[0], apEl = $('#applyPartner');
+  if (ap && apEl) { apEl.innerHTML = `Already streaming? Add another stage: <a href="${esc(partnerHref(ap[1]))}" target="_blank" rel="sponsored noopener" data-partner="${esc(ap[0])}">${esc(ap[1].label)} ↗</a>`; apEl.hidden = false; }
+  document.addEventListener('click', (e) => { const a = e.target.closest('[data-partner]'); if (a) track('partner_click', { placement: a.dataset.partner }); });
+}
 function renderAd(slot) {
-  const size = slot.dataset.adSize, list = HOUSE_ADS[size] || HOUSE_ADS['728x90'];
+  const size = slot.dataset.adSize, list = (HOUSE_ADS[size] || HOUSE_ADS['728x90']).map(([t, s]) => ({ t, s }));
+  const partner = partnersFor('ad:' + size)[0];
+  if (partner) list.splice(1, 0, { t: partnerLabel(partner[1].label), s: partner[1].sub, href: partnerHref(partner[1]), key: partner[0] });
   let i = 0;
   const paint = () => {
-    const [t, s] = list[i++ % list.length];
-    slot.innerHTML = `<a href="#earn" class="house ${size === '300x600' ? 'house--v' : ''}" data-ad="${esc(slot.dataset.adSlot)}"><div><b>${t}</b><small>${esc(s)}</small></div>${size === '300x600' ? '' : '<span class="btn btn--sm btn--primary">Learn more</span>'}</a>`;
-    track('ad_impression', { slot: slot.dataset.adSlot, creative: t.replace(/<[^>]+>/g, ' ') });
+    const { t, s, href, key } = list[i++ % list.length];
+    const ext = href ? ` target="_blank" rel="sponsored noopener" data-partner="${esc(key)}"` : '';
+    slot.innerHTML = `<a href="${href ? esc(href) : '#earn'}"${ext} class="house ${size === '300x600' ? 'house--v' : ''}" data-ad="${esc(slot.dataset.adSlot)}"><div>${href ? '<span class="tag-partner">Partner</span>' : ''}<b>${t}</b><small>${esc(s)}</small></div>${size === '300x600' ? '' : `<span class="btn btn--sm btn--primary">${href ? 'Watch free' : 'Learn more'}</span>`}</a>`;
+    track('ad_impression', { slot: slot.dataset.adSlot, creative: t.replace(/<[^>]+>/g, ' '), partner: key || null });
   };
   paint(); setInterval(() => { if (!document.hidden && slot.offsetParent) paint(); }, 12000);
 }
@@ -3584,7 +3629,7 @@ function boot() {
   renderChatShell(); wireLeaderboard(); paintLeaderboards();
   renderExchange(); paintExchangeTop();
   renderStoreTabs(); renderStore(); paintCart();
-  renderPricing(); renderBlog(); earn(); renderCampaign();
+  renderPricing(); renderBlog(); earn(); renderCampaign(); renderPartners();
   $$('#view > [data-ad-slot]').concat($$('.profiles-layout [data-ad-slot]')).forEach(renderAd);
   bindCoins();
 
