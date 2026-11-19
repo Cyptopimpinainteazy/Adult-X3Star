@@ -834,20 +834,64 @@ async function renderCbLive(force) {
   const camp = (window.X3STAR && X3STAR.campaign) || {};
   const qs = (() => { const p = new URLSearchParams(); if (camp.utm_campaign) p.set('c', camp.utm_campaign); if (camp.utm_source) p.set('s', camp.utm_source); const s = p.toString(); return s ? '?' + s : ''; })();
   const rooms = d.rooms.slice(0, cbl.shown);
-  root.innerHTML = `<div class="pv-head"><div><span class="eyebrow">Partner rooms · Chaturbate</span><h2>Live <em>right now</em>.</h2></div><p>${d.rooms.length ? `${fmt.num(d.total)} rooms streaming in this category. Free to watch — tap a room to open it on Chaturbate.` : (d.error || 'Nobody is live in this category right now. Try another tab.')}</p></div>
+  root.innerHTML = `<div class="pv-head"><div><span class="eyebrow">Partner rooms · Chaturbate</span><h2>Live <em>right now</em>.</h2></div><p>${d.rooms.length ? `${fmt.num(d.total)} rooms streaming in this category. Free to watch — hover to preview, tap a room to watch it here.` : (d.error || 'Nobody is live in this category right now. Try another tab.')}</p></div>
     <div class="pv-chips" role="tablist">${CB_TABS.map(([k, l]) => `<button class="pv-chip ${k === cbl.tab ? 'on' : ''}" role="tab" aria-selected="${k === cbl.tab}" data-cbtab="${k}">${esc(l)}</button>`).join('')}</div>
-    <div class="cb-grid">${rooms.map(r => `<a class="cb-card" href="${esc(r.href + qs)}" target="_blank" rel="sponsored noopener" data-cbroom="${esc(r.room)}">
-      <span class="cb-media"><img src="${esc(r.thumb)}" alt="${esc(r.name)} live on Chaturbate" loading="lazy" decoding="async">
-        <span class="cb-badges">${r.show === 'public' ? '<b class="cb-live">LIVE</b>' : `<b class="cb-priv">${esc(r.show)}</b>`}${r.hd ? '<b>HD</b>' : ''}${r.isNew ? '<b class="cb-new">NEW</b>' : ''}</span>
-        <span class="cb-viewers">👁 ${fmt.num(r.viewers)}</span></span>
-      <span class="cb-body"><span class="cb-name">${esc(r.name)}${r.age ? `<i>${r.age}</i>` : ''}</span>${r.subject ? `<span class="cb-subj">${esc(r.subject)}</span>` : ''}${r.tags.length ? `<span class="cb-tags">${r.tags.slice(0, 3).map(t => `#${esc(t)}`).join(' ')}</span>` : ''}</span></a>`).join('')}</div>
+    <div class="cb-grid">${rooms.map((r, i) => `<article class="cb-card" tabindex="0" role="button" aria-label="Open ${esc(r.name)}'s live room" data-cbi="${i}">
+      <img src="${esc(r.thumb)}" alt="" loading="lazy" decoding="async">
+      <span class="cb-badges">${r.show === 'public' ? '<b class="cb-live">LIVE</b>' : `<b class="cb-priv">${esc(r.show)}</b>`}${r.hd ? '<b>HD</b>' : ''}${r.isNew ? '<b class="cb-new">NEW</b>' : ''}</span>
+      <span class="cb-viewers">👁 ${fmt.num(r.viewers)}</span>
+      ${r.embed ? '<span class="cb-hint">▶ Hover to watch</span>' : ''}
+      <span class="cb-glass"><span class="cb-name">${esc(r.name)}${r.age ? `<i>${r.age}</i>` : ''}</span>${r.subject ? `<span class="cb-subj">${esc(r.subject)}</span>` : ''}${r.tags.length ? `<span class="cb-tags">${r.tags.slice(0, 3).map(t => `#${esc(t)}`).join(' ')}</span>` : ''}</span>
+    </article>`).join('')}</div>
     ${d.rooms.length > cbl.shown ? '<div class="pv-more"><button class="btn btn--ghost" id="cbMore">Show more live rooms</button></div>' : ''}
     <p class="pv-note">Partner rooms hosted on Chaturbate. All performers are 18+. x3STAR may earn a commission when you join there.</p>`;
   $$('[data-cbtab]', root).forEach(b => b.onclick = () => { cbl.tab = b.dataset.cbtab; cbl.shown = 12; renderCbLive(true); });
   const more = $('#cbMore'); if (more) more.onclick = () => { cbl.shown += 12; renderCbLive(true); };
-  $$('[data-cbroom]', root).forEach(a => a.addEventListener('click', () => { if (X.track) X.track('cb_live_click', { room: a.dataset.cbroom, tab: cbl.tab }); }));
+  const list = rooms;
+  $$('.cb-card', root).forEach(card => {
+    const r = list[Number(card.dataset.cbi)];
+    const open = () => openCbRoom(list, Number(card.dataset.cbi), qs);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    if (!r.embed || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    let t;
+    card.addEventListener('mouseenter', () => { t = setTimeout(() => {
+      $$('.cb-card iframe', root).forEach(f => f.remove());
+      const f = document.createElement('iframe');
+      f.src = r.embed; f.title = `${r.name} live preview`; f.loading = 'lazy'; f.allow = 'autoplay; fullscreen'; f.referrerPolicy = 'no-referrer-when-downgrade';
+      f.setAttribute('scrolling', 'no'); f.tabIndex = -1;
+      card.insertBefore(f, card.querySelector('.cb-badges')); card.classList.add('playing');
+      if (X.track) X.track('cb_live_preview', { room: r.room });
+    }, 550); });
+    card.addEventListener('mouseleave', () => { clearTimeout(t); const f = card.querySelector('iframe'); if (f) f.remove(); card.classList.remove('playing'); });
+  });
   clearInterval(cbl.timer);
   cbl.timer = setInterval(() => { if (!document.hidden && !sec.hidden && sec.offsetParent) renderCbLive(true); }, 90000);
+}
+
+/* A live Chaturbate room in an x3STAR window: the stream (or thumbnail) on top with a see-through
+   overlay, room details below, "Watch full room" through the counted affiliate link, and next/prev. */
+function openCbRoom(list, i, qs) {
+  const r = list[i]; if (!r) return;
+  if (X.track) X.track('cb_room_open', { room: r.room });
+  const api = X.ui.openModal(`<div class="profile-modal cb-room">
+    <div class="pm-media cb-room-media">
+      ${r.embed ? `<iframe src="${esc(r.embed)}" title="${esc(r.name)} live on Chaturbate" allow="autoplay; fullscreen" scrolling="no" referrerpolicy="no-referrer-when-downgrade"></iframe>` : `<img src="${esc(r.thumb)}" alt="">`}
+      <div class="top"><span class="pill-live">${r.show === 'public' ? 'LIVE' : esc(r.show.toUpperCase())}</span><span class="viewers num">👁 ${fmt.num(r.viewers)}</span>${r.hd ? '<span class="viewers">HD</span>' : ''}</div>
+      <div class="cb-room-glass"><b>${esc(r.name)}${r.age ? ` <i>${r.age}</i>` : ''}</b><span>${r.location ? esc(r.location) + ' · ' : ''}live ${r.minutesOnline >= 60 ? Math.floor(r.minutesOnline / 60) + 'h ' + (r.minutesOnline % 60) + 'm' : r.minutesOnline + 'm'}</span></div>
+    </div>
+    <div class="pm-body">
+      <span class="eyebrow">Partner room · Chaturbate</span>
+      <h3>${esc(r.name)}</h3>
+      ${r.subject ? `<p class="bio">${esc(r.subject)}</p>` : ''}
+      ${r.tags.length ? `<div class="cb-room-tags">${r.tags.map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
+      <div class="cb-room-stats"><div><b>${fmt.num(r.viewers)}</b><small>watching</small></div><div><b>${r.followers ? fmt.num(r.followers) : '—'}</b><small>followers</small></div><div><b>${r.age || '—'}</b><small>age</small></div></div>
+      <a class="btn btn--primary" href="${esc(r.href + qs)}" target="_blank" rel="sponsored noopener" data-cbgo>Watch full room on Chaturbate ↗</a>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-cbnav="-1" ${i ? '' : 'disabled'}>← Previous</button><button class="btn" data-cbnav="1" ${i < list.length - 1 ? '' : 'disabled'}>Next room →</button></div>
+      <p class="pv-note" style="margin:0">Free to watch. Chatting and tipping happen on Chaturbate; joining is free. x3STAR may earn a commission.</p>
+    </div></div>`, { cls: 'modal--xl' });
+  $('[data-cbgo]', api.root).addEventListener('click', () => { if (X.track) X.track('cb_live_click', { room: r.room, from: 'window' }); });
+  $$('[data-cbnav]', api.root).forEach(b => b.onclick = () => { api.close(); setTimeout(() => openCbRoom(list, i + Number(b.dataset.cbnav), qs), 330); });
 }
 
 /* =====================================================================

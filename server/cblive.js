@@ -53,8 +53,26 @@ function displayName(raw, room) {
   return cleanText(s, 24) || room;
 }
 
+/**
+ * Live video embed for a room: the src of the API's iframe_embed (revshare variant when on the revshare program).
+ * Only https chaturbate.com URLs carrying our campaign are accepted; otherwise no embed (the card keeps the thumbnail).
+ */
+function embedSrc(r, { program, campaign } = {}) {
+  const html = String((program === 'revshare' && r.iframe_embed_revshare) || r.iframe_embed || '');
+  const m = html.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+  if (!m) return '';
+  try {
+    const u = new URL(m[1].replace(/&amp;/g, '&'));
+    if (u.protocol !== 'https:' || !/(^|\.)chaturbate\.com$/i.test(u.hostname)) return '';
+    if (campaign && u.searchParams.get('campaign') !== campaign) return '';
+    u.searchParams.set('disable_sound', '1');
+    u.searchParams.set('track', 'card_embed');
+    return u.href;
+  } catch { return ''; }
+}
+
 /** Normalise one API room; null if it must not be shown. */
-function normalize(r) {
+function normalize(r, opts) {
   if (!r || !ROOM_RE.test(String(r.username || ''))) return null;
   const age = Number(r.age);
   if (r.age != null && r.age !== '' && !(age >= 18)) return null;
@@ -72,14 +90,14 @@ function normalize(r) {
     gender: GENDERS[String(r.gender || '').toLowerCase()] || '',
     viewers: Math.max(0, Math.floor(Number(r.num_users) || 0)),
     followers: Math.max(0, Math.floor(Number(r.num_followers) || 0)),
-    subject, tags: tags.filter(t => !HIDDEN_TAGS.has(t)).slice(0, 5), thumb,
+    subject, tags: tags.filter(t => !HIDDEN_TAGS.has(t)).slice(0, 5), thumb, embed: embedSrc(r, opts),
     hd: !!r.is_hd, isNew: !!r.is_new, show,
     location: cleanText(r.location, 40),
     minutesOnline: Math.max(0, Math.floor((Number(r.seconds_online) || 0) / 60))
   };
 }
 
-async function fetchFresh({ campaign, gender, tag, ip }) {
+async function fetchFresh({ campaign, program, gender, tag, ip }) {
   const q = new URLSearchParams({ wm: campaign, format: 'json', limit: String(FETCH_LIMIT), client_ip: ip });
   if (gender) q.set('gender', gender);
   if (tag) q.set('tag', tag);
@@ -89,7 +107,7 @@ async function fetchFresh({ campaign, gender, tag, ip }) {
   const list = Array.isArray(data) ? data : Array.isArray(data && data.results) ? data.results : null;
   if (!list) throw new Error('Unexpected Chaturbate API response');
   const seen = new Set(), rooms = [];
-  for (const r of list) { const n = normalize(r); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
+  for (const r of list) { const n = normalize(r, { program, campaign }); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
   rooms.sort((a, b) => (a.show === 'public' ? 0 : 1) - (b.show === 'public' ? 0 : 1) || b.viewers - a.viewers);
   return rooms;
 }
@@ -98,16 +116,16 @@ async function fetchFresh({ campaign, gender, tag, ip }) {
  * Live rooms for a filter. Returns { rooms, stale, error }.
  * gender: f|m|c|t (or words), tag: one Chaturbate tag, ip: visitor IP.
  */
-async function liveRooms({ campaign, gender, tag, ip }) {
+async function liveRooms({ campaign, program, gender, tag, ip }) {
   const g = GENDERS[String(gender || '').toLowerCase()] || '';
   const t = TAG_RE.test(String(tag || '').toLowerCase()) ? String(tag).toLowerCase() : '';
   const apiGender = g === 't' ? 's' : g;   // the affiliate API still uses "s" for trans
   const cip = clientIp(ip);
-  const key = `${campaign}|${g}|${t}|${cip}`;
+  const key = `${campaign}|${program || ''}|${g}|${t}|${cip}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return { rooms: hit.rooms, stale: false, error: null };
   if (!inflight.has(key)) {
-    inflight.set(key, fetchFresh({ campaign, gender: apiGender, tag: t, ip: cip })
+    inflight.set(key, fetchFresh({ campaign, program, gender: apiGender, tag: t, ip: cip })
       .then(rooms => { remember(key, rooms); return rooms; })
       .finally(() => inflight.delete(key)));
   }
@@ -119,4 +137,4 @@ async function liveRooms({ campaign, gender, tag, ip }) {
   }
 }
 
-module.exports = { liveRooms, normalize, clientIp, setFetcher, ROOM_RE };
+module.exports = { liveRooms, normalize, embedSrc, clientIp, setFetcher, ROOM_RE };

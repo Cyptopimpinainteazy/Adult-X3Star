@@ -281,7 +281,8 @@ test('live Chaturbate grid: API call, cleaning, caching, stale fallback, click l
   assert.equal(r.status, 200); assert.equal(r.data.enabled, true);
   assert.deepEqual(r.data.rooms.map(x => x.room), ['bella', 'amy_rose'], 'sorted by viewers, unsafe rooms removed');
   const a = r.data.rooms[1];
-  assert.equal(a.subject, 'Hi guys #goal'); assert.equal(a.thumb, 'https://thumb.live.mmcdn.com/riw/amy_rose.jpg'); assert.equal(a.href, '/go/CB/r/amy_rose'); assert.equal(a.minutesOnline, 60);
+  assert.equal(a.subject, 'Hi guys #goal'); assert.equal(a.embed, '');
+  assert.match(r.headers.get('content-security-policy'), /frame-src https:\/\/chaturbate\.com/); assert.equal(a.thumb, 'https://thumb.live.mmcdn.com/riw/amy_rose.jpg'); assert.equal(a.href, '/go/CB/r/amy_rose'); assert.equal(a.minutesOnline, 60);
   const u = new URL(calls[0]);
   assert.equal(u.origin + u.pathname, 'https://chaturbate.com/api/public/affiliates/onlinerooms/');
   assert.equal(u.searchParams.get('wm'), 'Ji03i'); assert.equal(u.searchParams.get('gender'), 'f'); assert.equal(u.searchParams.get('tag'), 'bigboobs'); assert.equal(u.searchParams.get('client_ip'), 'request_ip');

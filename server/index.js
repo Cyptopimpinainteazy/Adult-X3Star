@@ -26,7 +26,7 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https://v.bngprm.com https://*.highwebmedia.com https://*.mmcdn.com", "media-src 'self' data: blob:",
-    "connect-src 'self' ws: wss: data:", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
+    "connect-src 'self' ws: wss: data:", "frame-src https://chaturbate.com https://*.chaturbate.com", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
   ].join('; '));
   if (cfg.COOKIE_SECURE) res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   next();

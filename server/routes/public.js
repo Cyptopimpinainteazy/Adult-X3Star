@@ -45,7 +45,7 @@ r.get('/cb/live', async (req, res, next) => {
     const pc = S.econConfig().partners || {}, cb = pc.CB || {};
     if (!cb.enabled || cb.liveGrid === false || !require('../affiliates').isLive('CB') || !/^[A-Za-z0-9]{1,20}$/.test(cb.campaign || '')) return res.json({ enabled: false, rooms: [], total: 0 });
     const limit = Math.min(48, Math.max(1, parseInt(req.query.limit, 10) || 24)), offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
-    const out = await require('../cblive').liveRooms({ campaign: cb.campaign, gender: req.query.gender, tag: req.query.tag, ip: req.ip });
+    const out = await require('../cblive').liveRooms({ campaign: cb.campaign, program: cb.program, gender: req.query.gender, tag: req.query.tag, ip: req.ip });
     res.setHeader('Cache-Control', 'private, max-age=30');
     res.json({ enabled: true, total: out.rooms.length, stale: out.stale, error: out.error ? 'Live rooms are unavailable right now' : null,
       rooms: out.rooms.slice(offset, offset + limit).map(x => ({ ...x, href: `/go/CB/r/${x.room}` })) });
