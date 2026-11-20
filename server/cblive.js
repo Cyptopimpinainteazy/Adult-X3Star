@@ -138,4 +138,4 @@ async function liveRooms({ campaign, program, gender, tag, ip }) {
   }
 }
 
-module.exports = { liveRooms, normalize, embedSrc, clientIp, setFetcher, ROOM_RE };
+module.exports = { liveRooms, normalize, embedSrc, clientIp, setFetcher, ROOM_RE, cleanText, displayName, HIDDEN_TAGS };

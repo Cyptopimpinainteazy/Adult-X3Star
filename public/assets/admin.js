@@ -282,6 +282,8 @@ async function partners() {
   main().innerHTML = head('Partner <em>links</em>', 'Your Chaturbate affiliate links. Every link on the site goes through /go/… so the click is counted here first, and carries a <span class="mono">track</span> tag so the same placement shows up in your Chaturbate stats.', '<button class="btn pri" id="pSave">Save partner settings</button>') + `
     <div class="panel pad"><div class="row" style="justify-content:space-between"><div><h3 class="t" style="margin:0">Chaturbate</h3><p class="note" style="margin:4px 0 0">Turn off to hide every Chaturbate link on the site.</p></div><button class="switch ${cb.enabled ? 'on' : ''}" id="pOn" role="switch" aria-checked="${cb.enabled}" aria-label="Chaturbate links on"></button></div>
       <div class="row" style="justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><div><b>Live now on Chaturbate grid</b><p class="note" style="margin:4px 0 0">Real live rooms (thumbnails, viewers, tags) from Chaturbate's online-rooms feed on Home, Live and Niches. Clicks use your room link and count as <span class="mono">live_grid</span>.</p></div><button class="switch ${cb.liveGrid !== false ? 'on' : ''}" id="pGrid" role="switch" aria-label="Live grid on"></button></div></div>
+    <div class="panel pad" style="margin-top:12px"><div class="row" style="justify-content:space-between;gap:16px;flex-wrap:wrap"><div><h3 class="t" style="margin:0">BongaCams live rooms</h3><p class="note" style="margin:4px 0 0">Adds a BongaCams tab to "Live right now", from BongaCash's Models Online API. Clicks use your BongaCams tracking link (Economy → Affiliates → BongaCams) and count as <span class="mono">live_grid</span>.</p></div>
+      <div class="row"><label class="field" style="margin:0"><span>BongaCash affiliate ID</span><input class="inp mono" id="pBcId" value="${esc(((cfgRes.effective.partners || {}).BC || {}).affiliateId || '')}" maxlength="12" style="width:130px"></label><button class="switch ${((cfgRes.effective.partners || {}).BC || {}).liveGrid !== false ? 'on' : ''}" id="pBcGrid" role="switch" aria-label="BongaCams live grid on"></button></div></div></div>
     <h3 class="t" style="margin:22px 0 10px">Program <small>which payout plan your links earn under</small></h3>
     <div class="grid g3">${Object.entries(progs).map(([k, p]) => `<label class="panel pad" style="cursor:pointer;display:flex;gap:12px;align-items:flex-start;${k === cb.program ? 'border-color:var(--pink)' : ''}"><input type="radio" name="prog" value="${k}" ${k === cb.program ? 'checked' : ''} style="margin-top:4px"><span><b>${esc(p.label)}</b><span class="note" style="display:block;margin-top:4px">${esc(p.terms)}</span><span class="note" style="display:block;margin-top:6px">${p.tours.length} link types</span></span></label>`).join('')}</div>
     <div class="grid g2" style="margin-top:16px">
@@ -305,12 +307,14 @@ async function partners() {
   partnerVideosPanel();
   $('#pOn').onclick = (e) => e.currentTarget.classList.toggle('on');
   $('#pGrid').onclick = (e) => e.currentTarget.classList.toggle('on');
+  $('#pBcGrid').onclick = (e) => e.currentTarget.classList.toggle('on');
   $$('[data-pon]').forEach(b => b.onclick = () => b.classList.toggle('on'));
   $$('input[name=prog]').forEach(r => r.onchange = () => $$('input[name=prog]').forEach(x => x.closest('label').style.borderColor = x.checked ? 'var(--pink)' : ''));
   $('#pSave').onclick = async () => {
     const ov = JSON.parse(JSON.stringify(overrides));
     ov.partners = ov.partners || {};
     ov.partners.CB = { enabled: $('#pOn').classList.contains('on'), program: ($('input[name=prog]:checked') || {}).value, campaign: $('#pCamp').value.trim(), houseRoom: $('#pHouse').value.trim(), roomTour: $('#pRoomTour').value, track: $('#pTrack').value.trim(), liveGrid: $('#pGrid').classList.contains('on') };
+    ov.partners.BC = { liveGrid: $('#pBcGrid').classList.contains('on'), affiliateId: $('#pBcId').value.trim() };
     ov.partners.placements = Object.fromEntries($$('[data-pl]').map(tr => { const cur = d.placements.find(p => p.key === tr.dataset.pl); return [tr.dataset.pl, { slot: cur.slot, tour: $('[data-ptour]', tr).value, label: $('[data-plabel]', tr).value.trim(), sub: cur.sub || '', on: $('[data-pon]', tr).classList.contains('on'), ...(cur.room ? { room: cur.room } : {}) }]; }));
     await guard(() => X3API.put('/api/admin/config', { overrides: ov }), 'Partner links saved');
     partners();

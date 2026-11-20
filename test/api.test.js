@@ -311,6 +311,35 @@ test('live Chaturbate grid: API call, cleaning, caching, stale fallback, click l
   CBL.setFetcher(null);
 });
 
+test('live BongaCams grid: boot flag, API, click link, switches', async () => {
+  const BCL = require('../server/bclive');
+  BCL.setFetcher(async () => ({ ok: true, json: async () => ({ users: [
+    { username: 'SweetMia', gender: 'Female', display_name: 'Mia', display_age: 23, members_count: 412, status: 'online', chat_status: 'public', thumbnail_image_big_live: 'https://i.bngcdn.com/live/SweetMia.jpg', embed_chat_url: 'https://bngprm.com/chat-frame.php?c=846478&model=SweetMia' },
+    { username: 'BigBen', gender: 'Male', display_age: 30, members_count: 90, status: 'online', chat_status: 'public', thumbnail_image_big_live: 'https://i.bngcdn.com/live/BigBen.jpg' }
+  ] }) }));
+  const boot = JSON.parse((await (await fetch(base + '/')).text()).match(/window\.X3STAR_BOOT=(\{.*?\});<\/script>/s)[1]);
+  assert.deepEqual(boot.liveSites, ['CB', 'BC']);
+  const r = await call('anon', 'GET', '/api/bc/live?gender=f');
+  assert.equal(r.data.enabled, true); assert.deepEqual(r.data.rooms.map(x => x.room), ['SweetMia']);
+  assert.equal(r.data.rooms[0].href, '/go/BC/r/SweetMia'); assert.match(r.data.rooms[0].embed, /^https:\/\/bngprm\.com\//);
+  assert.match(r.headers.get('content-security-policy'), /frame-src [^;]*https:\/\/bngprm\.com/);
+  const go = await call('anon', 'GET', '/go/BC/r/SweetMia?s=reddit');
+  assert.equal(go.status, 302); assert.equal(go.headers.get('location'), 'https://bongacams.com/track?c=846478&csurl=https%3A%2F%2Fbongacams.com%2FSweetMia');
+  assert.equal((await call('anon', 'GET', '/go/BC/r/bad%20room')).status, 404);
+  // admin switch off → tab gone and endpoint disabled
+  const cur = (await call('ad', 'GET', '/api/admin/config')).data.overrides;
+  assert.equal((await call('ad', 'PUT', '/api/admin/config', { overrides: { ...cur, partners: { ...(cur.partners || {}), BC: { liveGrid: true, affiliateId: 'abc' } } } })).status, 400);
+  await call('ad', 'PUT', '/api/admin/config', { overrides: { ...cur, partners: { ...(cur.partners || {}), BC: { liveGrid: false, affiliateId: '846478' } } } });
+  assert.deepEqual((await call('anon', 'GET', '/api/bc/live')).data, { enabled: false, rooms: [], total: 0 });
+  assert.equal((await call('anon', 'GET', '/go/BC/r/SweetMia')).status, 404);
+  await call('ad', 'PUT', '/api/admin/config', { overrides: cur });
+  // pausing BongaCams in Affiliates hides it too
+  await call('ad', 'PUT', '/api/admin/affiliates/BC', { status: 'paused' });
+  assert.equal((await call('anon', 'GET', '/api/bc/live')).data.enabled, false);
+  await call('ad', 'PUT', '/api/admin/affiliates/BC', { status: 'active' });
+  BCL.setFetcher(null);
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

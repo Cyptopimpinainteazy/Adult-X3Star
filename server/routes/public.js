@@ -51,6 +51,18 @@ r.get('/cb/live', async (req, res, next) => {
       rooms: out.rooms.slice(offset, offset + limit).map(x => ({ ...x, href: `/go/CB/r/${x.room}` })) });
   } catch (e) { next(e); }
 });
+/* live BongaCams rooms for the grid (?gender=f|c|t|m) */
+r.get('/bc/live', async (req, res, next) => {
+  try {
+    if (!S.liveSites().includes('BC')) return res.json({ enabled: false, rooms: [], total: 0 });
+    const bc = (S.econConfig().partners || {}).BC || {};
+    const limit = Math.min(48, Math.max(1, parseInt(req.query.limit, 10) || 24)), offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+    const out = await require('../bclive').liveRooms({ affiliateId: String(bc.affiliateId), gender: req.query.gender });
+    res.setHeader('Cache-Control', 'private, max-age=30');
+    res.json({ enabled: true, total: out.rooms.length, stale: out.stale, error: out.error ? 'Live rooms are unavailable right now' : null,
+      rooms: out.rooms.slice(offset, offset + limit).map(x => ({ ...x, href: `/go/BC/r/${encodeURIComponent(x.room)}` })) });
+  } catch (e) { next(e); }
+});
 /* partner videos (BongaCams feed) — newest first, optional ?tag= &performer= */
 r.get('/partner-videos', (req, res) => {
   const F = require('../feeds');

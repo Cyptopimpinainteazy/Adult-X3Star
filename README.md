@@ -121,6 +121,10 @@ One place for every network or store you promote:
 
 Home, Live and Niches show a grid of rooms that are live on Chaturbate right now: thumbnail, name, age, viewers, LIVE/HD/NEW badges, room subject and tags, with tabs for Women, Couples, Trans, Men, Big boobs, Goth and Femdom. The server fetches Chaturbate's affiliate online-rooms API with your campaign code and the visitor's IP (so Chaturbate's geo rules apply), caches it for a minute, and serves the last good copy for up to 15 minutes if the API is down. Rooms under 18, away, with insecure/foreign images or with blocked tags/subjects (minor- or non-consent-implying words) are dropped. Clicks go through `/go/CB/r/<room>` → your room link with `track=<source>_live_grid`. Turn it off in Admin → Partners, or pause Chaturbate in Admin → Affiliates.
 
+### Live right now on BongaCams
+
+A **Chaturbate | BongaCams** switch sits above the category tabs whenever both grids are on. The BongaCams tab uses BongaCash's *API – Models Online* (v1 JSON, `https://bngprm.com/promo.php?c=846478&type=api&api_v=1&api_type=json`), fetched once a minute for the whole site and filtered by gender locally (Women, Couples, Trans, Men). Cards and the room window are the same as Chaturbate's: live thumbnail, name, age, viewers, HD and ⚡ (interactive toy), hometown, and the live chat embed (`embed_chat_url`, only BongaCams hosts carrying your affiliate ID). The same safety rules apply (18+, no ad-style names, blocked words, hidden youth tags). Clicks go through `/go/BC/r/<room>` → your BongaCams tracking link (Admin → Economy → Affiliates → BongaCams). Turn it off or change the affiliate ID in Admin → Partners, or pause BongaCams in Admin → Affiliates.
+
 ### Chaturbate affiliate links
 
 Your Chaturbate linking codes are built in (`shared/partners.js`): all three programs (Revshare, Pay per sign-up, Tokens) with campaign `Ji03i` and your room `cock_da_hammer`. The default program is **Revshare**; switch it in **Admin → Partners**.

@@ -25,8 +25,8 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https://v.bngprm.com https://*.highwebmedia.com https://*.mmcdn.com", "media-src 'self' data: blob:",
-    "connect-src 'self' ws: wss: data:", "frame-src https://chaturbate.com https://*.chaturbate.com", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
+    "font-src 'self' https://fonts.gstatic.com data:", "img-src 'self' data: blob: https:", "media-src 'self' data: blob:",
+    "connect-src 'self' ws: wss: data:", "frame-src https://chaturbate.com https://*.chaturbate.com https://bongacams.com https://*.bongacams.com https://bngprm.com https://*.bngprm.com https://bngpt.com https://*.bngpt.com", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'"
   ].join('; '));
   if (cfg.COOKIE_SECURE) res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
   next();
@@ -80,6 +80,14 @@ app.get('/go/CB/r/:room', (req, res, next) => {
   logClick(req, 'CB', '', 'live_grid', campaign, source);
   res.redirect(302, built.url);
 });
+/* BongaCams tab of the live grid: count the click, then your BongaCams tracking link to that room */
+app.get('/go/BC/r/:room', (req, res, next) => {
+  const room = String(req.params.room), tpl = ((S.econConfig().affiliates || {}).BC || {}).url || '';
+  if (!require('./bclive').ROOM_RE.test(room) || !S.liveSites().includes('BC') || !/^https:\/\//.test(tpl) || !tpl.includes('{room}')) return next(new A.HttpError(404, 'not_found', 'Link not available'));
+  const { campaign, source } = clickParams(req);
+  logClick(req, 'BC', '', 'live_grid', campaign, source);
+  res.redirect(302, tpl.replace(/\{room\}/g, encodeURIComponent(room)).replace(/\{campaign\}/g, encodeURIComponent(campaign || 'x3star')).replace(/\{source\}/g, encodeURIComponent(source || 'live_grid')));
+});
 /* partner links from the Affiliates registry */
 app.get('/go/a/:id', (req, res, next) => {
   const AF = require('./affiliates');
@@ -130,7 +138,7 @@ function indexHtml() {
 }
 function bootPayload(req) {
   const rows = all("SELECT * FROM creators WHERE status = 'approved' ORDER BY featured DESC, base_viewers DESC").map(c => S.publicCreator(c));
-  return { api: true, creators: rows.filter(c => c.live), offline: rows.filter(c => !c.live), me: req.user ? S.publicUser(req.user) : null, economy: S.econConfig(), partners: S.partnerPlacements(), payments: cfg.PAYMENTS_MODE, demoTraffic: cfg.DEMO_TRAFFIC };
+  return { api: true, creators: rows.filter(c => c.live), offline: rows.filter(c => !c.live), me: req.user ? S.publicUser(req.user) : null, economy: S.econConfig(), partners: S.partnerPlacements(), liveSites: S.liveSites(), payments: cfg.PAYMENTS_MODE, demoTraffic: cfg.DEMO_TRAFFIC };
 }
 const sendIndex = (req, res) => {
   const json = JSON.stringify(bootPayload(req)).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16));

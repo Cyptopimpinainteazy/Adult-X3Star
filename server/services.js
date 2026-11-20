@@ -96,6 +96,14 @@ function publicCreator(c, opts = {}) {
   return out;
 }
 const cbEnabled = () => !!(econConfig().partners && econConfig().partners.CB && econConfig().partners.CB.enabled);
+/** Sites whose "Live right now" grid is on: e.g. ['CB', 'BC']. */
+function liveSites() {
+  const AF = require('./affiliates'), pc = econConfig().partners || {}, out = [];
+  const cb = pc.CB || {}, bc = pc.BC || {};
+  if (cb.enabled && cb.liveGrid !== false && /^[A-Za-z0-9]{1,20}$/.test(cb.campaign || '') && AF.isLive('CB')) out.push('CB');
+  if (bc.liveGrid !== false && /^\d{3,12}$/.test(String(bc.affiliateId || '')) && AF.isLive('BC')) out.push('BC');
+  return out;
+}
 /** Partner placements the fan app may render: key -> { slot, label, sub, href } (only ones that resolve). */
 function partnerPlacements() {
   const AF = require('./affiliates');
@@ -144,4 +152,4 @@ function uniqueTicker(name) {
 }
 const refCode = () => crypto.randomBytes(4).toString('hex').toUpperCase();
 
-module.exports = { E, P, partnerPlacements, econConfig, setEconOverrides, econOverrides, rng, loadEcon, withEcon, summaryFor, uploadUrl, approvedUpload, beans30d, publicCreator, publicProduct, topFans, publicUser, chatIdentity, uniqueSlug, uniqueTicker, refCode, viewersFor };
+module.exports = { E, P, partnerPlacements, liveSites, econConfig, setEconOverrides, econOverrides, rng, loadEcon, withEcon, summaryFor, uploadUrl, approvedUpload, beans30d, publicCreator, publicProduct, topFans, publicUser, chatIdentity, uniqueSlug, uniqueTicker, refCode, viewersFor };

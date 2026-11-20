@@ -396,3 +396,7 @@ html{overflow-x:hidden}
 .cb-room-tags{display:flex;flex-wrap:wrap;gap:6px} .cb-room-tags span{padding:3px 9px;border-radius:999px;border:1px solid var(--line);font:500 11.5px var(--mono);color:var(--pink-2)}
 .cb-room-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .cb-room-stats div{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)} .cb-room-stats b{display:block;font:500 22px var(--serif)} .cb-room-stats small{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 @media (max-width:560px){.cb-grid{grid-template-columns:1fr 1fr;gap:10px}.cb-card{aspect-ratio:3/4}.cb-badges{left:7px;top:7px;gap:3px}.cb-badges b{padding:1px 5px;font-size:9px}.cb-badges b:not(.cb-live):not(.cb-priv){display:none}.cb-viewers{right:7px;top:7px;font-size:10px;padding:1px 6px}.cb-subj{display:none}.cb-name{font-size:13px}.cb-glass{left:6px;right:6px;bottom:6px;padding:8px 10px}}
+.live-sites{display:inline-flex;gap:4px;padding:4px;margin-bottom:14px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.02)}
+.live-sites button{height:34px;padding:0 18px;border:0;border-radius:999px;background:none;color:var(--mute);font:600 13px var(--sans);cursor:pointer;transition:.2s}
+.live-sites button.on{background:linear-gradient(135deg,var(--pink),var(--magenta,#c41dff));color:#fff}
+.cb-room-stats b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -135,6 +135,10 @@
       track: '{source}_{placement}', // Chaturbate sub-ID; placeholders {placement} {source} {creator}
       liveGrid: true              // "Live now on Chaturbate" grid (online-rooms API) on Home / Live / Niches
     },
+    BC: {
+      liveGrid: true,             // BongaCams tab in the "Live right now" grid (BongaCash Models Online API)
+      affiliateId: '846478'       // your BongaCash affiliate / campaign ID (c=)
+    },
     placements: DEFAULT_PLACEMENTS
   };
 
@@ -208,6 +212,9 @@
     if (!TOURS[cb.roomTour] || !TOURS[cb.roomTour].room) fail('Creator room tour must be one of: room, room_home, full_room');
     if (typeof cb.track !== 'string' || cb.track.length > 80) fail('Track format must be a short string');
     if (cb.liveGrid !== undefined && typeof cb.liveGrid !== 'boolean') fail('Live grid setting must be true or false');
+    const bc = cfg.BC || {};
+    if (bc.liveGrid !== undefined && typeof bc.liveGrid !== 'boolean') fail('BongaCams live grid setting must be true or false');
+    if (bc.affiliateId !== undefined && !/^\d{3,12}$/.test(String(bc.affiliateId))) fail('BongaCams affiliate ID must be 3–12 digits');
     for (const [k, p] of Object.entries(cfg.placements || {})) {
       if (!/^[a-z0-9_]{1,40}$/.test(k)) fail(`Placement key "${k}" must be lowercase letters, digits or underscores`);
       if (!p || !TOURS[p.tour]) fail(`Placement ${k}: unknown tour "${p && p.tour}"`);
