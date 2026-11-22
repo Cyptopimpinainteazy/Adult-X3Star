@@ -26,6 +26,7 @@ module.exports = {
   SHARED_DIR: path.join(ROOT, 'shared'),
   DATA_DIR,
   UPLOAD_DIR: path.join(DATA_DIR, 'uploads'),
+  SITE_FILES_DIR: path.join(DATA_DIR, 'site-files'),   // ownership/verification files served at the site root
   DB_FILE: process.env.DB_FILE ? path.resolve(ROOT, process.env.DB_FILE) : path.join(DATA_DIR, 'x3star.db'),
   PORT: num(process.env.PORT, 8080),
   HOST: process.env.HOST || '0.0.0.0',

@@ -103,6 +103,10 @@ See [`.env.example`](.env.example). The important ones:
 
 All economy values (prices, odds, rewards, payout rates, affiliate links) are edited live in **Admin → Economy**.
 
+### Site verification files
+
+Affiliate networks and search consoles often ask you to upload a file (e.g. `commission-factory-<token>.html`) so it's reachable at `https://www.x3star.live/<file>`. Put it in `data/site-files/` on the server (`~/x3star/data/site-files/` with the setup script); it's served at the site root right away, survives updates (it lives with your data, not in git), and never shadows the app's own pages. Allowed: plain file names ending in .html, .htm, .txt, .xml or .json.
+
 ### Cam model guide (`/cam-model-guide`)
 
 A server-rendered recruitment guide (indexable by search engines, unlike the `#` app pages): what the job is, how gifts turn into payouts, equipment tiers, setup, show types, growing a fan base, safety, legal/tax basics and an FAQ (with FAQ structured data), ending in the creator application. Every pay figure (bean value, minimum payout, weekly cap, host-tier bonuses, agency commission) is read from the live economy config, so the page always matches Admin → Economy. `/robots.txt` and `/sitemap.xml` are served too.

@@ -340,6 +340,16 @@ test('live BongaCams grid: boot flag, API, click link, switches', async () => {
   BCL.setFetcher(null);
 });
 
+test('site verification files are served from data/site-files at the root', async () => {
+  const fs = require('node:fs'), path = require('node:path'), cfg = require('../server/config');
+  fs.writeFileSync(path.join(cfg.SITE_FILES_DIR, 'commission-factory-abc123.html'), 'commission-factory-abc123');
+  const r = await fetch(base + '/commission-factory-abc123.html');
+  assert.equal(r.status, 200); assert.equal(await r.text(), 'commission-factory-abc123'); assert.match(r.headers.get('content-type'), /text\/html/);
+  assert.equal((await fetch(base + '/not-there-xyz.html')).status, 404);
+  assert.equal((await fetch(base + '/..%2Fx3star.db')).status, 404);
+  assert.match(await (await fetch(base + '/index.html')).text(), /X3STAR_BOOT/, 'the app index is never shadowed');
+});
+
 test('families: create costs diamonds, join, leaderboard', async () => {
   assert.equal((await login('fam', 'fan@demo.x3star.local', 'demo-pass-123')).status, 200);
   const f = await call('fam', 'POST', '/api/families', { name: 'Test Crew', tag: 'TST', motto: 'hi' });

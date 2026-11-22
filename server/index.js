@@ -154,6 +154,19 @@ app.get(['/cam-model-guide', '/become-a-cam-model'], (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=300');
   res.type('html').send(require('./pages/guide').renderGuide({ econ: S.econConfig(), baseUrl: baseUrl(req) }));
 });
+/* Site-ownership verification files (affiliate networks, Google, etc.): drop the file into data/site-files/
+   and it is served at the root, e.g. /commission-factory-<token>.html. Plain names only; no subfolders. */
+fs.mkdirSync(cfg.SITE_FILES_DIR, { recursive: true });
+app.get(/^\/([A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.(?:html|htm|txt|xml|json))$/, (req, res, next) => {
+  const name = req.params[0];
+  if (name.includes('..') || ['index.html', 'studio.html', 'admin.html', 'robots.txt', 'sitemap.xml'].includes(name)) return next();
+  const file = path.join(cfg.SITE_FILES_DIR, name);
+  fs.stat(file, (err, st) => {
+    if (err || !st.isFile()) return next();
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(file, { dotfiles: 'deny', headers: { 'X-Content-Type-Options': 'nosniff' } });
+  });
+});
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /api/\nDisallow: /admin\nDisallow: /studio\nDisallow: /go/\nDisallow: /uploads/\nSitemap: ${baseUrl(req)}/sitemap.xml\n`));
 app.get('/sitemap.xml', (req, res) => {
   const b = baseUrl(req), day = new Date().toISOString().slice(0, 10);
