@@ -762,13 +762,37 @@ async function loadStories() {
   if (API) { try { return (await X3API.get('/api/stories')).groups; } catch { return []; } }
   return X.models.slice(0, 8).map((m, i) => ({ creator: { id: m.id, name: m.name, avatar: U.poster(m) }, items: [{ id: m.id + '-s1', type: 'image', url: U.poster(m), caption: ['Tonight at 10 🖤', 'New set just dropped', 'Goal is almost there…', 'Who\'s coming to my PK?'][i % 4], at: now() - (i + 1) * 3600000 }] }));
 }
+/* Live partner rooms for the story circles: top rooms (women first) from every live grid that's on, interleaved. */
+async function liveCircleRooms(max = 16) {
+  const sites = ((window.X3STAR_BOOT && X3STAR_BOOT.liveSites) || []).filter(s => LIVE_SITES[s]);
+  if (!API || !sites.length) return [];
+  const lists = await Promise.all(sites.map(s => X3API.get(LIVE_SITES[s].api + '?gender=f&limit=' + max)
+    .then(d => (d.enabled ? d.rooms : []).filter(r => r.show === 'public').map(r => ({ ...r, site: s })))
+    .catch(() => [])));
+  const out = [];
+  for (let i = 0; out.length < max && lists.some(l => l[i]); i++) lists.forEach(l => { if (l[i] && out.length < max) out.push(l[i]); });
+  return out;
+}
+const campaignQs = () => { const c = (window.X3STAR && X3STAR.campaign) || {}, p = new URLSearchParams(); if (c.utm_campaign) p.set('c', c.utm_campaign); if (c.utm_source) p.set('s', c.utm_source); const s = p.toString(); return s ? '?' + s : ''; };
+let storyTimer = null;
 async function renderStories() {
   const rail = $('#storyRail'); if (!rail) return;
-  const groups = await loadStories(), seen = new Set(store.get('storySeen', []));
-  if (!groups.length) { rail.hidden = true; return; }
+  const [allGroups, live] = await Promise.all([loadStories(), liveCircleRooms()]);
+  // Only stories with a real picture get a circle; demo creators' gradient placeholders are left out.
+  const groups = API ? allGroups.filter(g => g.creator.avatar) : allGroups;
+  const seen = new Set(store.get('storySeen', []));
+  if (!groups.length && !live.length) { rail.hidden = true; return; }
   rail.hidden = false;
-  rail.innerHTML = groups.map((g, i) => `<button class="story-b ${g.items.every(it => seen.has(String(it.id))) ? 'seen' : ''}" data-i="${i}"><span><i style="background-image:url(${g.creator.avatar || (X.byId[g.creator.id] ? U.poster(X.byId[g.creator.id]) : '')})"></i></span><small>${esc(g.creator.name.split(' ')[0])}</small></button>`).join('');
-  $$('.story-b', rail).forEach(b => b.onclick = () => openStory(groups, +b.dataset.i, 0));
+  rail.innerHTML = groups.map((g, i) => `<button class="story-b ${g.items.every(it => seen.has(String(it.id))) ? 'seen' : ''}" data-i="${i}"><span><i style="background-image:url(${g.creator.avatar || (X.byId[g.creator.id] ? U.poster(X.byId[g.creator.id]) : '')})"></i></span><small>${esc(g.creator.name.split(' ')[0])}</small></button>`).join('')
+    + live.map((r, i) => `<button class="story-b live" data-live="${i}" aria-label="${esc(r.name)}, live on ${esc(LIVE_SITES[r.site].name)}"><span><i style="background-image:url('${esc(r.thumb)}')"></i><b class="story-live">LIVE</b></span><small>${esc(r.name)}</small></button>`).join('');
+  $$('.story-b[data-i]', rail).forEach(b => b.onclick = () => openStory(groups, +b.dataset.i, 0));
+  $$('.story-b[data-live]', rail).forEach(b => b.onclick = () => {
+    const r = live[+b.dataset.live], same = live.filter(x => x.site === r.site);
+    if (X.track) X.track('story_live_open', { room: r.room, site: r.site });
+    openCbRoom(same, same.indexOf(r), campaignQs(), LIVE_SITES[r.site].name);
+  });
+  clearTimeout(storyTimer);
+  if (live.length) storyTimer = setTimeout(() => { if (!document.hidden && rail.offsetParent) renderStories(); }, 120000);
 }
 function openStory(groups, gi, ii) {
   const g = groups[gi]; if (!g) return renderStories();
