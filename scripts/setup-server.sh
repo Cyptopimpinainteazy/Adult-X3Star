@@ -159,18 +159,22 @@ $SUDO tee /etc/caddy/Caddyfile >/dev/null <<EOF
 $DOMAIN, www.$DOMAIN {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:$APP_PORT
-	log {
-		output file /var/log/caddy/x3star.log {
-			roll_size 20mb
-			roll_keep 5
-		}
-	}
+	# Access log goes to the journal (journalctl -u caddy); no log file to own or rotate.
+	log
 }
 EOF
-$SUDO mkdir -p /var/log/caddy && $SUDO chown caddy:caddy /var/log/caddy 2>/dev/null || true
+# Earlier versions logged to a file that "caddy validate" (run as root) created root-owned, so the caddy user
+# couldn't open it and Caddy failed to start. Hand any such leftovers back to caddy.
+[ -d /var/log/caddy ] && $SUDO chown -R caddy:caddy /var/log/caddy 2>/dev/null || true
 $SUDO caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
 $SUDO systemctl enable -q caddy
-$SUDO systemctl reload caddy 2>/dev/null || $SUDO systemctl restart caddy
+$SUDO systemctl restart caddy
+sleep 2
+if ! $SUDO systemctl is-active --quiet caddy; then
+  $SUDO journalctl -u caddy -n 30 --no-pager
+  die "Caddy did not start (log above)."
+fi
+say "Caddy is running"
 
 # ── 6. Firewall ─────────────────────────────────────────────────────
 if command -v ufw >/dev/null && $SUDO ufw status | grep -q "Status: active"; then
