@@ -1,0 +1,89 @@
+docs/EMPLOYER_DIRECTORY_RESEARCH.md
+  s_1898582a33ecc7::t_1d9b79c9fd6143 1-57
+server/db.js
+  s_1898582a33ecc7::t_283e6b00bdfc32 123-191,365-368
+server/employer-directory.js
+  s_1898582a33ecc7::t_670484502c036f 1-742
+server/routes/employer-directory.js
+  s_1898582a33ecc7::t_88e8771b7aea24 1-64
+.env.example
+  s_a8302b15a18fd1::t_7356bddd10f179 37-41
+README.md
+  s_1898582a33ecc7::t_84c7b02a9c10cc 110-135
+docs/API.md
+  s_1898582a33ecc7::t_5a8684fe3f604d 57-90
+public/assets/admin.js
+  s_1898582a33ecc7::t_dca96f09cccd6e 25,32,372-455
+public/assets/directory.css
+  s_74ba107840d62d::t_fd75a33e5f6db9 1-4
+public/assets/employer.js
+  s_1898582a33ecc7::t_734e14ab38163e 1-148
+public/assets/jobs.js
+  s_1fe0b72fd51a7b::t_eb78e700832ba1 9,12-14,23,36-37,53,56,99,124-125,133,137-140
+public/employers.html
+  s_74ba107840d62d::t_a8fddc6363cf28 1-3
+public/index.html
+  s_5c66df31c6e087::t_7f15efad65239d 1075,1545-1546
+server/config.js
+  s_1fe0b72fd51a7b::t_49906b50fa01a8 22-23,34
+server/index.js
+  s_a8302b15a18fd1::t_9608931d12013c 52,156-167
+server/pages/directory.js
+  s_a8302b15a18fd1::t_34cf7cd22edadc 1-32
+server/pages/editorial.js
+  s_5c66df31c6e087::t_e12b330e7598dc 18,20
+test/directory-pages.test.js
+  s_74ba107840d62d::t_83ee3d3e0af7f5 1-83
+test/employer-directory.test.js
+  s_1898582a33ecc7::t_b30481ab36ea39 1-782
+test/jobs-client.test.js
+  s_5c66df31c6e087::t_a6fd707b2478df 203-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "149ae430abefe285f250fd040ce7c00e9d756392",
+  "prompts": {},
+  "sessions": {
+    "s_1898582a33ecc7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1ac116f6-6b5b-4560-b899-f76dd06bdbc6",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_1fe0b72fd51a7b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bfd-e007-79f0-a123-7cb40bb9d913",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_5c66df31c6e087": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ab581923044b23875",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_74ba107840d62d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21c01-a3df-76b1-82fb-6eb76324f55c",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
