@@ -1,0 +1,104 @@
+{
+  "verifiedAt": "2026-11-27T20:28:44.520Z",
+  "task": "Journal and recruiting SEO",
+  "branch": "feat/journal-seo",
+  "sourceBaseCommit": "cd77565765ce1a73ed2988ddf2eb4dbd0a388b56",
+  "sourceState": "Verified implementation before commit; sourceSha256 identifies exact files. Unrelated untracked user work preserved.",
+  "changes": [
+    "Three permanent audience topic guides with original introductions and curated reading paths",
+    "All 58 articles link back to their topic through breadcrumbs; article content files unchanged",
+    "72 canonical indexable sitemap pages",
+    "Homepage canonical/social metadata and permanent index alias redirect preserving query attribution",
+    "Informational guide explicit-rating, obsolete FAQ markup and automatic freshness stamp removed",
+    "Read-only same-server SEO gate with URL-boundary rejection tests"
+  ],
+  "verification": [
+    {
+      "command": "npm test",
+      "result": "PASS",
+      "tests": 131,
+      "failed": 0,
+      "durationMs": 22559.729175
+    },
+    {
+      "command": "npm run build:standalone",
+      "result": "PASS",
+      "artifact": "dist/x3star-standalone.html",
+      "sizeKbRounded": 578
+    },
+    {
+      "command": "node --check on tracked JavaScript plus three new files",
+      "result": "PASS",
+      "files": 72
+    },
+    {
+      "command": "vm.Script parse of standalone inline JavaScript",
+      "result": "PASS",
+      "scripts": 7
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run check:seo -- http://127.0.0.1:8080",
+      "result": "PASS",
+      "report": {
+        "ok": true,
+        "target": "http://127.0.0.1:8080",
+        "canonicalOrigin": "http://127.0.0.1:8080",
+        "pagesChecked": 72,
+        "articlesChecked": 58,
+        "topicGuidesChecked": 3,
+        "uniqueTitles": 72,
+        "uniqueDescriptions": 72,
+        "scope": "Initial HTML and sitemap only; no browser, indexing, rankings or traffic verification."
+      }
+    },
+    {
+      "command": "git diff --exit-code sourceBaseCommit -- four existing article modules",
+      "result": "PASS",
+      "files": [
+        "server/content/articles.js",
+        "server/content/journal-creators.js",
+        "server/content/journal-affiliates.js",
+        "server/content/journal-hiring.js"
+      ]
+    }
+  ],
+  "independentReview": {
+    "agent": "seo_audit",
+    "result": "No blocking findings after corrections",
+    "focusedTestsPassed": 28,
+    "adversarialGateTestsPassed": 1,
+    "corrections": [
+      "Removed automatic monthly guide freshness stamp",
+      "Pinned gate fetch URLs to target origin even for protocol-relative sitemap paths",
+      "Rejected non-HTTP(S) sitemap URLs",
+      "Documented parseable JSON-LD rather than full schema validation"
+    ]
+  },
+  "limits": [
+    "Local execution only; not deployed or merged",
+    "Browser visual check unavailable: browser access host is unavailable",
+    "No Google indexing, ranking, Search Console, organic traffic, Core Web Vitals or rich-result eligibility verified",
+    "No external media or partner links fetched by the SEO gate",
+    "No production SITE_URL or DNS changes"
+  ],
+  "sourceSha256": {
+    "README.md": "ccc55070007f9487a75d22848d6494e2629916639ffe857276c9a00d3cf005be",
+    "docs/SEO_RESEARCH.md": "23940d3731f32ecc3bbf278cc083545b4504f8ddb66fbf7e9e9b81cd217031cd",
+    "package.json": "e811f6502f20cfd15e4593a64561655b9f050b54ce4f805886d99b3fa81d8a73",
+    "public/assets/editorial.css": "1a61d0d929c04587992749e7830db81a601d0ce7938c7189a2f09edc7d24528b",
+    "public/index.html": "da89a8ae2f779663a41f3636b1dc2cb8e899b5f9bd71f2161c2c3b39174f0637",
+    "server/index.js": "c2590c70ac559e5d4694c23065178ee5ea03414505fa485e6a6986e332365982",
+    "server/pages/editorial.js": "dfdc1bea69a210619306cb86adeace4a4143630b3a469ef21d0b425fbd42ab37",
+    "server/pages/guide.js": "65ce3f0fa2bf41d54673a320d69af0016bd2547f960c6f6265eaaca95779bb8a",
+    "server/routes/editorial.js": "367f2cbe0c75f0521db3fdc7be5aa3b9d75c76bd3d3c8ba85e3c753cad8738a8",
+    "test/api.test.js": "e5f336b5898da13e45598089e0b186d041d3dd943667326de360db8963ba6024",
+    "test/editorial.test.js": "d7709a8d07bbecd926e02bd07ace28d6179f656b2acbce76f50790f78d8787d8",
+    "scripts/check-seo.js": "94f053c7fde8418abaa9e34c71a373ae1bcb4df809f7321be7b9f6dc1329226f",
+    "server/content/journal-topics.js": "9f117240182ae6fb9bd69020bcf4e10723460dad283da0f0d35ad5486f97ebee",
+    "server/pages/metadata.js": "3c71818948b608a97435fe8be5c0a60b1db44b3baca378f5634df7acb48a1979"
+  }
+}

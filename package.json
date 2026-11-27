@@ -13,6 +13,7 @@
     "dev": "node --watch server/index.js",
     "seed": "node server/seed.js",
     "test": "node --test test/*.test.js",
+    "check:seo": "node scripts/check-seo.js",
     "build:standalone": "node scripts/build-standalone.js",
     "import:feed": "node scripts/import-feed.js"
   },

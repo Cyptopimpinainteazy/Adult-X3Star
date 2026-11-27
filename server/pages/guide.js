@@ -4,7 +4,7 @@
  * Rendered on the server (not a #hash route) so search engines can index it. Every pay figure is read from the
  * live economy config, so the page always matches what Admin → Economy is set to.
  */
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const { esc, socialMetadata } = require('./metadata');
 /* Whole dollars without cents, cents for normal amounts, and enough precision for sub-cent values like $0.008. */
 const usd = (n) => { n = Number(n); const whole = Number.isInteger(Math.round(n * 1e6) / 1e6); const max = n !== 0 && Math.abs(n) < 1 ? 4 : 2; return '$' + n.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: max }); };
 const num = (n) => Number(n).toLocaleString('en-US');
@@ -41,8 +41,7 @@ function renderGuide({ econ, baseUrl }) {
   const title = 'How to Become a Cam Model — The x3STAR Creator Guide';
   const desc = `Everything you need to start camming on x3STAR: equipment, setting up your persona, how diamonds turn into payouts (${usd(f.beanUsd)} per bean, payouts from ${usd(f.minPayoutUsd)}), safety, legal basics and growing a fan base.`;
   const ld = [
-    { '@context': 'https://schema.org', '@type': 'Article', headline: title, description: desc, mainEntityOfPage: url, publisher: { '@type': 'Organization', name: 'x3STAR', url: baseUrl } },
-    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: Q.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }
+    { '@context': 'https://schema.org', '@type': 'Article', headline: title, description: desc, mainEntityOfPage: url, publisher: { '@type': 'Organization', name: 'x3STAR', url: baseUrl } }
   ];
   const toc = [['what', 'What the job is'], ['earn', 'How you earn'], ['gear', 'Equipment'], ['setup', 'Setting up'], ['shows', 'Types of shows'], ['grow', 'Growing a fan base'], ['safety', 'Safety & privacy'], ['legal', 'Legal & money'], ['faq', 'FAQ']];
   return `<!DOCTYPE html>
@@ -53,9 +52,7 @@ function renderGuide({ econ, baseUrl }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${esc(url)}">
-<meta name="rating" content="adult">
-<meta property="og:type" content="article"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(url)}"><meta property="og:site_name" content="x3STAR">
-<meta name="twitter:card" content="summary">
+${socialMetadata({ title, description: desc, url, article: {} })}
 <meta name="theme-color" content="#0a0a0a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext x=%2716%27 y=%2725%27 font-size=%2726%27 text-anchor=%27middle%27 fill=%27%23ff2d87%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,7 +100,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:13px;color
 
 <main>
 <div class="hero"><div class="wrap">
-  <span class="eyebrow">Creator guide · updated ${new Date().toISOString().slice(0, 7)}</span>
+  <span class="eyebrow">Creator guide · adults 18+</span>
   <h1>How to become a <em>cam model</em>.</h1>
   <p class="lead">A straight-talking guide to starting out: the gear you actually need, how to build a persona, how money moves from a fan's gift to your bank, and how to stay safe while you do it.</p>
   <div class="row"><a class="btn pri" href="/casting#apply">Apply to stream on x3STAR</a><a class="btn" href="#earn">See how payouts work</a></div>

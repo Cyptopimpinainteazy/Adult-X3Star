@@ -173,6 +173,7 @@ node --test test/jobs.test.js test/star-jobs-pages.test.js
 - Applicants choose **x3STAR review** or a clearly labeled **independent partner application**. The x3STAR form uses the existing Admin → Applications queue. Partner choices come from active placements in the `apply` slot, respect paused/disabled settings, disclose the referral relationship, and use the existing tracked `/go/` redirects. An outbound click is not a confirmed partner registration.
 - The form saves the applicant's selected state separately from the casting entry page. It retains bounded session campaign attribution across the public journal and casting pages. The Admin application card shows State, Entry page and campaign fields. No IDs, photos or payment information are requested by this form; review and later verification remain separate.
 - `/blog` and `/blog/<slug>` publish **58 full guides**: the original eight plus **50 new industry posts** (18 for creators/models, 16 for affiliates/publishers and 16 for recruiters/employers). The new collection contains 34,579 original body words. Full article HTML, bylines, dates, sources where relevant, related reading and audience-specific next steps are available without JavaScript. Browse by `?audience=creators`, `?audience=affiliates` or `?audience=hiring`, or use the journal search. Filtered variants are noindex with the journal canonical.
+- `/blog/topics/creators`, `/blog/topics/affiliates` and `/blog/topics/hiring` provide permanent, indexable reading paths with distinct introductions, curated stages and complete audience collections. Article breadcrumbs link back to the appropriate topic; arbitrary journal searches remain noindex.
 - Casting and editorial pages load their own local CSS/JavaScript and do not automatically load the live-room app, partner media or external fonts.
 
 `/partners` provides a publisher/referral inquiry form. It reuses the existing agent application review queue and preserves article campaign attribution. A confirmed receipt records a pending inquiry; it does not create a publisher account, establish a contract, activate commissions or send email. Creator, publisher and employer article calls to action lead to their respective existing workflows. The original eight article records and URLs are preserved. New content lives in `server/content/journal-creators.js`, `journal-affiliates.js` and `journal-hiring.js`; see [the editorial brief](docs/BLOG_CONTENT_BRIEF.md).
@@ -181,7 +182,7 @@ node --test test/jobs.test.js test/star-jobs-pages.test.js
 
 **State publishing policy:** California, Colorado, Florida, Nevada, New York and Texas have developed state guidance with official planning resources and are initially indexable. The other 44 state conversion pages work for visitors and campaigns but carry `noindex,follow` and stay outside the sitemap until their local editorial material is developed. All remain crawlable so search engines can read those directives. This is an editorial rollout policy, not a guarantee of Google indexing or rankings. To develop another state, update its entry in `server/content/states.js`, verify its resources and guidance, then change `indexable` and `updated` after review.
 
-`/sitemap.xml` lists 69 canonical URLs: the app, creator guide, casting hub, journal hub, publisher-inquiry page, six developed state guides and 58 articles. Editorial `lastmod` values use maintained content dates; routes without a trustworthy modification date omit it. Article `BlogPosting` and breadcrumb metadata match visible content. General casting pages do not claim to be specific job vacancies or use `JobPosting` markup. [Primary-source SEO research](docs/SEO_RESEARCH.md) explains the search and SafeSearch considerations; informational pages on the same adult-content host may still be affected by host classification.
+`/sitemap.xml` lists 72 canonical URLs: the app, creator guide, casting hub, journal hub, publisher-inquiry page, three topic guides, six developed state guides and 58 articles. Editorial `lastmod` values use maintained content dates; routes without a trustworthy modification date omit it. Article `BlogPosting` and breadcrumb metadata match visible content. General casting pages do not claim to be specific job vacancies or use `JobPosting` markup. [Primary-source SEO research](docs/SEO_RESEARCH.md) explains the search and SafeSearch considerations; informational pages on the same adult-content host may still be affected by host classification.
 
 For local checks:
 
@@ -189,13 +190,16 @@ For local checks:
 node --test test/editorial.test.js test/casting-apply.test.js
 npm test
 npm run build:standalone
+npm run check:seo -- http://127.0.0.1:8080
 ```
+
+The SEO check requires a running server. It reads every sitemap URL, verifies initial HTML, unique titles/descriptions, canonical consistency, indexability, social metadata and parseable JSON-LD, and exits nonzero on failure. It never starts players or follows partner links. `SITE_URL` may differ from the local test origin; the check fetches each canonical path from the supplied test server. It does not measure browser rendering, Core Web Vitals or Google indexing. The homepage now has canonical/social metadata; `/index.html` redirects permanently to `/` while preserving query attribution.
 
 The standalone artifact remains the fan-app demo; the new casting/journal routes require the Node server. This feature adds local page/application behavior, not deployment, email delivery, a payment provider or a live-media service.
 
 ### Cam model guide (`/cam-model-guide`)
 
-A server-rendered recruitment guide (indexable by search engines, unlike the `#` app pages): what the job is, how gifts turn into payouts, equipment tiers, setup, show types, growing a fan base, safety, legal/tax basics and an FAQ (with FAQ structured data), ending in the creator application. Every pay figure (bean value, minimum payout, weekly cap, host-tier bonuses, agency commission) is read from the live economy config, so the page always matches Admin → Economy. `/robots.txt` and `/sitemap.xml` are served too.
+A server-rendered recruitment guide (indexable by search engines, unlike the `#` app pages): what the job is, how gifts turn into payouts, equipment tiers, setup, show types, growing a fan base, safety, legal/tax basics and a visible FAQ (with Article structured data for the guide), ending in the creator application. Every pay figure (bean value, minimum payout, weekly cap, host-tier bonuses, agency commission) is read from the live economy config, so the page always matches Admin → Economy. `/robots.txt` and `/sitemap.xml` are served too.
 
 ### Affiliate partners and rankings (Admin → Affiliates)
 

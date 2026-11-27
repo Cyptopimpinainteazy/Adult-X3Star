@@ -146,9 +146,10 @@ function bootPayload(req) {
 const sendIndex = (req, res) => {
   const json = JSON.stringify(bootPayload(req)).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16));
   res.setHeader('Cache-Control', 'no-store');
-  res.type('html').send(indexHtml().replace('<!--X3STAR_BOOT-->', `<script>window.X3STAR_BOOT=${json};</script>`));
+  res.type('html').send(indexHtml().replace('<!--X3STAR_SEO-->', () => require('./pages/metadata').homeMetadata(baseUrl(req))).replace('<!--X3STAR_BOOT-->', () => `<script>window.X3STAR_BOOT=${json};</script>`));
 };
-app.get(['/', '/index.html'], sendIndex);
+app.get('/index.html', (req, res) => res.redirect(301, '/' + (req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '')));
+app.get('/', sendIndex);
 
 /* indexable pages + crawler files */
 const editorial = require('./routes/editorial');
