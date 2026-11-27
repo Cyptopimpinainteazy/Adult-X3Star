@@ -1,0 +1,45 @@
+README.md
+  s_a8302b15a18fd1::t_dc8afd63aeca06 176,185,193,196-197,202
+audit-artifacts/journal-seo-local.json
+  s_a8302b15a18fd1::t_e59be7397c8b84 1-104
+docs/SEO_RESEARCH.md
+  s_a8302b15a18fd1::t_11ca9d855e0626 58-69
+package.json
+  s_a8302b15a18fd1::t_ae7418bac960e3 16
+public/assets/editorial.css
+  s_a8302b15a18fd1::t_ac1ddd4fb01bc4 13
+public/index.html
+  s_a8302b15a18fd1::t_5997de95cff5dd 9-11
+scripts/check-seo.js
+  s_a8302b15a18fd1::t_169a1937bc17a2 1-53
+server/index.js
+  s_a8302b15a18fd1::t_2aaceaf8c449ef 149,151-152
+server/pages/editorial.js
+  s_a8302b15a18fd1::t_42e493a1c60c5f 5-6,9,11,14,17,66,78-87,92-95,98,100,111
+server/pages/guide.js
+  s_a8302b15a18fd1::t_f3bcff0c52c752 7,44,55,103
+server/pages/metadata.js
+  s_a8302b15a18fd1::t_8ca9a26952749a 1-16
+server/routes/editorial.js
+  s_a8302b15a18fd1::t_06c495ac129741 7-8,40-44,53
+test/api.test.js
+  s_a8302b15a18fd1::t_7e2089d9a13b3e 253-254
+test/editorial.test.js
+  s_a8302b15a18fd1::t_1567c7928dc271 120,128-236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b778f3b314b137b2f3f3a0bf3199c85d175f775d",
+  "prompts": {},
+  "sessions": {
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
