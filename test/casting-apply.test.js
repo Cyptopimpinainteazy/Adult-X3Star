@@ -93,3 +93,24 @@ test('casting campaign attribution rejects nested, unknown and oversized input',
     assert.equal(res.data.error.code, 'bad_input');
   }
 });
+
+test('Denver campaign inquiries keep the actual state separate from the approved entry path', async t => {
+  const call = await serverFor(t);
+  const campaign = { utm_source: 'trafficjunky', utm_medium: 'display', utm_campaign: 'denver_creator_casting', utm_content: 'denver_intro' };
+  const submitted = await call('POST', '/api/apply', application({ state: 'CO', landingPath: '/casting/colorado/denver', campaign }));
+  assert.equal(submitted.status, 201);
+  const admin = await call('POST', '/api/auth/login', { email: 'casting-admin@test.local', password: 'casting-test-pass-123' });
+  const queue = await call('GET', '/api/admin/applications', undefined, admin.cookie);
+  const stored = queue.data.rows.find(row => row.email === 'casting@example.test');
+  assert.equal(stored.status, 'pending');
+  assert.equal(stored.data.state, 'colorado');
+  assert.equal(stored.data.landingPath, '/casting/colorado/denver');
+  assert.deepEqual(stored.data.campaign, campaign);
+  const visitor = await call('POST', '/api/apply', application({ email: 'visitor@example.test', state: 'WY', landingPath: '/casting/colorado/denver' }));
+  assert.equal(visitor.status, 201, 'Landing page must not misreport the visitor’s actual state');
+  const updated = await call('GET', '/api/admin/applications', undefined, admin.cookie);
+  assert.equal(updated.data.rows.find(row => row.email === 'visitor@example.test').data.state, 'wyoming');
+  for (const landingPath of ['/casting/colorado/aurora', '/casting/colorado/denver?utm_source=ad', '/casting/california/denver']) {
+    assert.equal((await call('POST', '/api/apply', application({ email: 'bad-path@example.test', landingPath }))).status, 400, landingPath);
+  }
+});

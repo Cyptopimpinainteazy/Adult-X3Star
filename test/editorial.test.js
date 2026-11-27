@@ -57,6 +57,32 @@ test('all state landing pages work; only developed profiles invite indexing', as
   assert.equal((await fetch(base + '/casting/constructor')).status, 404);
 });
 
+test('Denver campaign offers online inquiries with exact entry attribution and separate partner links', async () => {
+  const path = '/casting/colorado/denver';
+  const response = await fetch(base + path + '?utm_source=trafficjunky&utm_campaign=denver_creator_casting');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-robots-tag'), 'noindex, follow');
+  const html = await response.text();
+  assert.match(html, /Denver, Colorado/);
+  assert.match(html, /Adults 18\+/);
+  assert.match(html, /collecting interest for review/);
+  assert.match(html, /does not advertise a scheduled audition/);
+  assert.ok(html.includes('data-landing-path="' + path + '"'));
+  assert.match(html, /value="colorado" selected/);
+  assert.match(html, /data-source="casting_denver"/);
+  assert.match(html, /s=casting_denver&amp;c=denver_creator_casting/);
+  assert.match(html, /rel="sponsored noopener"/);
+  assert.ok(html.includes('rel="canonical" href="https://creators.example' + path + '"'));
+  assert.match(html, /content="noindex,follow"/);
+  assert.doesNotMatch(html, /<iframe|<video|JobPosting|\/api\/cb\/live/);
+  const sitemap = await (await fetch(base + '/sitemap.xml')).text();
+  assert.ok(!sitemap.includes(path), 'Campaign variants stay outside the organic sitemap');
+  const slash = await fetch(base + path + '/?utm_source=trafficjunky', { redirect: 'manual' });
+  assert.equal(slash.status, 301);
+  assert.equal(slash.headers.get('location'), path + '?utm_source=trafficjunky');
+  assert.equal((await fetch(base + '/casting/colorado/aurora')).status, 404);
+});
+
 test('journal articles are full HTML with visible metadata matching BlogPosting', async () => {
   const res = await fetch(base + '/blog');
   assert.equal(res.status, 200);

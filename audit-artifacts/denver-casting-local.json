@@ -1,0 +1,128 @@
+{
+  "verifiedAt": "2026-11-27T20:35:38.519Z",
+  "task": "Denver Colorado adult creator casting campaign",
+  "branch": "feat/denver-casting-campaign",
+  "sourceBaseCommit": "b778f3b314b137b2f3f3a0bf3199c85d175f775d",
+  "state": "Local implementation and draft ad copy; no ad-platform submission, external posting, purchase or spend",
+  "campaign": {
+    "city": "Denver",
+    "region": "Colorado",
+    "country": "US",
+    "minimumAge": 18,
+    "metroExpansion": false,
+    "key": "denver_creator_casting",
+    "path": "/casting/colorado/denver",
+    "paidAdTextDrafts": 3,
+    "ownedChannelPostDrafts": 2,
+    "uniqueTrackedDestinationsChecked": 5,
+    "platformCandidate": "TrafficJunky; city targeting verified in official FAQ, specific campaign eligibility not approved",
+    "budget": null,
+    "dates": null,
+    "publicOrigin": null
+  },
+  "verification": [
+    {
+      "command": "npm test",
+      "result": "PASS",
+      "tests": 134,
+      "failed": 0,
+      "durationMs": 9634.69908
+    },
+    {
+      "command": "node --test test/editorial.test.js test/casting-apply.test.js test/casting-client.test.js",
+      "result": "PASS",
+      "tests": 21
+    },
+    {
+      "command": "npm run build:standalone",
+      "result": "PASS",
+      "sizeKbRounded": 578
+    },
+    {
+      "command": "node --check on tracked JavaScript plus new campaign module",
+      "result": "PASS",
+      "files": 73
+    },
+    {
+      "command": "vm.Script parse of standalone inline JavaScript",
+      "result": "PASS",
+      "scripts": 7
+    },
+    {
+      "command": "npm run check:seo -- http://127.0.0.1:8080",
+      "result": "PASS",
+      "report": {
+        "ok": true,
+        "target": "http://127.0.0.1:8080",
+        "canonicalOrigin": "http://127.0.0.1:8080",
+        "pagesChecked": 72,
+        "articlesChecked": 58,
+        "topicGuidesChecked": 3,
+        "uniqueTitles": 72,
+        "uniqueDescriptions": 72,
+        "scope": "Initial HTML and sitemap only; no browser, indexing, rankings or traffic verification."
+      }
+    },
+    {
+      "command": "GET all five tracked ad/post destination URLs on localhost",
+      "result": "PASS",
+      "status": 200,
+      "robots": "noindex, follow"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --exit-code base -- existing states and four article modules",
+      "result": "PASS"
+    }
+  ],
+  "functionalEvidence": [
+    "Real HTTP and temporary SQLite verify pending Denver inquiry, exact landing path and all campaign fields in private admin queue",
+    "Applicant state is independent of Denver entry path, including Wyoming visitor coverage",
+    "Unlisted city paths and query-bearing entry-path values rejected",
+    "Campaign page retains adult confirmation, no application fee, development-stage disclosure and active sponsored partner choices",
+    "Campaign page remains outside the 72-URL organic sitemap"
+  ],
+  "independentReview": {
+    "agent": "denver_review",
+    "result": "No blocking findings",
+    "focusedTestsPassed": 21
+  },
+  "limits": [
+    "Local page, not deployed or search-indexed",
+    "No paid or social ad delivery, impressions, traffic or conversions claimed",
+    "Connected marketing service had no ad/social account connection for this project; no TrafficJunky advertiser account available via connector",
+    "Budget/run dates/platform approval/public destination still required for paid delivery",
+    "Ad copy drafts only; no placement-specific final banner images",
+    "Browser visual review not performed; browser access host unavailable",
+    "No application submitted to the persistent local database; test applications used disposable SQLite"
+  ],
+  "sources": [
+    {
+      "title": "TrafficJunky FAQ: geo targeting, campaign scheduling and approval",
+      "url": "https://www.trafficjunky.com/resources/faq"
+    },
+    {
+      "title": "TrafficJunky advertiser rules",
+      "url": "https://www.trafficjunky.com/rules-and-regulations"
+    },
+    {
+      "title": "Google Ads sexual-content policy",
+      "url": "https://support.google.com/adspolicy/answer/6023699?hl=en"
+    }
+  ],
+  "sourceSha256": {
+    "README.md": "77788a9de4ab2352b02a2aeec72d7a17bb817e6036b3c587ad33bac061ef6904",
+    "server/content/casting-campaigns.js": "16f27fcc34dc36e81229c8cbca6dfaea93d460377eb4acaa72cfb408aa8a439d",
+    "server/pages/editorial.js": "b75455ee1ae2768c365c8bf70ea8b520e92261a6ad1185a8a3a1b28abe7f0f9a",
+    "server/routes/editorial.js": "3cdccbb7bf402130ff90cae02db10e651c9734a42e4d4a9ce93eb4733c510360",
+    "server/routes/public.js": "15be08f22401b458165c5e6705b3f51e6ecc945ddc9b28964a453778b0fd34c2",
+    "test/casting-apply.test.js": "c0d768b51ae25eff69ec38388681ada273e7b188e8053f90e4274b7b6cf520e0",
+    "test/casting-client.test.js": "0e0b82f02d1999594ed56d38789541b9bf93929f85e893b746b480ce38864cf5",
+    "test/editorial.test.js": "ae41a302c196204f0b6880b74589dc567b3709d33f5c995422c0f278e98ee1f0",
+    "campaigns/denver-casting/ADS.md": "cee9efda294fbf82c68bc21bcd06ba40425ac8640925b3b315f7c0f6864202f8",
+    "campaigns/denver-casting/PLAN.md": "6bf25d37c99f46092229b7329e8f5111f58c0c59209239c3c424454ea06ba45d"
+  }
+}
