@@ -88,6 +88,24 @@ Plan fields include `priceCents,currency,durationDays,invoiceInstructions,enable
 
 HTML routes: `/jobs`, `/jobs/:id` and `/employers`. No applicant fee, mail delivery, automatic acceptance, hosted card checkout or automatic refund is performed.
 
+## Talent network
+
+Public JSON routes use `Cache-Control: no-store` and never return account emails, applicant messages, identity documents, billing receipts or owner IDs:
+
+| Method | Path | Result |
+|---|---|---|
+| GET | `/api/network/talent?q=&state=&intent=&page=&pageSize=` | `{talent,total,page,pageSize,pages}`; approved creators with active nonbanned owners; `intent` is blank, `hiring` or `available` |
+| GET | `/api/network/talent/:id` | `{creator,jobs}` metadata plus current public board posts; unknown/hidden creator `404` |
+| GET | `/api/network/opportunities?q=&state=&location=&kind=&category=&workMode=&page=&pageSize=` | `{jobs,total,page,pageSize,pages}` from open unexpired free star boards; each job adds public creator metadata |
+| GET | `/api/network/companies?q=&state=&page=&pageSize=` | `{companies,total,page,pageSize,pages}`; only identities from currently eligible paid/reviewed employer openings |
+| GET | `/api/network/companies/:id` | Public company listing snapshot and eligible jobs; no current paid opening means `404` |
+
+All searches use scalar bounded values, literal text matching and stable pagination (page 1–1000, pageSize 1–50). Unknown filter values or malformed IDs return `400`. Talent metadata includes `id,name,niche,tags,bio,networkCity,networkState,live,demo,availableCount,hiringCount,opportunityCount,profileUrl,boardUrl`. Opportunity `kind` remains `hiring` or `available`; collaborations use `category=collaboration`. Opportunity state refers to the posting creator's optional self-declared state; location searches the post's broad location and creator's public city. Paid employer state continues to refer to the reviewed listing.
+
+Existing `GET /api/studio` now supplies `networkStates:[{slug,name}]`. `PUT /api/studio/profile` additionally accepts `networkCity` (optional string ≤80, blank clears) and `networkState` (blank or known U.S. state, normalized to slug). Defaults are blank, and updates keep existing creator/Admin `?as=` ownership rules. The fields appear only in authorized Studio responses and the owner-gated network metadata, rather than weaker legacy creator endpoints. No location is inferred or separately verified.
+
+HTML routes: `/network`, `/talent`, `/talent/:id`, `/opportunities`, `/companies`, `/companies/:id`. Trailing-slash redirects preserve query strings. Free profile opportunities link to `/stars/:id/jobs#job-<id>` for existing private inquiries; paid jobs link to `/jobs/:id`. No new message-delivery service or payment integration is introduced.
+
 ## Per-star jobs boards
 
 Public fields: `{ id, creatorId, kind, title, description, category, workMode, location, compensation, status, expiresAt, createdAt, updatedAt }`. `kind` is `hiring` or `available`. Categories: `editing`, `moderation`, `design`, `photography`, `collaboration`, `other`. `workMode`: `remote`, `hybrid`, `onsite`. No public response includes applicant contacts or messages.

@@ -5,6 +5,7 @@ const { all, get, run, tx, J } = require('../db');
 const A = require('../auth');
 const S = require('../services');
 const U = require('../uploads');
+const { STATES, getState } = require('../content/states');
 const { HttpError, bad, str, intIn, numIn, oneOf, HEX, NICHES, SITES } = require('./common');
 
 const r = express.Router();
@@ -29,7 +30,8 @@ r.get('/', (req, res) => {
   const uniqueGifters = (get('SELECT COUNT(DISTINCT from_user) AS n FROM gifts WHERE creator_id = ? AND created_at > ?', c.id, now - 30 * day) || {}).n || 0;
   const weekBeans = (get("SELECT COALESCE(SUM(beans),0) AS b FROM payouts WHERE creator_id = ? AND status != 'rejected' AND created_at > ?", c.id, now - 7 * day) || {}).b || 0;
   res.json({
-    creator: { ...S.publicCreator(c, { full: true }), handles: J(c.handles, {}), status: c.status, kyc: c.kyc, beans: c.beans, beansTotal: c.beans_total, pinnedProductId: c.pinned_product_id, baseViewers: c.base_viewers },
+    creator: { ...S.publicCreator(c, { full: true }), networkCity: c.network_city || '', networkState: c.network_state || '', handles: J(c.handles, {}), status: c.status, kyc: c.kyc, beans: c.beans, beansTotal: c.beans_total, pinnedProductId: c.pinned_product_id, baseViewers: c.base_viewers },
+    networkStates: STATES.map(state => ({slug: state.slug, name: state.name})),
     uploads: all('SELECT * FROM uploads WHERE creator_id = ? ORDER BY id DESC', c.id).map(uploadOut),
     products: all('SELECT * FROM products WHERE creator_id = ? ORDER BY id DESC', c.id).map(p => ({ ...S.publicProduct(p), active: !!p.active, uploadId: p.upload_id })),
     payouts: all('SELECT id, beans, usd, method, status, note, created_at, decided_at FROM payouts WHERE creator_id = ? ORDER BY id DESC LIMIT 50', c.id),
@@ -44,6 +46,11 @@ r.put('/profile', (req, res) => {
   const c = myCreator(req), b = req.body || {};
   const name = str(b.name ?? c.name, 'Display name', 2, 40);
   const bio = str(b.bio ?? c.bio, 'Bio', 0, 600);
+  const networkCity = b.networkCity === undefined ? c.network_city || '' : b.networkCity;
+  if (typeof networkCity !== 'string' || networkCity.trim().length > 80) throw bad('Public city must be text of at most 80 characters');
+  const stateInput = b.networkState === undefined ? c.network_state || '' : b.networkState;
+  if (typeof stateInput !== 'string' || (stateInput !== '' && !getState(stateInput))) throw bad('Choose a valid public state or leave it blank');
+  const networkState = stateInput ? getState(stateInput).slug : '';
   const niche = oneOf(b.niche ?? c.niche, 'Niche', NICHES);
   const tags = (Array.isArray(b.tags) ? b.tags : J(c.tags, [])).map(t => str(t, 'Tag', 1, 20)).slice(0, 6);
   const sites = (Array.isArray(b.sites) ? b.sites : J(c.sites, [])).filter(s => SITES.includes(s));
@@ -61,9 +68,10 @@ r.put('/profile', (req, res) => {
   const backAt = str(b.back ?? c.back_at, 'Back-at note', 0, 40);
   const handles = {}; const hin = b.handles && typeof b.handles === 'object' ? b.handles : J(c.handles, {});
   for (const site of ['CB', 'SC', 'BC', 'C4']) { const h = String(hin[site] || '').trim(); if (h && !/^[A-Za-z0-9_.-]{1,40}$/.test(h)) throw bad(`${site} username has invalid characters`); if (h) handles[site] = h; }
-  run('UPDATE creators SET name=?, bio=?, niche=?, tags=?, sites=?, hues=?, tip_menu=?, goal=?, schedule=?, ticker=?, back_at=?, handles=? WHERE id=?',
-    name, bio, niche, JSON.stringify(tags), JSON.stringify(sites), JSON.stringify(hues), JSON.stringify(tipMenu), JSON.stringify(goal), JSON.stringify(schedule), ticker, backAt, JSON.stringify(handles), c.id);
-  res.json({ creator: S.publicCreator(get('SELECT * FROM creators WHERE id = ?', c.id), { full: true }) });
+  run('UPDATE creators SET name=?, bio=?, niche=?, tags=?, sites=?, hues=?, tip_menu=?, goal=?, schedule=?, ticker=?, back_at=?, handles=?, network_city=?, network_state=? WHERE id=?',
+    name, bio, niche, JSON.stringify(tags), JSON.stringify(sites), JSON.stringify(hues), JSON.stringify(tipMenu), JSON.stringify(goal), JSON.stringify(schedule), ticker, backAt, JSON.stringify(handles), networkCity.trim(), networkState, c.id);
+  const updated = get('SELECT * FROM creators WHERE id = ?', c.id);
+  res.json({ creator: { ...S.publicCreator(updated, { full: true }), networkCity: updated.network_city || '', networkState: updated.network_state || '' } });
 });
 
 r.post('/live', (req, res) => {

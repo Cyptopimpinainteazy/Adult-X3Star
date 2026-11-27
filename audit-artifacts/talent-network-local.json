@@ -1,0 +1,193 @@
+{
+  "task": "connected-talent-network",
+  "recorded_at": "2026-11-27T08:42:04.545276+00:00",
+  "branch": "feat/talent-network",
+  "git_head_at_verification": "149ae430abefe285f250fd040ce7c00e9d756392",
+  "source_state": "scoped working changes over recorded parent; unrelated wiki/IDE/live-QA files preserved and excluded",
+  "versions": {
+    "node": "v24.22.1",
+    "sqlite": "3.53.4"
+  },
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 102,
+      "pass": 102,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check server/shared/public/assets/test/scripts JavaScript",
+      "files": 58,
+      "exit_code": 0
+    },
+    {
+      "command": "vm.Script parse source/standalone inline scripts",
+      "scripts": 8,
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "new_real_http_sqlite_tests": {
+    "backend": 8,
+    "rendered_pages": 4,
+    "owner_admin_location_scope": true,
+    "blank_defaults_and_clearing": true,
+    "actual_restart": true,
+    "old_schema_migration": true,
+    "hidden_creator_and_legacy_field_omission": true,
+    "open_post_counts_and_filters": true,
+    "company_shared_payment_review_refund_expiry_test_gate": true,
+    "listing_identity_snapshots": true,
+    "bounded_literal_search_and_pagination": true,
+    "html_escaping_and_private_data_omission": true,
+    "board_inquiry_links": true
+  },
+  "independent_review": {
+    "reviewers": 2,
+    "affected_suite_tests_passed": 45,
+    "blocking_findings_remaining": 0,
+    "resolved": [
+      "API route mount prefix",
+      "new location fields exposed by weaker legacy serializer",
+      "state-code selection",
+      "page-size pagination",
+      "company pluralization"
+    ]
+  },
+  "live_readback": [
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/network",
+      "status": 200,
+      "noStore": true,
+      "noindex": true,
+      "noMedia": true
+    },
+    {
+      "path": "/talent",
+      "status": 200,
+      "noStore": true,
+      "noindex": true,
+      "noMedia": true
+    },
+    {
+      "path": "/talent/luna",
+      "status": 200,
+      "noStore": true,
+      "noindex": true,
+      "noMedia": true
+    },
+    {
+      "path": "/opportunities",
+      "status": 200,
+      "noStore": true,
+      "noindex": true,
+      "noMedia": true
+    },
+    {
+      "path": "/companies",
+      "status": 200,
+      "noStore": true,
+      "noindex": true,
+      "noMedia": true
+    },
+    {
+      "path": "/jobs",
+      "status": 200
+    },
+    {
+      "path": "/employers",
+      "status": 200
+    },
+    {
+      "path": "/casting/colorado",
+      "status": 200
+    },
+    {
+      "path": "/assets/network.css",
+      "status": 200
+    },
+    {
+      "path": "/api/network/talent",
+      "status": 200,
+      "total": 16,
+      "returned": 16,
+      "allReturnedDemo": true,
+      "allReturnedLocationsBlank": true,
+      "privateFieldsOmitted": true
+    },
+    {
+      "path": "/api/network/opportunities",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "path": "/api/network/companies",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "path": "/talent/missing-creator",
+      "status": 404
+    },
+    {
+      "path": "/companies/999999999",
+      "status": 404
+    },
+    {
+      "path": "/api/employer",
+      "status": 401
+    },
+    {
+      "path": "/api/admin/employer-directory",
+      "status": 401
+    }
+  ],
+  "browser": {
+    "status": "blocked",
+    "evidence": "apps=[], browsers=[], The browser access host is unavailable",
+    "actual_visual_keyboard_verified": false
+  },
+  "scope_boundaries": {
+    "dedicated_hub": "/network; existing live app kept at /",
+    "competitor_content_imported": false,
+    "demo_profiles_labeled": true,
+    "fake_openings_inserted_locally": false,
+    "new_direct_messaging": false,
+    "real_charge_performed": false,
+    "live_card_checkout": "not connected; existing invoice/test workflow preserved",
+    "production_deployment": "not performed"
+  },
+  "source_sha256": {
+    "README.md": "ca8b2f30812c2e3e08c6472c2d330eba49b846231bde2d98b5d7c33f3a138d63",
+    "docs/API.md": "9256c215c00fddaa782d1a68f6436ea1381c6e01420932ecc7655c588711ab3b",
+    "docs/TALENT_NETWORK_IMPLEMENTATION.md": "73867b9f07c70a93df527ce62c97b368f105c4c4741f328b20098fe3c3e32ffe",
+    "docs/TALENT_NETWORK_RESEARCH.md": "d1ce221d1e5ede249ae2bb41d676015e69746a09931e58f8fb82779c63e84151",
+    "public/assets/editorial.css": "bd8a7fa0ce0869974604b6e71e5320798d781da44ae6e0e11b968012882acfc6",
+    "public/assets/network.css": "c8935fb94b44bac416536a3c43d297e53936fddfabeafeff3a8e917d9b7c2d49",
+    "public/assets/studio.js": "c2ab9affa52e1cb52f9d42412e7c88cc5339547ad4c3c13f4ab288e3b239dfeb",
+    "public/index.html": "39019e2d3bc7db08de2c56c02430d794c14ae85de24b1e9ba9364b370191a06c",
+    "server/db.js": "7c1be2a3417b868bc4a78c7d508380fee1191cb646f6e74cd9832d5a6d030671",
+    "server/employer-directory.js": "a329ade8d5401190ca8c3b4e4e7ba4e5c5c04c69630a7ed51a4059b14fdf84d1",
+    "server/index.js": "ad9e115a30d0c1aed6d971f4447fbf70548e3043de69cfce86b64f60771c42df",
+    "server/network.js": "737bfa15c56161ed3e70e402c3e7da0c5cc0c0835cbf3d0f58368526a86bd319",
+    "server/pages/editorial.js": "a01804af19140840e1e3d71f9ed5601d3c8a69ba3c74aa20d75c9fb5b414fc54",
+    "server/pages/network.js": "4fadb0e63106155975142ac7d496ea6471ebc1a02bf4cc1fd7abaab1574ff07b",
+    "server/routes/network.js": "2a1a901860b4e5643e72db5bbc8c35c8edb3345a6b80385bfe56d287f9bf3206",
+    "server/routes/studio.js": "69a409259aa58bedd88d38be192d0f01064de2065a34b5cb0286c2b481badb3e",
+    "test/network.test.js": "b11ef0ab387c633a548dc3910ad194e7c7312fa5585679976401bf5d38585826",
+    "test/network-pages.test.js": "ba9e0fa67e2568e3d5800465bc1813f89f32ce4c3c61da7201727abf0d5cd6de"
+  }
+}
