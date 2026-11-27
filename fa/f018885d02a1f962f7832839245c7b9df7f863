@@ -1,0 +1,19 @@
+README.md
+  s_a8302b15a18fd1::t_c6fc0353619fa3 119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "faf018885d02a1f962f7832839245c7b9df7f863",
+  "prompts": {},
+  "sessions": {
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
