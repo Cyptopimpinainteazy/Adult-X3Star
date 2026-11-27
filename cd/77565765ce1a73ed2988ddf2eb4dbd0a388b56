@@ -1,0 +1,67 @@
+README.md
+  s_a8302b15a18fd1::t_a0541111171b5b 175,178-179,184
+docs/API.md
+  s_a8302b15a18fd1::t_a3e513b269b31f 143-150
+public/assets/casting.js
+  s_a8302b15a18fd1::t_b5cb7e78add104 30,41,44,46-49,52,60-61,68
+public/assets/editorial.css
+  s_a8302b15a18fd1::t_adbde34eabfba1 10-12
+server/content/articles.js
+  s_a8302b15a18fd1::t_b9beb0a9f34104 366-371,373
+server/content/journal-affiliates.js
+  s_8da7a8c3b64ec6::t_9ef5d4cbbb67a2 1-893
+server/content/journal-creators.js
+  s_9b56e0cce08874::t_daf2968cd95a2a 1-924
+server/content/journal-hiring.js
+  s_d58832be3f0dde::t_f59798894120c4 1-804
+server/pages/editorial.js
+  s_a8302b15a18fd1::t_40901cabd75216 20,50-85,87-96,99
+server/routes/editorial.js
+  s_a8302b15a18fd1::t_6e1dae6a0722c4 7-8,12,28-38,47
+test/casting-client.test.js
+  s_a8302b15a18fd1::t_74eea8bd1affb5 1-75
+test/editorial.test.js
+  s_a8302b15a18fd1::t_d72e0c4bc4407d 8-9,11,65,70-75,89-115,120,137,156-181
+test/journal-content.test.js
+  s_a8302b15a18fd1::t_bd1b65ca990e86 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cd77565765ce1a73ed2988ddf2eb4dbd0a388b56",
+  "prompts": {},
+  "sessions": {
+    "s_8da7a8c3b64ec6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21e96-eecc-7b00-859c-4bdb1b1d658f",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_9b56e0cce08874": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21e96-a9cc-7112-a4bf-5334a7412872",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_d58832be3f0dde": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21e97-2c60-7ae2-aaf2-201168246c28",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
