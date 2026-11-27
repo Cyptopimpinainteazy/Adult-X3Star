@@ -1,0 +1,39 @@
+README.md
+  s_a8302b15a18fd1::t_61400794714466 183-184
+audit-artifacts/denver-casting-local.json
+  s_a8302b15a18fd1::t_8e938f3e03dc23 1-128
+campaigns/denver-casting/ADS.md
+  s_a8302b15a18fd1::t_e5c85f49a6274e 1-93
+campaigns/denver-casting/PLAN.md
+  s_a8302b15a18fd1::t_c4e904dc5ff9d6 1-40
+server/content/casting-campaigns.js
+  s_a8302b15a18fd1::t_3e4ff4a6b9ebb3 1-13
+server/pages/editorial.js
+  s_a8302b15a18fd1::t_b265b622cbcff0 6,29,31,34-35,41-49,121
+server/routes/editorial.js
+  s_a8302b15a18fd1::t_6e88b63ead161b 8-9,29-33
+server/routes/public.js
+  s_a8302b15a18fd1::t_69146bbd45fa6e 162-163
+test/casting-apply.test.js
+  s_a8302b15a18fd1::t_f371416b380255 96-116
+test/casting-client.test.js
+  s_a8302b15a18fd1::t_527495a8c815b7 9,13,20,76-89
+test/editorial.test.js
+  s_a8302b15a18fd1::t_723a56c6dde54c 60-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ed40e64b98630bf02c8f4c493f570317b6ac3e31",
+  "prompts": {},
+  "sessions": {
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
