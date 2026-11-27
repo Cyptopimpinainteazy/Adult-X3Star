@@ -1,0 +1,61 @@
+README.md
+  s_a8302b15a18fd1::t_5e0a007baa67f0 110-122
+audit-artifacts/talent-network-local.json
+  s_a8302b15a18fd1::t_e2a7549b376ffe 1-193
+docs/API.md
+  s_a8302b15a18fd1::t_b49a1ac8be7659 91-108
+docs/TALENT_NETWORK_IMPLEMENTATION.md
+  s_a8302b15a18fd1::t_91724253a53394 1-112
+docs/TALENT_NETWORK_RESEARCH.md
+  s_a8302b15a18fd1::t_a4b7ae94459604 1-13
+public/assets/editorial.css
+  s_a8302b15a18fd1::t_2a2826044734bf 7-9
+public/assets/network.css
+  s_a8302b15a18fd1::t_8ceb2122a0c7fb 1-186
+public/assets/studio.js
+  s_a8302b15a18fd1::t_42a48ed1beb9e4 88-89,116,124
+public/index.html
+  s_a8302b15a18fd1::t_6e3d6fc6af2d21 1055,1075,1545
+server/db.js
+  s_941edc7117563b::t_907db28b6950b7 65-66,371-377
+server/employer-directory.js
+  s_a8302b15a18fd1::t_dbd066cdf1ee83 157-158,172-177,551-638,813-814
+server/index.js
+  s_a8302b15a18fd1::t_3aef05cf6cd6dd 53,157-180
+server/network.js
+  s_a8302b15a18fd1::t_485910c30fa3ca 1-210
+server/pages/editorial.js
+  s_a8302b15a18fd1::t_2ea9d67dc44782 18,20,46
+server/pages/network.js
+  s_941edc7117563b::t_264fe59120093e 1-197
+server/routes/network.js
+  s_a8302b15a18fd1::t_5b1a1a73f36592 1-13
+test/network-pages.test.js
+  s_a8302b15a18fd1::t_2d3008d7cb7eaa 1-186
+test/network.test.js
+  s_a8302b15a18fd1::t_df457cb7fb3239 1-525
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b46f263598dc07ec40c5ebe62924d26445f9e14b",
+  "prompts": {},
+  "sessions": {
+    "s_941edc7117563b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bfd-baf9-7f00-bafd-27f1a996dc47",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_a8302b15a18fd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21bce-3128-7df0-9e83-aa8dfa6c7324",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
