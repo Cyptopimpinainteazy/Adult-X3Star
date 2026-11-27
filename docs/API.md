@@ -54,6 +54,24 @@ Every response includes `econ`: the full economy summary (balance, level, VIP, d
 ## Creator Studio (`/api/studio`, role creator; admins can pass `?as=<creatorId>`)
 `GET /` (profile, uploads, products, payouts, analytics) · `PUT /profile` · `POST /live { live }` (needs KYC) · `POST /upload` (multipart `file`, `kind`: avatar\|cover\|gallery\|story\|product, `caption`) · `PATCH /upload/:id { caption }` · `DELETE /upload/:id` · `POST|PUT|DELETE /products[/:id]` · `POST /pin { productId }` · `POST /convert { beans }` · `POST /payout { beans, method }` (needs KYC; minimum and weekly cap apply)
 
+## Per-star jobs boards
+
+Public fields: `{ id, creatorId, kind, title, description, category, workMode, location, compensation, status, expiresAt, createdAt, updatedAt }`. `kind` is `hiring` or `available`. Categories: `editing`, `moderation`, `design`, `photography`, `collaboration`, `other`. `workMode`: `remote`, `hybrid`, `onsite`. No public response includes applicant contacts or messages.
+
+| Method | Path | Result |
+|---|---|---|
+| GET | `/api/creators/:id/jobs` | `{jobs}`: open, unexpired listings from an approved, nonbanned owner; unknown/unavailable creator is `404` |
+| POST | `/api/jobs/:id/inquiries` | Signed in; `{message, portfolioUrl?}` → `201 {ok:true,inquiry}`; account name/email shared privately with owner/Admin |
+| GET | `/api/studio/jobs` | Owner/Admin `{jobs}` including drafts/closed/archived and private `inquiryCount`; up to 100, nonarchived first |
+| POST | `/api/studio/jobs` | Listing fields → `201 {job}`; default status `draft`, default expiry 30 days |
+| PUT | `/api/studio/jobs/:id` | Partial listing fields → `{job}`; owner only; reopening needs future expiry |
+| DELETE | `/api/studio/jobs/:id` | Archives; retains inquiries; returns `{ok:true}` |
+| GET | `/api/studio/jobs/:id/inquiries` | Owner/Admin `{inquiries}` with applicant account name/email, message, portfolio link and review status |
+| PATCH | `/api/studio/jobs/:id/inquiries/:inquiryId` | `{status:"new"|"reviewing"|"closed"}` → `{inquiry}`; owner-scoped listing and inquiry |
+| GET | `/stars/:id/jobs` | Public non-graphic HTML board, including offline stars; `noindex,follow`, no media or applicant data |
+
+Studio requests support Admin `?as=<creatorId>`; creator accounts always resolve to their own profile. Listing IDs are scoped to the resolved creator. Archive retains data and rejects later editing; use a new listing when needed. Limits: title 3–100, description 20–3000, compensation 3–160 characters; location at most 100 and required (2+) for hybrid/on-site. `expiresAt` is an integer timestamp in the future within 180 days when supplied. Open listings require future expiry. Maximum 20 nonarchived listings per star. Inquiry message is 10–2000 characters; optional portfolio URL is at most 500 characters, HTTPS, without credentials. Inquiry limit is 20 attempts/hour/IP and 100 accepted inquiries/listing. Duplicate inquiry returns `409 already_inquired`; closed/expired listings return `409 listing_closed`; self-inquiry is `400`. Private responses use `Cache-Control: no-store`. No mail delivery, applicant acceptance, payment or external forwarding is performed.
+
 ## Agency (role agent)
 `GET /api/agency` · `POST /api/agency/payout { beans, method }`
 

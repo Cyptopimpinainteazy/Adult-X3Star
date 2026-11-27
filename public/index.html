@@ -1013,6 +1013,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
 }
 </style>
 <link rel="stylesheet" href="assets/game.css">
+<link rel="stylesheet" href="assets/jobs.css">
 </head>
 <body class="locked">
 <a class="skip" href="#main">Skip to content</a>
@@ -1572,6 +1573,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
 <script src="shared/partners.js"></script>
 <script src="shared/economy.js"></script>
 <script src="assets/api.js"></script>
+<script src="assets/jobs.js"></script>
 <script>
 /* =====================================================================
    x3STAR frontend
@@ -1653,10 +1655,10 @@ const DEFAULT_MODELS = [
   { id: 'scarlett', name: 'Scarlett Rae',   ticker: 'SCAR', niche: 'Femdom',        tags: ['Heels', 'Findom', 'Roleplay'],        viewers: 1430, price: 0.1240, hues: ['#ff2d55', '#200008'], vhue: -40, sites: ['CB', 'SC', 'X3'], joined: 30, bio: 'Expensive taste, zero patience. Tribute leaderboard resets at midnight.' },
   { id: 'jade',     name: 'Jade Ember',     ticker: 'JADE', niche: 'BigBoobs',      tags: ['Redhead', 'Yoga', 'Toys'],            viewers: 2650, price: 0.0474, hues: ['#ff5a3c', '#3a0a14'], vhue: -20, sites: ['CB', 'SC', 'BC', 'X3'], joined: 6, bio: 'Morning yoga, evening shows. Fire-red hair and the most generous goal board on the floor.' }
 ];
-const toModel = (c) => ({ id: c.id, name: c.name, ticker: c.ticker, niche: c.niche, tags: c.tags && c.tags.length ? c.tags : [c.niche], viewers: c.viewers || 120, price: c.price || 0.02, hues: c.hues || ['#ff2d87', '#7a2cff'], vhue: c.vhue || 0, sites: c.sites || ['X3'], joined: c.joined || 1, bio: c.bio || '', avatar: c.avatar, cover: c.cover, video: c.video, go: c.go || {} });
+const toModel = (c) => ({ id: c.id, name: c.name, ticker: c.ticker, niche: c.niche, tags: c.tags && c.tags.length ? c.tags : [c.niche], viewers: c.viewers || 120, price: c.price || 0.02, hues: c.hues || ['#ff2d87', '#7a2cff'], vhue: c.vhue || 0, sites: c.sites || ['X3'], joined: c.joined || 1, bio: c.bio || '', avatar: c.avatar, cover: c.cover, video: c.video, go: c.go || {}, back: c.back || '', live: c.live !== false });
 const MODELS = BOOT && BOOT.api ? ((BOOT.creators && BOOT.creators.length ? BOOT.creators : BOOT.offline || []).map(toModel)) : DEFAULT_MODELS;
 if (!MODELS.length) MODELS.push(...DEFAULT_MODELS);
-const byId = Object.fromEntries(MODELS.map(m => [m.id, m]));
+const byId = Object.fromEntries([...((BOOT && BOOT.offline) || []).map(toModel), ...MODELS].map(m => [m.id, m]));
 [...MODELS, ...((BOOT && BOOT.offline) || [])].forEach(m => { if (m.cover || m.avatar || m.video) CONFIG.media[m.id] = Object.assign({}, CONFIG.media[m.id], (m.cover || m.avatar) ? { poster: m.cover || m.avatar } : {}, m.video ? { video: m.video } : {}); });
 /* deterministic RNG so seeded boards are stable across reloads */
 function seedRng(str) { let h = 2166136261 >>> 0; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return (h % 1e6) / 1e6; }; }
@@ -1913,6 +1915,9 @@ class SimulatedAdapter {
 
 const bus = new ChatBus();
 ChatBus.me = BOOT && BOOT.me ? BOOT.me.name : null;
+addEventListener('x3star:session-changed', event => {
+  if (BOOT && BOOT.api && event.detail && event.detail.user) ChatBus.me = event.detail.user.name;
+});
 const SIM = {};
 if (CONFIG.chatSocketUrl) {
   bus.use(new WebSocketAdapter({ url: CONFIG.chatSocketUrl, protocols: CONFIG.chatSocketProtocols }));
@@ -2296,7 +2301,10 @@ function wireFilters() {
 
 /* full profile modal */
 function openProfile(id, tab = 'about') {
-  const m = byId[id]; track('profile_open', { model: id });
+  const m = byId[id];
+  if (!m) return toast('Creator profile not found.');
+  if (m.live === false) { location.hash = '#member-' + id; return; }
+  track('profile_open', { model: id });
   const api = openModal(`
     <div class="profile-modal">
       <div class="pm-media">
@@ -2308,7 +2316,7 @@ function openProfile(id, tab = 'about') {
       <div class="pm-body">
         <span class="eyebrow">${esc(m.niche)} · ${m.sites.map(s => SITES[s]).join(' · ')}</span>
         <h3>${esc(m.name)}<svg class="verified" style="width:22px;height:22px"><use href="#i-check"/></svg></h3>
-        <div class="tabs" role="tablist"><button data-t="about">About</button><button data-t="store">Store</button><button data-t="fans">Top fans</button><button data-t="comments">Comments</button></div>
+        <div class="tabs" role="tablist"><button data-t="about">About</button><button data-t="store">Store</button><button data-t="fans">Top fans</button><button data-t="comments">Comments</button><button data-t="jobs">Jobs</button></div>
         <div data-panel></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto">
           <button class="btn btn--green" data-a="tip"><svg class="icon"><use href="#i-coin"/></svg>Tip</button>
@@ -2324,6 +2332,7 @@ function openProfile(id, tab = 'about') {
   bindCoins(r);
   const panel = $('[data-panel]', r);
   const show = (t) => {
+    window.X3Jobs && window.X3Jobs.cancel(panel);
     $$('.tabs button', r).forEach(b => b.classList.toggle('on', b.dataset.t === t));
     if (t === 'about') {
       const c = market.get(id);
@@ -2331,6 +2340,9 @@ function openProfile(id, tab = 'about') {
         <div class="kv" style="grid-template-columns:repeat(2,1fr)"><div><small>Market cap</small><b data-coin="${id}" data-field="mcap"></b></div><div><small>Holders</small><b data-coin="${id}" data-field="holders"></b></div><div><small>24h volume</small><b data-coin="${id}" data-field="vol"></b></div><div><small>On x3STAR</small><b>${m.joined} mo</b></div></div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${m.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div>`;
       bindCoins(panel);
+    } else if (t === 'jobs') {
+      panel.innerHTML = '<p class="note">Loading jobs board…</p>';
+      window.X3Jobs && window.X3Jobs.mount(panel, { creatorId: id });
     } else if (t === 'store') {
       panel.innerHTML = `<div class="tab-panel mini-prods">${productsFor(m).map(p => `<div class="mini-prod"><div class="pi" style="background:${p.bg}"><svg><use href="#${p.icon}"/></svg></div><div style="flex:1;min-width:0"><b>${esc(p.name)}</b><span>${fmt.usd(p.price)}</span></div><button class="icon-btn" style="width:32px;height:32px" data-add="${p.sku}" aria-label="Add ${esc(p.name)} to cart">+</button></div>`).join('')}</div>`;
       $$('[data-add]', panel).forEach(b => b.onclick = () => addToCart(m.id, b.dataset.add));
@@ -2923,9 +2935,17 @@ function renderPostPage(id) {
   $('[data-tip]', root).onclick = () => openTip(m.id);
   bindCoins(root); renderThread($('[data-thread]', root), 'post-' + p.id);
 }
+function renderOfflineMember(m, root) {
+  root.innerHTML = `<a href="#profiles" class="back" style="margin-bottom:18px">← All creators</a>
+    <div class="member-hero"><img src="${poster(m)}" alt=""></div>
+    <div class="member-id"><div class="ava-lg" style="background-image:url(${poster(m)})"></div><div><span class="tag">OFFLINE</span><h1>${esc(m.name)}</h1><p class="note">${esc(m.back || 'Check back for their next session.')}</p></div><div class="acts"><a class="btn btn--primary" href="/stars/${encodeURIComponent(m.id)}/jobs">Shareable jobs board ↗</a></div></div>
+    <div class="member-cols"><div><p style="font-size:17px;color:#d4cbd1;max-width:640px">${esc(m.bio)}</p><section aria-label="Jobs and opportunities" data-creator-jobs="${esc(m.id)}"><p class="note">Loading jobs board…</p></section><div class="thread"></div></div><aside><div class="side-card panel"><h4>While they’re offline</h4><p class="note">Published jobs and opportunities stay available independently of live sessions.</p><a class="btn btn--sm" href="/casting">Explore creator casting</a></div></aside></div>`;
+  window.X3Game && window.X3Game.onMember(m.id, root);
+}
 function renderMemberPage(id) {
   const m = byId[id], root = $('#pageInner');
   if (!m) { root.innerHTML = `<div class="empty">Member not found. <a href="#profiles" class="btn btn--sm">Browse creators</a></div>`; return; }
+  if (m.live === false) return renderOfflineMember(m, root);
   root.innerHTML = `
     <a href="#profiles" class="back" style="margin-bottom:18px"><svg class="icon" style="width:14px;height:14px"><use href="#i-back"/></svg>All creators</a>
     <div class="member-hero"><img src="${poster(m)}" alt="">${videoSrc(m) ? `<video muted loop playsinline autoplay style="${videoFilter(m)};opacity:.7"></video>` : ''}</div>
@@ -2939,6 +2959,7 @@ function renderMemberPage(id) {
         <p style="font-size:17px;color:#d4cbd1;max-width:640px">${esc(m.bio)}</p>
         <div class="kv"><div><small>Price</small><b data-coin="${id}" data-field="price"></b></div><div><small>24h</small><b data-coin="${id}" data-field="chg"></b></div><div><small>Market cap</small><b data-coin="${id}" data-field="mcap"></b></div><div><small>Holders</small><b data-coin="${id}" data-field="holders"></b></div></div>
         <div class="panel" style="padding:18px">${sparkSVG(id, { w: 700, h: 120 }).replace('class="spark', 'style="width:100%;height:120px" class="spark')}</div>
+        <section aria-label="Jobs and opportunities" data-creator-jobs="${esc(id)}"><p class="note">Loading jobs board…</p></section>
         <div class="thread" data-thread></div>
       </div>
       <aside style="display:flex;flex-direction:column;gap:16px">
@@ -3114,7 +3135,7 @@ function wireStage() {
 }
 bus.on(m => {
   if (m.type === 'status' || !m.room) return;
-  if (m.type === 'tip') {
+  if (m.type === 'tip' && stage.goal[m.room]) {
     const g = stage.goal[m.room]; g.got += m.amount;
     if (g.got >= g.target) { if (m.room === stage.id) toast(`Goal reached — ${GOALS[m.room]} is on!`, 'ok'); g.got = 0; g.target = Math.round(g.target * 1.2 / 100) * 100; }
     if (m.room === stage.id && $('#stageGoal').children.length) paintGoal();
@@ -3156,7 +3177,7 @@ const OFFLINE = (BOOT && BOOT.api) ? ((BOOT.creators && BOOT.creators.length ? B
 ];
 function renderOffline() {
   const alerts = new Set(store.get('alerts', []));
-  $('#offGrid').innerHTML = OFFLINE.map(o => `<article class="ocard panel reveal"><div class="om" style="background-image:url(${poster(o)})"><span>OFFLINE · BACK ${esc(o.back.toUpperCase())}</span></div><div class="ob"><h4>${esc(o.name)}</h4><div class="meta">${esc(o.niche)} · ${fmt.k(o.fans)} fans</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px">${o.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><button class="btn btn--sm btn--block ${alerts.has(o.id) ? 'btn--primary' : ''}" data-alert="${o.id}" aria-pressed="${alerts.has(o.id)}">${alerts.has(o.id) ? 'Alert on' : 'Alert me when live'}</button></div></article>`).join('');
+  $('#offGrid').innerHTML = OFFLINE.map(o => `<article class="ocard panel reveal"><div class="om" style="background-image:url(${poster(o)})"><span>OFFLINE · BACK ${esc(o.back.toUpperCase())}</span></div><div class="ob"><h4>${esc(o.name)}</h4><div class="meta">${esc(o.niche)} · ${fmt.k(o.fans)} fans</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px">${o.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>${byId[o.id] ? `<a class="btn btn--sm btn--block" href="#member-${o.id}">View profile &amp; jobs</a>` : ''}<button class="btn btn--sm btn--block ${alerts.has(o.id) ? 'btn--primary' : ''}" data-alert="${o.id}" aria-pressed="${alerts.has(o.id)}">${alerts.has(o.id) ? 'Alert on' : 'Alert me when live'}</button></div></article>`).join('');
   $$('#offGrid [data-alert]').forEach(b => b.onclick = () => {
     const set = new Set(store.get('alerts', [])), id = b.dataset.alert, on = !set.has(id); on ? set.add(id) : set.delete(id); store.set('alerts', [...set]);
     b.classList.toggle('btn--primary', on); b.textContent = on ? 'Alert on' : 'Alert me when live'; b.setAttribute('aria-pressed', on); track('alert', { id, on });

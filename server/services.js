@@ -86,6 +86,7 @@ function publicCreator(c, opts = {}) {
     go: goLinks(c)
   };
   if (opts.full) {
+    out.jobs = require('./jobs').publicRows(c.id);
     out.gallery = all("SELECT id, mime, file, caption, created_at FROM uploads WHERE creator_id = ? AND kind = 'gallery' AND status = 'approved' ORDER BY id DESC LIMIT 60", c.id)
       .map(u => ({ id: u.id, url: uploadUrl(u), type: u.mime.startsWith('video/') ? 'video' : 'image', caption: u.caption, at: u.created_at }));
     out.products = all('SELECT * FROM products WHERE creator_id = ? AND active = 1 ORDER BY id', c.id).map(p => publicProduct(p));

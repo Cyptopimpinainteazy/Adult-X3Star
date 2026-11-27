@@ -102,6 +102,16 @@ r.delete('/upload/:id', (req, res) => {
 });
 
 /* ---------- products (creator store) ---------- */
+/* Listings and private inquiries reuse the same owner/admin creator scope. */
+const Jobs = require('../jobs');
+r.use('/jobs', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+r.get('/jobs', (req, res) => res.json({ jobs: Jobs.listOwned(myCreator(req).id) }));
+r.post('/jobs', (req, res) => res.status(201).json({ job: Jobs.create(myCreator(req), req.body, req.user.id) }));
+r.put('/jobs/:id', (req, res) => res.json({ job: Jobs.update(myCreator(req), req.params.id, req.body, req.user.id) }));
+r.delete('/jobs/:id', (req, res) => { Jobs.archive(myCreator(req).id, req.params.id, req.user.id); res.json({ ok: true }); });
+r.get('/jobs/:id/inquiries', (req, res) => res.json({ inquiries: Jobs.listInquiries(myCreator(req).id, req.params.id) }));
+r.patch('/jobs/:id/inquiries/:inquiryId', (req, res) => res.json({ inquiry: Jobs.setInquiryStatus(myCreator(req).id, req.params.id, req.params.inquiryId, req.body && req.body.status, req.user.id) }));
+
 function productBody(b, c) {
   const uploadId = b.uploadId ? Number(b.uploadId) : null;
   if (uploadId && !get('SELECT 1 FROM uploads WHERE id = ? AND creator_id = ?', uploadId, c.id)) throw bad('Image must be one of your uploads');
