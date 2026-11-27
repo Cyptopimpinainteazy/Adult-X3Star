@@ -107,6 +107,32 @@ All economy values (prices, odds, rewards, payout rates, affiliate links) are ed
 
 Affiliate networks and search consoles often ask you to upload a file (e.g. `commission-factory-<token>.html`) so it's reachable at `https://www.x3star.live/<file>`. Put it in `data/site-files/` on the server (`~/x3star/data/site-files/` with the setup script); it's served at the site root right away, survives updates (it lives with your data, not in git), and never shadows the app's own pages. Allowed: plain file names ending in .html, .htm, .txt, .xml or .json.
 
+### Paid employer jobs directory
+
+`/jobs` is the sitewide employer directory: search by role/company, category, U.S. state and remote/hybrid/on-site arrangement. `/jobs/<id>` serves a full opening with a free private inquiry action. Applicants are not charged. The existing free per-star boards remain independent of paid directory placement.
+
+Employers use `/employers` with an existing x3STAR account or a new account. They do not need a creator profile. The workflow is company profile → draft opening → content review → server-priced invoice → confirmed receipt → publication. Listing edits return the content to review and do not pause or restart an already-running paid period. Company identity is copied into the reviewed listing, so a later profile edit cannot silently replace a published employer name.
+
+**Admin → Employer directory** controls future pricing, review, employer suspension, invoice receipts and off-platform full-refund records. The initial local test setting is **$49 USD for 30 days**, editable in Admin. Each invoice preserves its quoted integer-cent price, currency, duration and payment instructions. Price changes affect new invoices. Review approval is bound to the content snapshot displayed to Admin; stale approvals are rejected.
+
+Employer billing uses its own orders and ledger, separate from diamond purchases:
+
+| `JOB_BILLING_MODE` | Behavior |
+| --- | --- |
+| `disabled` (default) | Employers can prepare/review drafts; no new paid invoice flow |
+| `test` | Development simulation only; explicit test receipt, no money charged, test ads labeled and excluded from live revenue/production publication |
+| `manual` | Employer follows Admin-configured invoice instructions; Admin records an actual off-platform receipt with matching amount/currency and a unique reference |
+
+Manual mode requires invoice instructions configured in Admin. Pausing **new orders** does not prevent reconciliation of existing receipts. Unpaid invoices can be cancelled by the owner. Recording an off-platform full refund removes that invoice’s entitlement and does **not** transfer money. Duplicate confirmations cannot extend an ad, and a receipt reference cannot pay multiple invoices. Publication requires approved content, a paid unrefunded entitlement, active employer/nonbanned owner, and an unexpired display period. Test receipts cannot become real manual invoices; switching modes requires a new real invoice. No fake provider-success endpoint or live card checkout is supplied.
+
+**Live card processing remains unconnected.** It requires an approved merchant account for this business and the chosen provider's actual credentials/verified notification integration. See [primary-source payment/directory research](docs/EMPLOYER_DIRECTORY_RESEARCH.md). Manual receipts are Admin attestations, not automatic processor verification. This feature does not send employer/candidate emails or make hiring decisions.
+
+The directory/detail pages are non-graphic HTML without live media. Filter variants, empty directories and test ads use `noindex`; real public openings have canonical URLs. No `JobPosting` markup or Google Jobs inclusion is claimed. New tables and migrations preserve existing users, roles, star boards and diamond orders.
+
+```bash
+node --test test/employer-directory.test.js test/directory-pages.test.js test/jobs-client.test.js
+```
+
 ### Per-star jobs and available work
 
 Every approved star has a board on their full profile (`/#member-luna`, for example), a Jobs tab in their profile dialog, and a shareable page at `/stars/luna/jobs`. Boards remain available when the star is offline. No sample openings are published automatically.

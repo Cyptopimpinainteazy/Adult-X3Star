@@ -200,3 +200,22 @@ test('standalone mode never fetches or fabricates a published jobs board', async
   assert.match(host.innerHTML, /standalone preview does not contain published listings/);
   assert.ok(!host.innerHTML.includes(job.title));
 });
+
+test('employer directory inquiries use the separate directory endpoint and company context', async () => {
+  const paths = [];
+  const directoryJob = { ...job, id: 42, companyName: 'Example Studio', test: true };
+  const context = client({ get: async route => { paths.push(route); return route === '/api/me' ? { user } : { job: directoryJob }; }, post: async route => { paths.push(route); return { ok: true, inquiry: { id: 9 } }; } });
+  const host = new Element();
+  await context.X3Jobs.mount(host, { source: 'employer', listingId: 42 });
+  assert.equal(paths[0], '/api/directory/jobs/42');
+  assert.match(host.innerHTML, /Example Studio/);
+  assert.match(host.innerHTML, /TEST LISTING/);
+  assert.match(host.innerHTML, /href="\/jobs\/42"/);
+  await host.buttons[0].handlers.click();
+  const form = host.buttons[0].slot.form;
+  form.elements.message.value = 'I would like to discuss this opening.';
+  await submit(form);
+  assert.ok(paths.includes('/api/directory/jobs/42/inquiries'));
+  assert.ok(!paths.includes('/api/jobs/42/inquiries'));
+  assert.match(host.buttons[0].slot.status.textContent, /employer/);
+});

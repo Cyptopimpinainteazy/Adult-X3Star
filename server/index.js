@@ -49,6 +49,7 @@ app.use('/api', (req, res, next) => {
 /* API */
 app.use('/api', require('./routes/public'));
 app.use('/api', require('./routes/jobs'));
+app.use('/api', require('./routes/employer-directory'));
 app.use('/api/econ', require('./routes/econ').router);
 app.use('/api/studio', require('./routes/studio'));
 app.use('/api/admin', require('./routes/admin'));
@@ -152,6 +153,18 @@ app.get(['/', '/index.html'], sendIndex);
 const editorial = require('./routes/editorial');
 app.use(editorial.router);
 const baseUrl = editorial.originFor;
+app.get(['/jobs', '/jobs/:id'], (req, res) => {
+  if (req.path.endsWith('/')) {
+    const query = req.originalUrl.indexOf('?');
+    return res.redirect(301, req.originalUrl.slice(0, query === -1 ? undefined : query).replace(/\/+$/, '') + (query === -1 ? '' : req.originalUrl.slice(query)));
+  }
+  const directory = require('./employer-directory'), page = require('./pages/directory');
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.params.id) return res.type('html').send(page.renderDirectoryJob({ job: directory.publicJob(req.params.id), origin: baseUrl(req) }));
+  const settings = directory.config();
+  const plan = { priceCents: settings.priceCents, currency: settings.currency, durationDays: settings.durationDays, enabled: settings.enabled, available: settings.available, billingMode: settings.billingMode, testPaymentsAllowed: settings.testPaymentsAllowed };
+  res.type('html').send(page.renderDirectory({ result: directory.search(req.query), query: req.query, origin: baseUrl(req), plan, billingMode: plan.billingMode }));
+});
 app.get('/stars/:id/jobs', (req, res) => {
   if (req.path.endsWith('/')) {
     const query = req.originalUrl.indexOf('?');
