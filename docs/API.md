@@ -13,12 +13,24 @@ JSON over HTTPS. Sessions use an `httpOnly` cookie (`x3s_sid`). State-changing r
 | GET | `/api/leaderboard/gifters?days=7` | Top gifters |
 | GET | `/api/families` · `/api/families/:id` | Family leaderboard (week points), roster |
 | GET | `/api/pk` · `/api/war` | Current PK battle, family war window |
-| POST | `/api/apply` | Creator/agent application `{ email, stage, niche, hours, sites[], note, adult:true, agentCode? }` |
+| POST | `/api/apply` | Creator/agent application `{ email, stage, niche, hours, sites[], note, adult:true, agentCode?, state?, landingPath?, campaign? }`; returns `201 {ok:true}` after storage |
 | GET | `/go/:site/:creator?c=&s=` | Logs a click on a creator's "Also live on" link and redirects (302). Chaturbate uses the partner config; other sites use their URL template |
 | GET | `/go/a/:id?c=&s=` | Logs a click on an Affiliates-registry link and redirects (302) — active partners only |
 | GET | `/go/v/:id?c=&s=` | Logs a partner-video click and redirects (302) to the clip's BongaCams tracking link |
 | GET | `/api/partner-videos?tag=&performer=&limit=&offset=` | Partner videos (newest first) with the top tags |
 | GET | `/go/p/:placement?c=&s=` | Logs a click on a site partner placement (footer, partner ad, apply page) and redirects (302) to the Chaturbate affiliate URL |
+
+## Casting attribution
+
+`state` is optional: a US state slug or two-letter code, stored as the canonical slug (for example `CO` → `colorado`). `landingPath` is an optional `/casting` or `/casting/<known-state-slug>` entry path, without a query, fragment or external origin. It is independent of the applicant's selected state. Both are returned in `GET /api/admin/applications` and shown in Admin.
+
+`campaign` is an optional object. Supported keys are `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `ref`, plus legacy aliases `source`, `medium`, `campaign`, `content`, `term` (strings up to 160 characters). Optional `first_seen` is a nonnegative safe-integer timestamp. Unknown keys, nested data, arrays, null and oversized values return `400`. Legacy applications omitting the new fields still work. The existing limit is five application attempts per hour/IP; duplicate pending email returns `409`, and missing adulthood confirmation returns `400 age_required`. A successful receipt confirms review-queue storage, not acceptance or email delivery.
+
+## Public editorial HTML
+
+`GET /casting` · `GET /casting/:state` · `GET /blog` · `GET /blog/:slug` · `GET /cam-model-guide` · `GET /robots.txt` · `GET /sitemap.xml`. These are HTML/crawler routes rather than JSON APIs. Unknown state/article slugs return `404`. Trailing-slash casting/journal URLs redirect permanently to the canonical path while retaining query attribution. State pages awaiting developed local guidance use both HTML and HTTP `noindex` directives and are omitted from the sitemap. `SITE_URL` configures the canonical public origin.
+
+Partner application links use existing `/go/p/apply_broadcaster` or available Admin affiliate placements, with `s=casting_<state>[_<utm_source>]` and optional `c=<utm_campaign>`. The existing partner track-tag length/character limit still applies. Internal Admin traffic keeps the source and campaign separately; an exit click does not confirm an external registration.
 
 ## Auth & account
 `POST /api/auth/register { email, name, password, adult:true, ref? }` · `POST /api/auth/login` · `POST /api/auth/logout` · `POST /api/auth/password { current, next }` · `GET /api/me` · `POST /api/me/avatar` (multipart `file`) · `GET /api/me/history` · `POST /api/reports { targetType, targetId, reason }`

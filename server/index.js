@@ -148,7 +148,9 @@ const sendIndex = (req, res) => {
 app.get(['/', '/index.html'], sendIndex);
 
 /* indexable pages + crawler files */
-const baseUrl = (req) => `${req.protocol}://${req.get('host')}`;
+const editorial = require('./routes/editorial');
+app.use(editorial.router);
+const baseUrl = editorial.originFor;
 app.get(['/cam-model-guide', '/become-a-cam-model'], (req, res) => {
   if (req.path !== '/cam-model-guide') return res.redirect(301, '/cam-model-guide');
   res.setHeader('Cache-Control', 'public, max-age=300');
@@ -166,11 +168,6 @@ app.get(/^\/([A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.(?:html|htm|txt|xml|json))$/, (re
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(file, { dotfiles: 'deny', headers: { 'X-Content-Type-Options': 'nosniff' } });
   });
-});
-app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /api/\nDisallow: /admin\nDisallow: /studio\nDisallow: /go/\nDisallow: /uploads/\nSitemap: ${baseUrl(req)}/sitemap.xml\n`));
-app.get('/sitemap.xml', (req, res) => {
-  const b = baseUrl(req), day = new Date().toISOString().slice(0, 10);
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['/', '/cam-model-guide'].map(p => `  <url><loc>${b}${p}</loc><lastmod>${day}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 });
 app.use('/shared', express.static(cfg.SHARED_DIR, { maxAge: cfg.NODE_ENV === 'production' ? '1h' : 0 }));
 app.use(express.static(cfg.PUBLIC_DIR, { index: false, extensions: ['html'], maxAge: cfg.NODE_ENV === 'production' ? '1h' : 0 }));
