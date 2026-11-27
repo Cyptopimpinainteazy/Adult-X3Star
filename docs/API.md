@@ -140,3 +140,11 @@ Server → client: `hello`, `chat`, `gift`, `enter`, `pk`, `error`. Client → s
 Gift message: `{ type:'gift', id, site:'X3', room, user, giftId, qty, diamonds, fx, level, vip, cosmetics }`.
 
 To merge external sites (Chaturbate, Stripchat, …) into the same stream, run a relay that turns each site's event feed into `chat` / `tip` messages (`{ type:'tip', site:'CB', room, user, amount, text }`) and broadcasts them through `server/ws.js` → `broadcast()`.
+
+## Public industry journal and publisher inquiries
+
+`GET /blog` lists all 58 articles; optional scalar `audience=creators|affiliates|hiring` and `q` (maximum 100 characters) select guides. Unknown/malformed/repeated filters return 400. Filter variants use noindex/follow and the canonical `/blog`; every `/blog/:slug` remains a full article with canonical, byline/dates, matching BlogPosting metadata and related reading. Fifty new articles have collection `industry-50`; the original eight records remain unchanged. `/sitemap.xml` has 69 canonical entries, including all 58 articles and `/partners`.
+
+`GET /partners` returns an informational publisher/referral landing page and inquiry form, with no-store. The shared casting client sends `POST /api/apply` JSON with `kind:'agent'`, public/business `stage`, contact `email`, `adult:true`, `hours:0`, `state:''`, a bounded note combining the website/audience/proposal, and the existing campaign object. It omits casting-only `landingPath`. Article calls to action add only `utm_content` so existing acquisition-source attribution is preserved. The existing application endpoint enforces its normal validation, duplicate-pending and rate limits; Admin reviews the private agent-kind application. Receipt requires `201 {ok:true}`; the frontend does not announce success on a malformed 200. No email, acceptance, account creation, contract, commission activation or payment occurs on submission.
+
+Creators continue using the unchanged `/casting` payload; employer readers use `/employers`. Article source links are HTTPS and escaped. The public journal loads no live-room media, external fonts or advertising SDK. Publication here means source/local Node routes; no search ranking, production deployment or lead volume is implied.
