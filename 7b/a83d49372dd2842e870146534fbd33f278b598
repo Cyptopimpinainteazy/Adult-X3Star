@@ -1,0 +1,57 @@
+server/config.js
+  s_1898582a33ecc7::t_bf166a9f06691c 22-27,31
+server/index.js
+  s_1898582a33ecc7::t_cf2b032ce68e82 151-153
+server/routes/public.js
+  s_1898582a33ecc7::t_c7a18a436fd98c 137-169,178-180
+test/casting-apply.test.js
+  s_1898582a33ecc7::t_1de92df480d601 1-95
+.env.example
+  s_4f1de8800fa7ba::t_c11ea914bd2437 9-11
+README.md
+  s_4f1de8800fa7ba::t_bc628c09a1e309 61,110-133
+docs/API.md
+  s_4f1de8800fa7ba::t_f811f30d3d0dcc 16,23-34
+docs/CASTING_IMPLEMENTATION.md
+  s_1898582a33ecc7::t_6bec0b2faa854e 1-151
+public/assets/admin.js
+  s_1898582a33ecc7::t_d2d8f2b965632b 67
+public/assets/casting.js
+  s_4f1de8800fa7ba::t_14fd4a239c4c8b 1-71
+public/assets/editorial.css
+  s_4f1de8800fa7ba::t_4b1609f77e7a9d 1-6
+public/index.html
+  s_1898582a33ecc7::t_0dd722d579db93 1074,1397,1495,1544-1545,3475
+server/content/articles.js
+  s_4f1de8800fa7ba::t_3e5a9dcdf2169f 1-367
+server/pages/editorial.js
+  s_4f1de8800fa7ba::t_a86eb791f10035 1-57
+server/routes/editorial.js
+  s_1898582a33ecc7::t_0c38359c656e64 1-39
+test/editorial.test.js
+  s_4f1de8800fa7ba::t_240827484c96b7 1-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ba83d49372dd2842e870146534fbd33f278b598",
+  "prompts": {},
+  "sessions": {
+    "s_1898582a33ecc7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1ac116f6-6b5b-4560-b899-f76dd06bdbc6",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    },
+    "s_4f1de8800fa7ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a7d8a8b278698e4f7",
+        "model": "unknown"
+      },
+      "human_author": "crypto pimpim <cryptopimpinainteazy@gmail.com>"
+    }
+  }
+}
