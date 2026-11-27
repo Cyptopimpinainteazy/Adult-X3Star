@@ -5,6 +5,9 @@ const { bad, HttpError, oneOf } = require('./routes/common');
 const { getState } = require('./content/states');
 const Jobs = require('./jobs');
 const Employers = require('./employer-directory');
+const Media = require('./talent-media');
+const creatorColumns =
+  'c.id,c.name,c.niche,c.tags,c.bio,c.network_city,c.network_state,c.live,c.demo,c.user_id,c.avatar_upload_id,c.cover_upload_id,c.handles';
 const creatorJoin = ' FROM creators c JOIN users u ON u.id=c.user_id ';
 const creatorGate = "c.status='approved' AND u.banned=0";
 function filters(query = {}) {
@@ -45,7 +48,7 @@ function filters(query = {}) {
   };
 }
 const literal = (value) => '%' + value.replace(/[\\%_]/g, '\\$&') + '%';
-function creatorOut(row, counts = {}) {
+function creatorOut(row, counts = {}, media = { photo: null, previewUrl: null }) {
   const tags = J(row.tags, []);
   return {
     id: row.id,
@@ -57,6 +60,8 @@ function creatorOut(row, counts = {}) {
     networkState: row.network_state || '',
     live: !!row.live,
     demo: !!row.demo,
+    photo: media.photo,
+    previewUrl: media.previewUrl,
     availableCount: counts.available || 0,
     hiringCount: counts.hiring || 0,
     opportunityCount: (counts.available || 0) + (counts.hiring || 0),
@@ -99,7 +104,8 @@ function searchTalent(query = {}) {
   const where = parts.join(' AND '),
     total = get('SELECT COUNT(*) AS n' + creatorJoin + 'WHERE ' + where, ...params).n;
   const rows = all(
-    'SELECT c.id,c.name,c.niche,c.tags,c.bio,c.network_city,c.network_state,c.live,c.demo' +
+    'SELECT ' +
+      creatorColumns +
       creatorJoin +
       'WHERE ' +
       where +
@@ -108,32 +114,34 @@ function searchTalent(query = {}) {
     f.pageSize,
     (f.page - 1) * f.pageSize
   );
-  const counts = countsFor(rows.map((row) => row.id));
+  const counts = countsFor(rows.map((row) => row.id)),
+    media = Media.forRows(rows);
   return {
-    talent: rows.map((row) => creatorOut(row, counts.get(row.id))),
+    talent: rows.map((row) => creatorOut(row, counts.get(row.id), media.get(row.id))),
     total,
     page: f.page,
     pageSize: f.pageSize,
     pages: Math.ceil(total / f.pageSize)
   };
 }
-function talentProfile(creatorId) {
+function publicCreatorRow(creatorId) {
   if (typeof creatorId !== 'string' || creatorId.length > 80)
     throw new HttpError(404, 'not_found', 'Creator not found');
-  const row = get(
-    'SELECT c.id,c.name,c.niche,c.tags,c.bio,c.network_city,c.network_state,c.live,c.demo' +
-      creatorJoin +
-      'WHERE c.id=? AND ' +
-      creatorGate,
-    creatorId
-  );
+  const row = get('SELECT ' + creatorColumns + creatorJoin + 'WHERE c.id=? AND ' + creatorGate, creatorId);
   if (!row) throw new HttpError(404, 'not_found', 'Creator not found');
+  return row;
+}
+function talentProfile(creatorId) {
+  const row = publicCreatorRow(creatorId);
   const jobs = Jobs.listPublic(row.id),
     counts = {
       available: jobs.filter((job) => job.kind === 'available').length,
       hiring: jobs.filter((job) => job.kind === 'hiring').length
     };
-  return { creator: creatorOut(row, counts), jobs };
+  return { creator: creatorOut(row, counts, Media.forRows([row]).get(row.id)), jobs };
+}
+function talentPreview(creatorId, ip) {
+  return Media.resolvePreview(() => publicCreatorRow(creatorId), ip);
 }
 function searchOpportunities(query = {}) {
   const f = filters(query),
@@ -207,4 +215,4 @@ function searchCompanies(query = {}) {
 function companyProfile(employerId) {
   return Employers.publicCompanyProfile(employerId);
 }
-module.exports = { searchTalent, talentProfile, searchOpportunities, searchCompanies, companyProfile };
+module.exports = { searchTalent, talentProfile, talentPreview, searchOpportunities, searchCompanies, companyProfile };

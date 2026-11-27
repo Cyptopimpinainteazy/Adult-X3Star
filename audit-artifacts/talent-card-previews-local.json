@@ -1,0 +1,191 @@
+{
+  "task": "circular-talent-photos-and-live-room-previews",
+  "recorded_at": "2026-11-27T19:25:03.213797+00:00",
+  "branch": "feat/talent-card-previews",
+  "git_head_at_verification": "b46f263598dc07ec40c5ebe62924d26445f9e14b",
+  "source_state": "scoped working changes over recorded parent; unrelated collaborative casting/live docs and wiki/IDE files preserved and excluded",
+  "versions": {
+    "node": "v24.22.1",
+    "sqlite": "3.53.4"
+  },
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 120,
+      "pass": 120,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check server/shared/public/assets/test/scripts JavaScript",
+      "files": 62,
+      "exit_code": 0
+    },
+    {
+      "command": "vm.Script parse source/standalone inline scripts",
+      "scripts": 8,
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "tests": {
+    "new_media_http_sqlite": 10,
+    "new_isolated_client_lifecycle": 8,
+    "existing_rendered_http_pages": 4,
+    "actual_upload_moderation": true,
+    "authorized_admin_upload_on_behalf": true,
+    "strict_public_cache_and_inflight_isolation": true,
+    "post_async_owner_and_configuration_recheck": true,
+    "exact_room_and_safe_provider_url": true,
+    "single_frame_lifecycle_cleanup": true,
+    "limited_dom_boundary": "Not actual browser or provider playback proof",
+    "provider_test_boundary": "External provider responses isolated at existing fetcher boundary"
+  },
+  "independent_review": {
+    "reviewers": 2,
+    "affected_tests_passed": 43,
+    "findings_remaining": 0,
+    "resolved": [
+      "removed-frame listener retention",
+      "window blur and background restart",
+      "iframe-loaded wording does not claim video playback",
+      "provider host allowlist matches current CSP"
+    ]
+  },
+  "real_provider_metadata": {
+    "recordedAt": "2026-11-27T19:22:35.178Z",
+    "boundary": "Real configured provider feed metadata only; no images or iframe playback requested",
+    "summary": [
+      {
+        "site": "CB",
+        "strictPublic": true,
+        "rooms": 60,
+        "stale": false,
+        "hasError": false,
+        "allRoomsPublic": true,
+        "sampleEmbed": {
+          "host": "chaturbate.com",
+          "path": "/in/",
+          "queryKeys": [
+            "tour",
+            "campaign",
+            "track",
+            "room",
+            "bgcolor",
+            "disable_sound"
+          ]
+        }
+      },
+      {
+        "site": "BC",
+        "strictPublic": true,
+        "rooms": 0,
+        "stale": false,
+        "hasError": false,
+        "allRoomsPublic": true,
+        "sampleEmbed": null
+      }
+    ]
+  },
+  "live_readback": [
+    {
+      "path": "/network",
+      "status": 200,
+      "circularPhotoMarkup": true,
+      "controllerDeferred": true,
+      "noEagerFrames": true
+    },
+    {
+      "path": "/talent",
+      "status": 200,
+      "circularPhotoMarkup": true,
+      "controllerDeferred": true,
+      "noEagerFrames": true
+    },
+    {
+      "path": "/talent/luna",
+      "status": 200
+    },
+    {
+      "path": "/assets/talent-previews.js",
+      "status": 200
+    },
+    {
+      "path": "/assets/network.css",
+      "status": 200
+    },
+    {
+      "path": "/api/network/talent",
+      "status": 200,
+      "total": 16,
+      "allReturnedDemo": true,
+      "approvedPhotos": 0,
+      "previewCandidates": 0
+    },
+    {
+      "path": "/api/network/talent/luna/preview",
+      "status": 200,
+      "available": false,
+      "reason": "demo",
+      "noStore": true
+    },
+    {
+      "path": "/jobs",
+      "status": 200
+    },
+    {
+      "path": "/employers",
+      "status": 200
+    },
+    {
+      "path": "/api/network/talent/unknown-model/preview",
+      "status": 404
+    },
+    {
+      "path": "/api/employer",
+      "status": 401
+    },
+    {
+      "path": "/api/admin/employer-directory",
+      "status": 401
+    }
+  ],
+  "browser": {
+    "status": "blocked",
+    "evidence": "apps=[], browsers=[], The browser access host is unavailable",
+    "actual_visual_and_keyboard_verified": false,
+    "actual_iframe_playback_or_muting_verified": false
+  },
+  "scope_boundaries": {
+    "local_profiles": "16 existing demos; no approved photos or linked preview candidates",
+    "fake_model_photo_or_room_association_added": false,
+    "native_stream_transport": "not connected",
+    "gallery_or_demo_video_used_as_live": false,
+    "real_payment": "not performed",
+    "deployment": "not performed"
+  },
+  "source_sha256": {
+    "README.md": "e38b038e0c9579c4d2fa72593acbed11427d3630024feae05a8799bcae7a058b",
+    "docs/API.md": "593e9deca4e720c5fd6fccade5e9dd9d8791e9958d3759fd47f8f3b8cb9a7b53",
+    "docs/TALENT_CARD_PREVIEWS.md": "91433da36fcc1c8afc35591251e6895d88aab0c8f55b22dca257912a7c0a2902",
+    "public/assets/network.css": "b4a4cbec5223f1d99aadc7676b98a63749d984cb2fe6a30ec32ac37420f1fcc7",
+    "public/assets/talent-previews.js": "01bc43a0a9cb73977fb81eaf01d5c608333275be624e77f67e435122466a202c",
+    "server/bclive.js": "8c3b1438a3dac678008973744828ee360e6c8554618f235cabd8c2073ec30084",
+    "server/cblive.js": "a20db5a22870b3d02341721c289876c7bd7ae6a3f294eb6c9db5ef2f5cdc273b",
+    "server/network.js": "2a96e29dd6da3f8ad65cd2e64315ac2f2e3f866819e75bd3a5e0ae5c29c750a4",
+    "server/pages/network.js": "7c491a6de0c1ab429e3c4b87c4b36dae02d9bad680e56581944133820bb343b8",
+    "server/routes/network.js": "5f6e9cec1210fbfeaa53a6d51e6f469dedb0eafb217ea00ebe0f1d6d14e1b9fd",
+    "server/talent-media.js": "a859a422b6437a1befd6032d54a00f3ddc3e26cc30b5eda1e40ce58731a5784e",
+    "test/network-pages.test.js": "934e40c02b176a9c3fac1a7b297948ae978e03997a6045f94a798f504c2b030d",
+    "test/talent-media.test.js": "e2904f5f33fe7c41895ff95f0612abddea9ae60392b8166b623ee7578721b87a",
+    "test/talent-previews-client.test.js": "d69922cee34d3733a71bdec3b43106118cc607f0a33e9eca8237132b06f00360"
+  }
+}

@@ -99,11 +99,23 @@ test('talent and free opportunities expose escaped metadata and connect to the e
   const id = approved.data.creatorId;
   const saved = await call('creator', 'PUT', '/api/studio/profile', { bio: 'Editing and design. <script>alert("bio")</script>', tags: ['editing', '<tag>'], networkCity: 'Denver <Metro>', networkState: 'CO' });
   assert.equal(saved.status, 200);
+  const photo = new FormData();
+  photo.append('kind', 'avatar');
+  photo.append('file', new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDwAAAABJRU5ErkJggg==', 'base64')], { type: 'image/png' }), 'avatar.png');
+  const uploadedResponse = await fetch(base + '/api/studio/upload', { method: 'POST', headers: { cookie: cookies.creator }, body: photo });
+  assert.equal(uploadedResponse.status, 201);
+  const uploaded = (await uploadedResponse.json()).upload;
+  assert.equal(uploaded.status, 'pending');
+  assert.ok(!(await page('/talent?q=Nova')).html.includes(uploaded.url), 'pending photo is not public');
+  assert.equal((await call('admin', 'POST', '/api/admin/uploads/' + uploaded.id, { status: 'approved' })).status, 200);
   const jobBody = { kind: 'hiring', title: 'Clip editor <Team>', description: 'Edit a weekly clip package. <script>alert("post")</script> Discuss the scope before accepting.', category: 'collaboration', workMode: 'hybrid', location: 'Denver', compensation: 'Rate agreed before work begins', status: 'open' };
   const made = await call('creator', 'POST', '/api/studio/jobs', jobBody);
   assert.equal(made.status, 201);
   assert.equal((await call('creator', 'POST', '/api/studio/jobs', { ...jobBody, title: 'Clip editing partner' })).status, 201);
   assert.equal((await call('creator', 'POST', '/api/studio/jobs', { ...jobBody, kind: 'available', title: 'Available for editing', category: 'editing' })).status, 201);
+  assert.equal((await call('creator', 'PUT', '/api/studio/profile', { handles: { CB: 'linked_room' } })).status, 200);
+  assert.equal((await call('admin', 'PUT', '/api/admin/config', { overrides: { partners: { CB: { enabled: true, liveGrid: true, campaign: 'Ji03i' } } } })).status, 200);
+  assert.equal((await call('admin', 'POST', '/api/admin/creators/' + id, { live: true })).status, 200);
 
   const talent = await page('/talent?q=Nova&state=CO&intent=available&pageSize=1');
   assert.equal(talent.status, 200);
@@ -113,12 +125,21 @@ test('talent and free opportunities expose escaped metadata and connect to the e
   assert.match(talent.html, /<option value="available" selected>/);
   assert.match(talent.html, /1 available-work post/);
   assert.match(talent.html, /content="noindex,follow"/);
+  assert.ok(talent.html.includes(`src="${uploaded.url}"`), 'approved creator photo is rendered');
+  assert.match(talent.html, /data-talent-photo[^>]*loading="lazy"/);
+  assert.match(talent.html, /src="\/assets\/talent-previews\.js" defer/);
+  assert.ok(talent.html.includes(`data-preview-url="/api/network/talent/${id}/preview"`));
+  assert.ok(talent.html.includes(`aria-controls="talent-preview-${id}" aria-expanded="false" hidden`));
+  assert.match(talent.html, /Check live room/);
+  assert.doesNotMatch(talent.html, /<iframe|<video|\/assets\/game\.js/);
 
   const profile = await page('/talent/' + id);
   assert.equal(profile.status, 200);
   assert.equal(profile.headers.get('cache-control'), 'no-store');
   assert.match(profile.html, /&lt;script&gt;alert\(&quot;bio&quot;\)&lt;\/script&gt;/);
   assert.match(profile.html, /content="index,follow"/, 'real creator metadata profile can be indexed');
+  assert.match(profile.html, /Marked live by creator/);
+  assert.doesNotMatch(profile.html, /talent-previews\.js/, 'profile detail does not bootstrap card players');
   assert.ok(profile.html.includes(`href="/stars/${id}/jobs#job-${made.data.job.id}"`));
   assert.ok(profile.html.includes(`href="/#member-${id}"`));
   assert.doesNotMatch(profile.html, /<script>alert|network-creator@example\.test|<img|<video|<iframe|JobPosting|DEMO PROFILE/);

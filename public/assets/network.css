@@ -1,4 +1,4 @@
-/* Original x3STAR discovery pages. Local typography, text cards and no media previews. */
+/* Original x3STAR discovery pages, approved photos and on-demand room previews. */
 .network-page{background:radial-gradient(ellipse at 90% 0,#39203340,transparent 35%),var(--bg)}
 .network-page main{padding-bottom:20px}
 .network-page main>section{padding-block:56px}
@@ -46,6 +46,28 @@
 .network-avatar.company{border-radius:12px;background:linear-gradient(145deg,#54445b,#221c2c);border-color:#65506f;color:#e2d7ed}
 .network-avatar.large{width:145px;height:175px;border-radius:76px 76px 12px 12px;font-size:61px}
 .network-avatar.large.company{border-radius:26px}
+.talent-card{overflow:hidden}
+.talent-media{position:relative;display:grid;place-items:center;aspect-ratio:16/10;margin:-25px -25px 23px;border-bottom:1px solid var(--line);background:radial-gradient(ellipse at 50% 30%,#78506850,transparent 75%),linear-gradient(145deg,#271b2c,#17121c);isolation:isolate}
+.talent-photo{position:relative;display:grid;place-items:center;width:132px;height:132px;border-radius:50%;border:2px solid #a7778d;background:linear-gradient(135deg,#563447,#2b2037);box-shadow:0 0 0 7px #b77b9612,0 12px 35px #0004;color:#ebc7d7;font:46px/1 var(--serif)}
+.talent-photo img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;background:#271d2d}
+.talent-photo small{display:none;position:absolute;top:calc(100% + 14px);width:180px;text-align:center;font:10px/1.4 var(--sans);color:var(--muted)}
+.talent-photo.photo-unavailable small{display:block}
+.has-preview-controls .talent-photo small{display:none}
+.talent-preview-stage{position:absolute;inset:0;z-index:1;background:#0b080d}
+.talent-preview-stage:empty{background:transparent}
+.talent-preview-stage[hidden],.talent-preview-controls [hidden]{display:none!important}
+.talent-preview-stage iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
+.talent-preview-controls{position:absolute;z-index:2;inset:auto 10px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;pointer-events:none}
+.talent-preview-controls>button,.talent-preview-room{pointer-events:auto}
+.talent-preview-controls>button{font:600 10px/1.5 var(--sans);max-width:100%;min-height:44px;padding:6px 13px;border:1px solid #b78a9f;border-radius:24px;background:#150e1de8;color:var(--ink);cursor:pointer}
+.talent-preview-controls>button:hover{border-color:var(--accent);background:#352139}
+.talent-preview-status{font-size:10px;line-height:1.4;color:var(--ink);margin:0;text-shadow:0 1px 5px #000}
+.talent-preview-status:empty{display:none}
+.talent-preview-room{font-size:10px;line-height:1.4;color:#ffd1e2;text-underline-offset:3px}
+.talent-preview-disclosure{display:none;font-size:8px;line-height:1.4;color:#e8dce5;max-width:280px}
+.is-preview-loading .talent-preview-controls,.is-previewing .talent-preview-controls,.is-preview-ready .talent-preview-controls{inset:auto 0 0;padding:35px 12px 10px;background:linear-gradient(transparent,#0a070de8)}
+.is-preview-loading .talent-preview-disclosure,.is-previewing .talent-preview-disclosure,.is-preview-ready .talent-preview-disclosure{display:block}
+.is-preview-ready .talent-photo,.is-preview-loading .talent-photo,.is-previewing .talent-photo{opacity:.4}
 .network-location{font-size:12px;color:#c6bac5;margin-bottom:14px}
 .network-location>span{display:block;font-size:10px;font-weight:650;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px}
 .network-bio{color:var(--muted);font-size:13px;line-height:1.8;margin-bottom:18px}
@@ -152,6 +174,7 @@
   .network-heading>.text-link{padding-bottom:0}
   .network-grid.people,.network-grid.two,.network-next,.network-profile-content{grid-template-columns:1fr}
   .network-person,.network-opportunity,.network-company{padding:23px}
+  .talent-media{margin:-23px -23px 22px;min-height:240px}
   .network-person-top h3{font-size:27px}
   .network-empty{padding:25px;gap:16px}
   .network-empty-mark{font-size:32px}
