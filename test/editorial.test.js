@@ -117,12 +117,121 @@ test('sitemap lists canonical indexable pages with maintained content dates', as
   const response = await fetch(base + '/sitemap.xml', { headers: { host: 'untrusted.example' } });
   assert.equal(response.status, 200);
   const xml = await response.text();
-  assert.equal((xml.match(/<loc>/g) || []).length, 69);
+  assert.equal((xml.match(/<loc>/g) || []).length, 72);
   assert.match(xml, /<loc>https:\/\/creators\.example\/casting\/colorado<\/loc><lastmod>2026-11-27<\/lastmod>/);
   assert.doesNotMatch(xml, /casting\/alabama|untrusted\.example|utm_|\/go\//);
   const robots = await (await fetch(base + '/robots.txt')).text();
   assert.match(robots, /Sitemap: https:\/\/creators\.example\/sitemap.xml/);
   assert.doesNotMatch(robots, /Disallow: \/casting/);
+});
+
+test('permanent topic guides connect each audience to useful reading paths', async () => {
+  const { TOPICS } = require('../server/content/journal-topics');
+  const counts = { creators: 26, affiliates: 16, hiring: 16 };
+  const hub = await (await fetch(base + '/blog')).text();
+  assert.match(hub, /<h1>Adult-industry guides/);
+  assert.match(hub, /<h2>Explore the guides<\/h2>/);
+  for (const topic of TOPICS) {
+    const path = '/blog/topics/' + topic.slug;
+    assert.ok(hub.includes('href="' + path + '"'));
+    const res = await fetch(base + path + '?utm_source=organic');
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.ok(visibleText(html).includes(topic.heading));
+    for (const paragraph of topic.intro) assert.ok(visibleText(html).includes(paragraph));
+    assert.ok(html.includes('rel="canonical" href="https://creators.example' + path + '"'));
+    assert.match(html, /content="index,follow"/);
+    const data = JSON.parse(html.match(/<script type="application\/ld\+json">([^]*?)<\/script>/)[1]);
+    assert.ok(data.some(item => item['@type'] === 'CollectionPage'));
+    const list = data.find(item => item['@type'] === 'ItemList');
+    assert.equal(list.itemListElement.length, counts[topic.slug]);
+    const expected = ARTICLES.filter(article => (article.audience || 'creators') === topic.slug);
+    assert.deepEqual(list.itemListElement.map(item => new URL(item.url).pathname), expected.map(article => '/blog/' + article.slug));
+    const chosen = topic.steps.flatMap(step => step.articles);
+    assert.equal(new Set(chosen).size, 9);
+    for (const slug of chosen) assert.ok(expected.some(article => article.slug === slug), slug);
+    for (const article of expected) {
+      assert.ok(html.includes('href="/blog/' + article.slug + '"'), article.slug);
+      const page = await (await fetch(base + '/blog/' + article.slug)).text();
+      assert.ok(page.includes('href="' + path + '"'), article.slug + ' links back to its topic');
+    }
+    const slash = await fetch(base + path + '/?utm_source=topic', { redirect: 'manual' });
+    assert.equal(slash.status, 301);
+    assert.equal(slash.headers.get('location'), path + '?utm_source=topic');
+  }
+  assert.equal((await fetch(base + '/blog/topics/missing')).status, 404);
+});
+
+test('every sitemap URL has unique search metadata and a matching canonical in initial HTML', async () => {
+  const xml = await (await fetch(base + '/sitemap.xml')).text();
+  const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
+  const titles = new Set(), descriptions = new Set();
+  for (const url of urls) {
+    const page = await fetch(base + new URL(url).pathname, { redirect: 'manual', headers: { host: 'untrusted.example' } });
+    assert.equal(page.status, 200, url);
+    const html = await page.text();
+    const title = html.match(/<title>([^<]+)<\/title>/)[1];
+    const description = html.match(/<meta name="description" content="([^"]+)"/)[1];
+    assert.ok(!titles.has(title), url + ' duplicate title');
+    assert.ok(!descriptions.has(description), url + ' duplicate description');
+    titles.add(title); descriptions.add(description);
+    assert.ok(html.includes('rel="canonical" href="' + url + '"'), url);
+    assert.match(html, /<h1[ >]/);
+    assert.doesNotMatch(html, /<meta name="robots" content="noindex/);
+    assert.equal(page.headers.get('x-robots-tag'), null);
+    assert.match(html, /name="twitter:title" content="[^"]+"/);
+    assert.match(html, /name="twitter:description" content="[^"]+"/);
+    assert.doesNotMatch(html, /untrusted\.example/);
+  }
+  const article = ARTICLES[8];
+  const html = await (await fetch(base + '/blog/' + article.slug)).text();
+  assert.ok(html.includes('property="article:published_time" content="' + article.published + '"'));
+  assert.ok(html.includes('property="article:modified_time" content="' + article.updated + '"'));
+});
+
+test('home aliases consolidate attribution and informational guide avoids explicit-only metadata', async () => {
+  for (const path of ['/index.html', '/INDEX.HTML']) {
+    const response = await fetch(base + path + '?utm_source=search&ref=publisher', { redirect: 'manual' });
+    assert.equal(response.status, 301);
+    assert.equal(response.headers.get('location'), '/?utm_source=search&ref=publisher');
+  }
+  const home = await (await fetch(base + '/')).text();
+  assert.match(home, /name="rating" content="adult"/);
+  assert.match(home, /"@type":"WebSite"/);
+  const guide = await (await fetch(base + '/cam-model-guide')).text();
+  assert.doesNotMatch(guide, /name="rating"|"@type":"FAQPage"/);
+  assert.match(guide, /id="faq"/);
+  assert.match(guide, /"@type":"Article"/);
+  assert.doesNotMatch(guide, /Creator guide · updated/);
+});
+
+test('reusable SEO gate checks the running site and rejects a broken canonical', async () => {
+  const { checkSeo } = require('../scripts/check-seo');
+  const report = await checkSeo(base);
+  assert.equal(report.pagesChecked, 72);
+  assert.equal(report.articlesChecked, 58);
+  assert.equal(report.topicGuidesChecked, 3);
+  assert.equal(report.canonicalOrigin, 'https://creators.example');
+  const http = require('node:http');
+  let canonical = 'https://example.test/', requested = '';
+  const broken = http.createServer((req, res) => {
+    if (req.url === '/sitemap.xml') { res.end('<urlset><url><loc>' + canonical + '</loc></url></urlset>'); return; }
+    requested = req.url;
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<html><head><title>A guide</title><meta name="description" content="A useful guide"><link rel="canonical" href="https://wrong.test/"></head><body><h1>A guide</h1></body></html>');
+  });
+  await new Promise(resolve => broken.listen(0, '127.0.0.1', resolve));
+  try {
+    const target = 'http://127.0.0.1:' + broken.address().port;
+    await assert.rejects(checkSeo(target), /canonical mismatch/);
+    canonical = 'https://example.test//127.0.0.1:1/escaped';
+    await assert.rejects(checkSeo(target), /canonical mismatch/);
+    assert.equal(requested, '//127.0.0.1:1/escaped', 'Protocol-relative paths must stay on the test server');
+    canonical = 'ftp://example.test/guide';
+    await assert.rejects(checkSeo(target), /must use HTTP/);
+  }
+  finally { await new Promise(resolve => broken.close(resolve)); }
+  await assert.rejects(checkSeo(base + '/blog'), /plain HTTP/);
 });
 
 test('duplicate trailing slashes redirect permanently and preserve attribution', async () => {

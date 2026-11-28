@@ -55,4 +55,16 @@ The Colorado OEDIT production page returned HTTP 403 to the research fetcher, an
 
 ## Evidence boundary after implementation
 
+### Journal SEO pass, 2026-11-27
+
+The 58 articles already had distinct titles and descriptions, readable initial HTML, visible bylines/dates, canonical URLs and related reading. Preserve that material. Google's guidance calls for concise, descriptive titles and page-specific summaries; it does not prescribe a universal title/description character limit or recommend repeating keywords. The journal's main heading now describes its subject. [Title guidance](https://developers.google.com/search/docs/appearance/title-link), [description guidance](https://developers.google.com/search/docs/appearance/snippet).
+
+Three permanent topic guides at `/blog/topics/creators`, `/blog/topics/affiliates` and `/blog/topics/hiring` add distinct introductions, curated reading stages, complete audience collections and reciprocal article breadcrumbs. Each is a useful destination with its own canonical; arbitrary search/filter variants remain noindex. CollectionPage and ItemList describe the visible collections without promising a Google rich result. [CollectionPage](https://schema.org/CollectionPage), [ItemList](https://schema.org/ItemList).
+
+The sitemap now contains 72 canonical pages. The homepage has canonical/social metadata, and `/index.html` redirects to `/` with query attribution preserved. Shared social metadata supplies Twitter title/description and article publication/update/category information using authored values. No stock imagery, fabricated publication times, keyword-volume estimates or ranking claims were added.
+
+The informational cam-model guide contains informational text, with no explicit images, videos or graphic sexual descriptions. Its automatic monthly “updated” stamp was removed because it did not represent editorial changes. Its explicit-rating tag was removed; the live-room homepage retains its adult rating. The visible FAQ stays, while the guide's unnecessary FAQPage markup and outdated documentation were removed. Google's May/June 2026 FAQ documentation update and explicit-content guidance were rechecked for this pass. This does not establish or change Google's classification of the host. [Search updates](https://developers.google.com/search/updates), [explicit-content metadata](https://developers.google.com/search/docs/specialty/explicit/guidelines).
+
+Run `npm run check:seo -- http://127.0.0.1:8080` against a running server to check sitemap entries and their initial HTML metadata. This local gate does not execute JavaScript, fetch live media, contact partner sites, inspect an external Search Console account or measure real search performance.
+
 Local HTTP tests can prove page HTML, links, metadata, form behavior, attribution storage, redirects and sitemap selection. They cannot prove Google indexed a URL or that search traffic converted. After an authorized deployment, use Search Console URL Inspection and sitemap reporting, then evaluate organic landing-page visits, completed x3STAR applications and tracked partner exits separately. Partner exits are clicks, not confirmed registrations or revenue.

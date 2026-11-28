@@ -250,7 +250,8 @@ test('cam model guide, robots.txt and sitemap', async () => {
   const r = await fetch(base + '/cam-model-guide'); const html = await r.text();
   assert.equal(r.status, 200);
   assert.match(html, /<h1>How to become a <em>cam model<\/em>\.<\/h1>/);
-  assert.match(html, /"@type":"FAQPage"/);
+  assert.match(html, /"@type":"Article"/);
+  assert.doesNotMatch(html, /"@type":"FAQPage"/);
   assert.match(html, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:\d+\/cam-model-guide">/);
   assert.ok(html.includes('$0.008') && html.includes('$40'), 'pay figures come from the economy config');
   assert.ok(html.includes('href="/casting#apply"'));
