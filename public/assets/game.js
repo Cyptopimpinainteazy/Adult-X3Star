@@ -726,9 +726,12 @@ async function renderFamilies() {
    Member page (API gallery + products + top fans) and account profile
    ===================================================================== */
 async function onMember(id, root) {
-  if (!API) return;
+  const jobsHost = $('[data-creator-jobs]', root);
+  if (!API) { if (jobsHost && window.X3Jobs) window.X3Jobs.mount(jobsHost, { creatorId: id }); return; }
   try {
     const { creator } = await X3API.get('/api/creators/' + encodeURIComponent(id));
+    if (!root.isConnected || !jobsHost || $('[data-creator-jobs]', root) !== jobsHost || jobsHost.dataset.creatorJobs !== id) return;
+    if (window.X3Jobs) window.X3Jobs.mount(jobsHost, { creatorId: id, jobs: creator.jobs || [] });
     const host = $('.member-cols > div', root); if (!host) return;
     const gal = el(`<div class="mgal"><h3 class="serif" style="font-size:26px;font-weight:500;margin:34px 0 14px">Gallery <small class="mono" style="font-size:12px;color:var(--dim)">${creator.gallery.length}</small></h3>${creator.gallery.length ? `<div class="gal-grid">${creator.gallery.map(g => `<button class="gal-i" data-src="${g.url}" data-type="${g.type}">${g.type === 'video' ? `<video src="${g.url}" muted playsinline preload="metadata"></video><span class="gal-play">▶</span>` : `<img src="${g.url}" alt="${esc(g.caption)}" loading="lazy">`}</button>`).join('')}</div>` : '<p class="note">No gallery posts yet.</p>'}</div>`);
     host.insertBefore(gal, $('.thread', host));
@@ -736,7 +739,7 @@ async function onMember(id, root) {
     const side = $('.member-cols aside', root);
     if (side) side.insertBefore(el(`<div class="side-card panel"><h4>Top gifters <span>7 days</span></h4>${creator.topFans.length ? `<ol class="lb">${creator.topFans.map(f => `<li><b>${esc(f.name)}</b><span>💎 ${fmt.num(f.diamonds)}</span></li>`).join('')}</ol>` : '<p class="note">No gifts yet this week.</p>'}<button class="btn btn--sm btn--primary btn--block" style="margin-top:10px" data-gift>Send a gift</button></div>`), side.firstChild);
     const gb = $('[data-gift]', side); if (gb) gb.onclick = () => openGifts(id);
-  } catch {}
+  } catch { if (root.isConnected && jobsHost && $('[data-creator-jobs]', root) === jobsHost && window.X3Jobs) window.X3Jobs.mount(jobsHost, { creatorId: id }); }
 }
 function onAccount(root) {
   if (!root || !Econ.signedIn() || $('#acctProfile', root)) return;
@@ -1013,6 +1016,13 @@ function onProfile(id, root, api) {
 }
 window.X3Game = { onProfile, decorate, onStage, onMember, onAccount, onRoute, openGifts, openTopUp, openDaily, openAuth, econ: Econ, actions };
 Econ.init();
+addEventListener('x3star:session-changed', event => {
+  if (!API || !event.detail || !event.detail.user) return;
+  Econ.me = event.detail.user;
+  BOOT.me = Econ.me;
+  Econ.init();
+  if ($('#hud')) paintHUD();
+});
 addEventListener('x3star:entered', intro, { once: true });
 X.onReady(() => {
   mountHUD(); mountWatch(); renderStories();

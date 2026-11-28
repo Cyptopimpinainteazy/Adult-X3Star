@@ -48,6 +48,7 @@ app.use('/api', (req, res, next) => {
 
 /* API */
 app.use('/api', require('./routes/public'));
+app.use('/api', require('./routes/jobs'));
 app.use('/api/econ', require('./routes/econ').router);
 app.use('/api/studio', require('./routes/studio'));
 app.use('/api/admin', require('./routes/admin'));
@@ -151,6 +152,17 @@ app.get(['/', '/index.html'], sendIndex);
 const editorial = require('./routes/editorial');
 app.use(editorial.router);
 const baseUrl = editorial.originFor;
+app.get('/stars/:id/jobs', (req, res) => {
+  if (req.path.endsWith('/')) {
+    const query = req.originalUrl.indexOf('?');
+    return res.redirect(301, req.originalUrl.slice(0, query === -1 ? undefined : query).replace(/\/+$/, '') + (query === -1 ? '' : req.originalUrl.slice(query)));
+  }
+  const jobs = require('./jobs');
+  const creator = jobs.getPublicCreator(req.params.id);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, follow');
+  res.type('html').send(require('./pages/jobs').renderJobsPage({ creator, jobs: jobs.listPublic(creator.id), origin: baseUrl(req) }));
+});
 app.get(['/cam-model-guide', '/become-a-cam-model'], (req, res) => {
   if (req.path !== '/cam-model-guide') return res.redirect(301, '/cam-model-guide');
   res.setHeader('Cache-Control', 'public, max-age=300');

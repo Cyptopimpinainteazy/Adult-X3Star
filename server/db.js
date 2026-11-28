@@ -91,6 +91,35 @@ CREATE TABLE IF NOT EXISTS products (
   active      INTEGER NOT NULL DEFAULT 1,
   created_at  INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS creator_jobs (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  creator_id  TEXT NOT NULL REFERENCES creators(id) ON DELETE CASCADE,
+  kind        TEXT NOT NULL CHECK (kind IN ('hiring','available')),
+  title       TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category    TEXT NOT NULL CHECK (category IN ('editing','moderation','design','photography','collaboration','other')),
+  work_mode   TEXT NOT NULL CHECK (work_mode IN ('remote','hybrid','onsite')),
+  location    TEXT NOT NULL DEFAULT '',
+  compensation TEXT NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','open','closed','archived')),
+  expires_at  INTEGER NOT NULL,
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS creator_jobs_owner_status ON creator_jobs(creator_id, status, expires_at);
+CREATE INDEX IF NOT EXISTS creator_jobs_owner_board ON creator_jobs(creator_id, (status = 'archived'), updated_at DESC, id DESC);
+CREATE TABLE IF NOT EXISTS creator_job_inquiries (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id      INTEGER NOT NULL REFERENCES creator_jobs(id) ON DELETE CASCADE,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message     TEXT NOT NULL,
+  portfolio_url TEXT NOT NULL DEFAULT '',
+  status      TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','reviewing','closed')),
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  UNIQUE(job_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS creator_job_inquiries_job ON creator_job_inquiries(job_id, created_at);
 CREATE TABLE IF NOT EXISTS gifts (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   from_user   INTEGER NOT NULL REFERENCES users(id),

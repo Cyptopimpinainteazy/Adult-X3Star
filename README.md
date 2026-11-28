@@ -107,6 +107,27 @@ All economy values (prices, odds, rewards, payout rates, affiliate links) are ed
 
 Affiliate networks and search consoles often ask you to upload a file (e.g. `commission-factory-<token>.html`) so it's reachable at `https://www.x3star.live/<file>`. Put it in `data/site-files/` on the server (`~/x3star/data/site-files/` with the setup script); it's served at the site root right away, survives updates (it lives with your data, not in git), and never shadows the app's own pages. Allowed: plain file names ending in .html, .htm, .txt, .xml or .json.
 
+### Per-star jobs and available work
+
+Every approved star has a board on their full profile (`/#member-luna`, for example), a Jobs tab in their profile dialog, and a shareable page at `/stars/luna/jobs`. Boards remain available when the star is offline. No sample openings are published automatically.
+
+In **Creator Studio → Jobs & available work**, the star can:
+
+- Post **Hiring / collaborations** openings or **Available for work** offers.
+- Describe scope, category, remote/hybrid/on-site arrangement, broad location and compensation terms.
+- Save drafts, publish, edit, close and archive listings; set an expiry up to 180 days away (30 days by default).
+- Review private inquiries and mark them new, reviewing or closed. Account name, contact email, message and optional portfolio link are visible only to the listing owner and authorized Admin.
+
+Only open, unexpired listings from approved, active owners appear publicly. There is a 20-listing limit per star excluding archived posts; each listing accepts up to 100 inquiries. Signed-in users can send one inquiry per listing and cannot inquire about their own post. A confirmed receipt means the inquiry was stored in Studio; it does not send an email, collect money, accept an applicant or confirm a booking. Archived records retain their inquiry history; Studio lists up to 100 records with nonarchived posts first.
+
+Admin can manage a star’s board using `/studio?as=luna#jobs`, matching the existing owner-selection convention. Every mutation and inbox request is checked against that selected creator on the server. New private job responses use `Cache-Control: no-store`.
+
+The shareable board is readable server-rendered HTML without profile media. It currently uses `noindex,follow`, stays outside the editorial sitemap, and does not claim to be a verified job vacancy through structured data. Standalone previews explain that published boards/private inquiries need the connected server. SQLite initialization adds the jobs/inquiries tables without replacing existing data.
+
+```bash
+node --test test/jobs.test.js test/star-jobs-pages.test.js
+```
+
 ### Online casting and public creator journal
 
 - `/casting` is the online recruiting hub, with an application form and links to all **50 US state pages** (`/casting/colorado`, for example).

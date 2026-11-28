@@ -28,7 +28,7 @@ async function boot() {
   try { me = (await X3API.get('/api/me')).user; } catch { me = null; }
   if (!me) return gate();
   if (!['creator', 'agent', 'admin'].includes(me.role)) return gate('This account is a fan account. Creator Studio needs an approved creator profile.');
-  if (me.role !== 'agent') { try { D = await X3API.get('/api/studio'); } catch (e) { if (me.role === 'admin') return gate('Admins: open Studio with ?as=<creatorId> — or sign in with a creator account.'); return gate(e.message); } }
+  if (me.role !== 'agent') { try { D = await X3API.get('/api/studio' + location.search); } catch (e) { if (me.role === 'admin') return gate('Admins: open Studio with ?as=<creatorId> — or sign in with a creator account.'); return gate(e.message); } }
   shell();
 }
 async function reload() { if (me.role !== 'agent') D = await X3API.get('/api/studio' + location.search); }
@@ -39,13 +39,13 @@ function shell() {
   const pending = D ? D.uploads.filter(u => u.status === 'pending').length : 0;
   app.innerHTML = `<div class="shell"><aside class="side" id="side">
       <div class="brand">x3<span>STAR</span><small>Studio</small></div>
-      ${isAgent ? '' : `<a class="nav" href="#overview" data-v="overview">Overview</a><a class="nav" href="#profile" data-v="profile">Profile</a><a class="nav" href="#media" data-v="media">Media & stories ${pending ? `<span class="cnt">${pending}</span>` : ''}</a><a class="nav" href="#store" data-v="store">Store</a><a class="nav" href="#earnings" data-v="earnings">Earnings</a><a class="nav" href="#live" data-v="live">Go live & filters</a>`}
+      ${isAgent ? '' : `<a class="nav" href="#overview" data-v="overview">Overview</a><a class="nav" href="#profile" data-v="profile">Profile</a><a class="nav" href="#media" data-v="media">Media & stories ${pending ? `<span class="cnt">${pending}</span>` : ''}</a><a class="nav" href="#store" data-v="store">Store</a><a class="nav" href="#jobs" data-v="jobs">Jobs & available work</a><a class="nav" href="#earnings" data-v="earnings">Earnings</a><a class="nav" href="#live" data-v="live">Go live & filters</a>`}
       ${isAgent || me.role === 'admin' ? '<a class="nav" href="#agency" data-v="agency">Agency</a>' : ''}
       <div class="foot"><span>${esc(me.name)} · <span class="mono">${esc(me.role)}</span></span>${D ? `<a href="/#member-${esc(D.creator.id)}" target="_blank" rel="noopener" style="color:var(--pink-2)">View public profile ↗</a>` : ''}<a href="/">← Back to x3STAR</a><button class="btn sm" id="out">Sign out</button></div>
     </aside><button class="btn burger" id="burger" aria-label="Menu">☰</button><main class="main" id="main"></main></div>`;
   $('#out').onclick = async () => { await X3API.post('/api/auth/logout'); location.href = '/'; };
   $('#burger').onclick = () => $('#side').classList.toggle('open');
-  const views = isAgent ? { agency } : { overview, profile, media, store, earnings, live, agency };
+  const views = isAgent ? { agency } : { overview, profile, media, store, jobs, earnings, live, agency };
   router(views, isAgent ? 'agency' : 'overview');
 }
 const main = () => $('#main');
@@ -188,6 +188,81 @@ function store() {
   $$('[data-edit]').forEach(b => b.onclick = () => form(D.products.find(p => p.id === +b.dataset.edit)));
   $$('[data-del]').forEach(b => b.onclick = async () => { if (await confirmBox('Delete product?', 'It will disappear from your store.', 'Delete', true)) { await guard(() => X3API.del('/api/studio/products/' + b.dataset.del + location.search), 'Deleted'); await reload(); store(); } });
   $$('[data-pin]').forEach(b => b.onclick = async () => { const id = +b.dataset.pin; await guard(() => X3API.post('/api/studio/pin' + location.search, { productId: c.pinnedProductId === id ? null : id }), c.pinnedProductId === id ? 'Unpinned' : 'Pinned to your stage'); await reload(); store(); });
+}
+
+/* ---------------- jobs and available work ---------------- */
+const JOB_CATEGORIES = { editing: 'Editing', moderation: 'Moderation', design: 'Design', photography: 'Photography', collaboration: 'Collaboration', other: 'Other' };
+const JOB_MODES = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'On-site' };
+let jobsView = 0;
+async function jobs() {
+  const version = ++jobsView;
+  main().innerHTML = head('Your <em>jobs board</em>', 'Post openings for your team or list work you are available to do.') + '<div class="panel pad" role="status">Loading your listings…</div>';
+  try {
+    const { jobs: listings } = await X3API.get('/api/studio/jobs' + location.search);
+    if (version !== jobsView || location.hash !== '#jobs') return;
+    main().innerHTML = head('Your <em>jobs board</em>', 'Hiring and available-work posts appear on your profile while open and unexpired.', `<a class="btn" href="/stars/${encodeURIComponent(D.creator.id)}/jobs" target="_blank" rel="noopener">View public board ↗</a><button class="btn pri" id="add-job">+ Add listing</button>`) +
+      `<p class="note">Inquiries stay in your private Studio inbox. Publishing a listing does not send emails, collect payments or confirm a booking.</p>` +
+      (listings.length ? `<div class="grid g2">${listings.map(j => `<article class="panel pad"><div class="row" style="justify-content:space-between"><span class="tag">${j.kind === 'hiring' ? 'Hiring / collaborations' : 'Available for work'}</span><span class="tag ${j.status === 'open' ? 'approved' : ''}">${esc(j.status)}${j.status === 'open' && j.expiresAt <= Date.now() ? ' · expired' : ''}</span></div><h2 style="font:500 25px var(--serif)">${esc(j.title)}</h2><p class="note">${esc(JOB_CATEGORIES[j.category] || j.category)} · ${esc(JOB_MODES[j.workMode] || j.workMode)}${j.location ? ' · ' + esc(j.location) : ''}</p><p class="mute" style="font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(j.description)}</p><b>${esc(j.compensation)}</b><p class="note">Expires ${fmt.date(j.expiresAt)}</p><div class="row" style="flex-wrap:wrap"><button class="btn sm" data-inbox="${j.id}">Inquiries${Number.isInteger(j.inquiryCount) ? ' · ' + j.inquiryCount : ''}</button>${j.status !== 'archived' ? `<button class="btn sm" data-edit-job="${j.id}">Edit</button>${j.status === 'open' ? `<button class="btn sm" data-close-job="${j.id}">Close listing</button>` : ''}<button class="btn sm red" data-archive-job="${j.id}">Archive</button>` : ''}</div></article>`).join('')}</div>` : '<div class="panel empty">Your board is ready. Add a hiring post or an available-for-work listing when you have something real to share.</div>');
+    $('#add-job').onclick = () => jobForm();
+    $$('[data-edit-job]').forEach(b => b.onclick = () => jobForm(listings.find(j => j.id === +b.dataset.editJob)));
+    $$('[data-inbox]').forEach(b => b.onclick = () => jobInbox(listings.find(j => j.id === +b.dataset.inbox)));
+    $$('[data-close-job]').forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await X3API.put('/api/studio/jobs/' + b.dataset.closeJob + location.search, { status: 'closed' }); toast('Listing closed', 'ok'); if (location.hash === '#jobs') jobs(); }
+      catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    });
+    $$('[data-archive-job]').forEach(b => b.onclick = async () => {
+      if (!await confirmBox('Archive this listing?', 'It will leave the public board. Its private inquiry records will be retained.', 'Archive', true)) return;
+      b.disabled = true;
+      try { await X3API.del('/api/studio/jobs/' + b.dataset.archiveJob + location.search); toast('Listing archived', 'ok'); if (location.hash === '#jobs') jobs(); }
+      catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    });
+  } catch (e) {
+    if (version !== jobsView || location.hash !== '#jobs') return;
+    main().innerHTML = head('Your <em>jobs board</em>', '') + `<div class="panel pad"><p role="alert">${esc(e.message)}</p><button class="btn" id="retry-jobs">Try again</button></div>`;
+    $('#retry-jobs').onclick = jobs;
+  }
+}
+function jobForm(job = {}) {
+  const dateInput = new Date(job.expiresAt > Date.now() ? job.expiresAt : Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const options = (values, selected) => Object.entries(values).map(([value, label]) => `<option value="${value}"${selected === value ? ' selected' : ''}>${label}</option>`).join('');
+  const m = modal(`<form id="job-editor"><h3>${job.id ? 'Edit' : 'Add'} listing</h3><label class="field"><span>What are you posting?</span><select class="inp" name="kind">${options({ hiring: 'Hiring / seeking collaborators', available: 'Available for work' }, job.kind || 'hiring')}</select></label><label class="field"><span>Title</span><input class="inp" name="title" required minlength="3" maxlength="100" value="${esc(job.title || '')}" placeholder="e.g. Video editor for weekly clips"></label><label class="field"><span>Description and scope</span><textarea class="inp" name="description" required minlength="20" maxlength="3000" rows="5">${esc(job.description || '')}</textarea></label><div class="grid g2"><label class="field"><span>Category</span><select class="inp" name="category">${options(JOB_CATEGORIES, job.category || 'other')}</select></label><label class="field"><span>Work arrangement</span><select class="inp" name="workMode">${options(JOB_MODES, job.workMode || 'remote')}</select></label></div><label class="field"><span>Broad location (optional; avoid a home address)</span><input class="inp" name="location" maxlength="100" value="${esc(job.location || '')}" placeholder="e.g. Colorado or US time zones"></label><label class="field"><span>Compensation / rate / budget</span><input class="inp" name="compensation" required minlength="3" maxlength="160" value="${esc(job.compensation || '')}" placeholder="State the terms or explain what needs discussion"></label><div class="grid g2"><label class="field"><span>Status</span><select class="inp" name="status">${options({ draft: 'Draft — only you can see it', open: 'Open — publish on profile', closed: 'Closed — hide from profile' }, job.status || 'draft')}</select></label><label class="field"><span>Expires on (UTC, within 180 days)</span><input class="inp" name="expiry" type="date" required value="${dateInput}" min="${new Date().toISOString().slice(0, 10)}" max="${new Date(Date.now() + 179 * 86400000).toISOString().slice(0, 10)}"></label></div><p class="note" id="job-editor-error" role="alert"></p><div class="row" style="justify-content:flex-end"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn pri" type="submit">Save listing</button></div></form>`);
+  $('[data-cancel]', m.root).onclick = m.close;
+  const arrangement = $('[name=workMode]', m.root), locationInput = $('[name=location]', m.root);
+  const locationRequired = () => { locationInput.required = arrangement.value !== 'remote'; locationInput.minLength = locationInput.required ? 2 : 0; };
+  arrangement.onchange = locationRequired; locationRequired();
+  $('#job-editor', m.root).onsubmit = async e => {
+    e.preventDefault();
+    const form = e.target, f = form.elements, save = $('button[type=submit]', form);
+    if (save.disabled || !form.reportValidity()) return;
+    const body = { kind: f.kind.value, title: f.title.value, description: f.description.value, category: f.category.value, workMode: f.workMode.value, location: f.location.value, compensation: f.compensation.value, status: f.status.value, expiresAt: new Date(f.expiry.value + 'T23:59:59.000Z').getTime() };
+    save.disabled = true;
+    $('#job-editor-error', m.root).textContent = '';
+    try {
+      const result = job.id ? await X3API.put('/api/studio/jobs/' + job.id + location.search, body) : await X3API.post('/api/studio/jobs' + location.search, body);
+      if (!result || !result.job) throw new Error('The server did not confirm the saved listing.');
+      m.close(); toast('Listing saved', 'ok'); if (location.hash === '#jobs') jobs();
+    } catch (error) { if (m.root.isConnected) { $('#job-editor-error', m.root).textContent = error.message; save.disabled = false; } }
+  };
+}
+async function jobInbox(job) {
+  const m = modal(`<h3>${esc(job.title)} — private inquiries</h3><div data-inquiries role="status">Loading…</div><div class="row" style="justify-content:flex-end"><button class="btn" data-done>Done</button></div>`);
+  $('[data-done]', m.root).onclick = m.close;
+  const box = $('[data-inquiries]', m.root);
+  try {
+    const { inquiries } = await X3API.get('/api/studio/jobs/' + job.id + '/inquiries' + location.search);
+    if (!box.isConnected) return;
+    box.innerHTML = inquiries.length ? inquiries.map(i => `<article class="panel pad" style="margin:14px 0"><b>${esc(i.applicant.name)}</b><p class="note"><a href="${esc('mailto:' + encodeURIComponent(i.applicant.email))}">${esc(i.applicant.email)}</a> · ${fmt.date(i.createdAt)}</p><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(i.message)}</p>${i.portfolioUrl ? `<p><a href="${esc(i.portfolioUrl)}" target="_blank" rel="noopener noreferrer">View portfolio ↗</a></p>` : ''}<label class="field"><span>Review status</span><select class="inp" data-inquiry-status="${i.id}">${['new', 'reviewing', 'closed'].map(s => `<option${s === i.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label></article>`).join('') : '<p class="mute">No inquiries for this listing yet.</p>';
+    $$('[data-inquiry-status]', box).forEach(select => {
+      let previous = select.value;
+      select.onchange = async () => {
+        select.disabled = true;
+        try { await X3API.patch('/api/studio/jobs/' + job.id + '/inquiries/' + select.dataset.inquiryStatus + location.search, { status: select.value }); previous = select.value; toast('Review status updated', 'ok'); }
+        catch (e) { select.value = previous; toast(e.message, 'err'); }
+        finally { select.disabled = false; }
+      };
+    });
+  } catch (e) { if (box.isConnected) box.innerHTML = `<p role="alert">${esc(e.message)}</p>`; }
 }
 
 /* ---------------- earnings ---------------- */

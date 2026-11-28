@@ -1,0 +1,105 @@
+{
+  "task": "per-star-jobs-board",
+  "recorded_at": "2026-11-27T07:50:15.930508+00:00",
+  "branch": "feat/star-jobs-board",
+  "base_commit": "7ba83d49372dd2842e870146534fbd33f278b598",
+  "source_state": "scoped task changes over base; unrelated wiki, IDE and CASTING_LIVE_QA files preserved and excluded",
+  "node": "v24.22.1",
+  "sqlite": "3.53.4",
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 74,
+      "pass": 74,
+      "fail": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check (server/shared/public/assets/test/scripts JavaScript)",
+      "exit_code": 0,
+      "files": 47
+    },
+    {
+      "command": "vm.Script parse source and standalone inline scripts",
+      "exit_code": 0,
+      "scripts": 8
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "real_integration": {
+    "new_http_sqlite_tests": 11,
+    "actual_process_restart": true,
+    "archive_cycles": 101,
+    "public_privacy_checks": true,
+    "owner_admin_scope_checks": true,
+    "expiry_and_duplicate_checks": true
+  },
+  "isolated_client": {
+    "tests": 8,
+    "pass": 8,
+    "boundary": "limited DOM/API fixture; not a browser"
+  },
+  "independent_review": {
+    "blocking_findings_remaining": 0,
+    "fixed": [
+      "active-listing archive priority",
+      "private no-store responses",
+      "mailto URI encoding",
+      "missing offline gift goal",
+      "static chat session identity",
+      "SSR and modal text wrapping"
+    ]
+  },
+  "live_readback": {
+    "origin": "http://localhost:8080",
+    "routes_200": [
+      "/api/health",
+      "/stars/luna/jobs",
+      "/stars/mila/jobs",
+      "/api/creators/luna/jobs",
+      "/assets/jobs.js",
+      "/assets/jobs.css",
+      "/studio"
+    ],
+    "anonymous_private_jobs_status": 401,
+    "invented_demo_jobs": false
+  },
+  "browser": {
+    "status": "blocked",
+    "evidence": "apps=[], browsers=[], The browser access host is unavailable",
+    "desktop_mobile_verified": false,
+    "browser_submission_verified": false
+  },
+  "deployment": "not performed",
+  "email_delivery": "not implemented",
+  "payments": "not implemented for jobs",
+  "hiring_decisions": "not performed",
+  "source_sha256": {
+    "README.md": "22e21e70fed157b15fc4dba65d904ac2e2c21d0e0a83bfeeeeafee9b32217f8f",
+    "docs/API.md": "c01543e95237d8f1a5a341a2c45cf6d8b005dc216f7ac379b6b30d69c407a229",
+    "public/assets/game.js": "4bb32d3ad730ed2cf81f2c765690338a70585746cb38c2586c8127cac750273f",
+    "public/assets/studio.js": "b7e994af951397ee5011e22ee1ee9370960ebfd98a44f3fcf0984035a8c6860c",
+    "public/index.html": "4016ab31ed0928d144838a2e1ea5eba4f52f459059df3706670ff6d0d0340d39",
+    "scripts/build-standalone.js": "94d7a2d38ecae409cea4280e6ffce9ad690407d4b9f6e896f351bdc496788a2e",
+    "server/db.js": "7d6d9494f8f270629700d9fc3b110a23757fd1233384316ab966884047073a0f",
+    "server/index.js": "da946b4b50e2e448689fba3fbe655ff07be5fdc234fa44b3268e297ed1d5fa0a",
+    "server/pages/editorial.js": "3679674bacd8eb171835773ed6c4da0dbfcd2626f7639de5f5b526c2f50c79e9",
+    "server/routes/studio.js": "7fe656a5dbbb1913ac41bb97616e65293784766ae62af252ee05d7daafdbb0db",
+    "server/services.js": "d6881ad1135b55e5122a7b5b2c6a08da18c3a563d570c812bb721f00a58718fc",
+    "public/assets/jobs.js": "007bd1cdd5df3dc54e737a24bb342830ddf80fa0f704bd71b0e974414ecd456c",
+    "public/assets/jobs.css": "20f2d3883dfe519f7c4af60e431cd1d234ffafb5282a908484a4d2e243618992",
+    "server/jobs.js": "e6880503b7190168bceae14d12feb94da914ad6a32d8cd0c582267ca25134630",
+    "server/pages/jobs.js": "79976330f872b51d88e542c80f5c4e1627c302c8db100d7039c4849b9660b9a9",
+    "server/routes/jobs.js": "d5405969f057329c3688865e555c12a764970ce9f1cf37b87f1efaef62ffdcc6",
+    "test/jobs.test.js": "1d2bf85bb07bdff23855ca728699c7e5d2e3b07207ed76faf97e8d1ff9eff69d",
+    "test/jobs-client.test.js": "c4af3ac26dbfdbf5e5695a9d9247fb4f29f84584468351423579e70ee3c0520b",
+    "test/star-jobs-pages.test.js": "43fc87a95bc1d0ad55d9df8f679f7a9502ac5590b136caa865f6551aa9280135"
+  }
+}
