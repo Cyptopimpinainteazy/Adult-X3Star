@@ -50,6 +50,7 @@ app.use('/api', (req, res, next) => {
 app.use('/api', require('./routes/public'));
 app.use('/api', require('./routes/jobs'));
 app.use('/api', require('./routes/employer-directory'));
+app.use('/api', require('./routes/network'));
 app.use('/api/econ', require('./routes/econ').router);
 app.use('/api/studio', require('./routes/studio'));
 app.use('/api/admin', require('./routes/admin'));
@@ -153,6 +154,30 @@ app.get(['/', '/index.html'], sendIndex);
 const editorial = require('./routes/editorial');
 app.use(editorial.router);
 const baseUrl = editorial.originFor;
+app.get(['/network', '/talent', '/talent/:id', '/opportunities', '/companies', '/companies/:id'], (req, res) => {
+  if (req.path.endsWith('/')) {
+    const query = req.originalUrl.indexOf('?');
+    return res.redirect(301, req.originalUrl.slice(0, query === -1 ? undefined : query).replace(/\/+$/, '') + (query === -1 ? '' : req.originalUrl.slice(query)));
+  }
+  const network = require('./network');
+  const pages = require('./pages/network');
+  const context = { origin: baseUrl(req), query: req.query };
+  res.setHeader('Cache-Control', 'no-store');
+  const section = req.path.split('/')[1].toLowerCase();
+  let html;
+  if (section === 'network') {
+    const directory = require('./employer-directory');
+    html = pages.renderNetwork({ ...context, talent: network.searchTalent({ pageSize: '6' }).talent,
+      opportunities: network.searchOpportunities({ pageSize: '4' }).jobs,
+      companies: network.searchCompanies({ pageSize: '4' }).companies,
+      employerJobs: directory.search({ pageSize: '4' }).jobs });
+  } else if (section === 'talent' && !req.params.id) html = pages.renderTalent({ ...context, result: network.searchTalent(req.query) });
+  else if (section === 'opportunities') html = pages.renderOpportunities({ ...context, result: network.searchOpportunities(req.query) });
+  else if (section === 'companies' && !req.params.id) html = pages.renderCompanies({ ...context, result: network.searchCompanies(req.query) });
+  else if (section === 'talent') html = pages.renderTalentProfile({ ...context, ...network.talentProfile(req.params.id) });
+  else html = pages.renderCompanyProfile({ ...context, company: network.companyProfile(req.params.id) });
+  res.type('html').send(html);
+});
 app.get(['/jobs', '/jobs/:id'], (req, res) => {
   if (req.path.endsWith('/')) {
     const query = req.originalUrl.indexOf('?');

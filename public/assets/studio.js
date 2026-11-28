@@ -85,6 +85,8 @@ function profile() {
         <label class="field"><span>Niche</span><select class="inp" name="niche">${NICHES.map(n => `<option ${n === c.niche ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
         <label class="field"><span>Tags (comma, up to 6)</span><input class="inp" name="tags" value="${esc(c.tags.join(', '))}"></label>
         <label class="field" style="grid-column:1/-1"><span>Bio</span><textarea class="inp" name="bio" maxlength="600">${esc(c.bio)}</textarea></label>
+        <label class="field"><span>Public city / region (optional)</span><input class="inp" name="networkCity" value="${esc(c.networkCity || '')}" maxlength="80" placeholder="e.g. Denver"><small class="note">Shown in talent search. Use a broad area; leave blank to keep it private.</small></label>
+        <label class="field"><span>Public U.S. state (optional)</span><select class="inp" name="networkState"><option value="">Not shared / outside the U.S.</option>${(D.networkStates || []).map(s => `<option value="${esc(s.slug)}"${s.slug === c.networkState ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select><small class="note">Your choice is public and self-declared. Never enter a home address.</small></label>
         <div class="field" style="grid-column:1/-1"><span>Where you stream</span><div class="chips">${Object.entries(SITES).map(([k, v]) => `<button type="button" class="chip ${c.sites.includes(k) ? 'on' : ''}" data-site="${k}">${v}</button>`).join('')}<span class="chip on" style="pointer-events:none">x3STAR</span></div></div>
         <div class="field" style="grid-column:1/-1"><span>Usernames on other sites (powers "Also live on" links)</span><div class="grid g4">${Object.entries(SITES).map(([k, v]) => `<input class="inp" name="h_${k}" placeholder="${v} username" value="${esc((c.handles || {})[k] || '')}" maxlength="40">`).join('')}</div></div>
         <label class="field"><span>Card color 1</span><input class="inp" type="color" name="hue0" value="${esc(c.hues[0])}" style="padding:4px"></label>
@@ -111,6 +113,7 @@ function profile() {
     const f = $('#pf');
     const body = {
       name: f.name.value, ticker: f.ticker.value.toUpperCase(), niche: f.niche.value, bio: f.bio.value, back: f.back.value,
+      networkCity: f.networkCity.value.trim(), networkState: f.networkState.value,
       tags: f.tags.value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6),
       sites: $$('[data-site].on').map(b => b.dataset.site), hues: [f.hue0.value, f.hue1.value],
       handles: Object.fromEntries(Object.keys(SITES).map(k => [k, f['h_' + k].value.trim()])),
@@ -118,7 +121,7 @@ function profile() {
       tipMenu: $$('#tm .tm-row').map(r => ({ label: $('[name=l]', r).value.trim(), price: Number($('[name=p]', r).value) })).filter(t => t.label),
       schedule: $$('#sch .sch-row').map(r => ({ day: $('[name=d]', r).value, time: $('[name=t]', r).value, title: $('[name=ti]', r).value.trim() })).filter(s => s.title)
     };
-    await guard(() => X3API.put('/api/studio/profile', body), 'Profile saved'); await reload();
+    await guard(() => X3API.put('/api/studio/profile' + location.search, body), 'Profile saved'); await reload();
   };
 }
 const tmRow = (t) => `<div class="tm-row"><input class="inp" name="l" value="${esc(t.label)}" placeholder="Menu item" maxlength="40"><input class="inp" name="p" type="number" min="1" value="${esc(t.price)}"><button class="btn sm" type="button" data-del-row aria-label="Remove">✕</button></div>`;

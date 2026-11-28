@@ -107,6 +107,19 @@ All economy values (prices, odds, rewards, payout rates, affiliate links) are ed
 
 Affiliate networks and search consoles often ask you to upload a file (e.g. `commission-factory-<token>.html`) so it's reachable at `https://www.x3star.live/<file>`. Put it in `data/site-files/` on the server (`~/x3star/data/site-files/` with the setup script); it's served at the site root right away, survives updates (it lives with your data, not in git), and never shadows the app's own pages. Allowed: plain file names ending in .html, .htm, .txt, .xml or .json.
 
+### Talent network
+
+`/network` connects talent discovery, profile opportunities, company listings and the paid jobs directory. It uses the existing records; it does not import competitor ads or invent member activity. The existing live app stays at `/`.
+
+- `/talent`: search approved creators by name/skills, optional public state and whether they have current hiring or available-work posts. `/talent/<id>` is their text-only public metadata profile with links to their existing board and live-app profile.
+- `/opportunities`: browse free star-profile posts, including hiring, availability and the collaboration category. Follow a result to the existing private board-inquiry flow. These posts do not buy placement in the paid employer directory.
+- `/companies`: browse employer identities that currently have approved paid openings. `/companies/<id>` uses the reviewed listing's company identity and listing location; unreviewed company profile edits are not promoted. Test ads stay labeled.
+- **Studio → Profile**: creators may share a broad public city/region and U.S. state, or leave both blank. These are self-declared profile fields, not location verification. Existing creators default to blank; no private application, billing or network location is reused.
+
+All pages serve readable HTML without JavaScript and use local styles without media previews. Demos are labeled. Banned owners, unavailable creators, expired/closed profile posts and ineligible employer ads disappear from these discovery surfaces. Dynamic directories use `noindex,follow`; demo/test-only profiles stay noindex. The reference informs navigation and discovery, not verification or earnings claims. Existing private inquiries are reused; full direct messaging, follows and reviews are not added here.
+
+Focused network verification: `node --test test/network.test.js test/network-pages.test.js`. These tests use real temporary SQLite and HTTP; actual browser layout and keyboard interaction still require a working browser host.
+
 ### Paid employer jobs directory
 
 `/jobs` is the sitewide employer directory: search by role/company, category, U.S. state and remote/hybrid/on-site arrangement. `/jobs/<id>` serves a full opening with a free private inquiry action. Applicants are not charged. The existing free per-star boards remain independent of paid directory placement.

@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS creators (
   pinned_product_id INTEGER,
   back_at     TEXT NOT NULL DEFAULT '',
   handles     TEXT NOT NULL DEFAULT '{}',
+  network_city TEXT NOT NULL DEFAULT '',
+  network_state TEXT NOT NULL DEFAULT '',
   demo        INTEGER NOT NULL DEFAULT 0,
   created_at  INTEGER NOT NULL
 );
@@ -365,6 +367,13 @@ for (const [t, c, d] of [['creators', 'handles', "TEXT NOT NULL DEFAULT '{}'"], 
 if (!db.prepare('PRAGMA table_info(employer_listing_orders)').all().some(column => column.name === 'invoice_instructions')) {
   db.exec("ALTER TABLE employer_listing_orders ADD COLUMN invoice_instructions TEXT NOT NULL DEFAULT ''");
 }
+
+for (const column of ['network_city', 'network_state']) {
+  if (!db.prepare('PRAGMA table_info(creators)').all().some(field => field.name === column)) {
+    db.exec(`ALTER TABLE creators ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`);
+  }
+}
+db.exec("CREATE INDEX IF NOT EXISTS creators_network_state ON creators(status,network_state,name COLLATE NOCASE,id); CREATE INDEX IF NOT EXISTS creator_jobs_network_public ON creator_jobs(status,expires_at,updated_at DESC,id DESC);");
 
 const all = (sql, ...p) => db.prepare(sql).all(...p);
 const get = (sql, ...p) => db.prepare(sql).get(...p);

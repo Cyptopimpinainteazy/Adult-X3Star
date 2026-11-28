@@ -154,11 +154,8 @@ function reviewToken(row) {
     )
     .digest('hex');
 }
-function listingOut(r, publicOnly = false) {
-  const o = r.active_order_id
-    ? get('SELECT * FROM employer_listing_orders WHERE id=? AND listing_id=?', r.active_order_id, r.id)
-    : null;
-  const out = {
+function publicListingOut(r, o) {
+  return {
     id: r.id,
     companyName: r.company_name,
     title: r.title,
@@ -172,6 +169,12 @@ function listingOut(r, publicOnly = false) {
     expiresAt: o && o.expires_at,
     test: !!(o && o.test)
   };
+}
+function listingOut(r, publicOnly = false) {
+  const o = r.active_order_id
+    ? get('SELECT * FROM employer_listing_orders WHERE id=? AND listing_id=?', r.active_order_id, r.id)
+    : null;
+  const out = publicListingOut(r, o);
   if (!publicOnly)
     Object.assign(out, {
       employerId: r.employer_id,
@@ -545,6 +548,94 @@ function search(query = {}) {
   ).map((l) => listingOut(l, true));
   return { jobs, total, page, pageSize, pages: Math.ceil(total / pageSize) };
 }
+/* Company discovery shares the exact paid publication gate above. Account profile edits
+   remain private until a listing carrying that company snapshot is approved. */
+function companyOut(rows) {
+  const latest = rows[0];
+  const jobs = rows.map((row) =>
+    publicListingOut(row, {
+      activated_at: row.public_published_at,
+      expires_at: row.public_expires_at,
+      test: row.public_test
+    })
+  );
+  return {
+    id: latest.employer_id,
+    companyName: latest.company_name,
+    location: latest.location,
+    state: latest.state,
+    test: jobs.every((job) => job.test),
+    jobs
+  };
+}
+function companyRows(employerIds, gate) {
+  return all(
+    'SELECT l.*,o.activated_at AS public_published_at,o.expires_at AS public_expires_at,o.test AS public_test' +
+      publicJoin +
+      'WHERE ' +
+      gate.sql +
+      ' AND l.employer_id IN (' +
+      employerIds.map(() => '?').join(',') +
+      ') ORDER BY o.activated_at DESC,l.id DESC',
+    ...gate.params,
+    ...employerIds
+  );
+}
+function searchPublicCompanies(query = {}) {
+  if (Object.keys(query).some((key) => /[\[\]]/.test(key))) throw bad('Malformed company filter');
+  const scalar = (key) => {
+    if (query[key] !== undefined && typeof query[key] !== 'string') throw bad('Invalid ' + key + ' filter');
+    return query[key] || '';
+  };
+  const q = text(scalar('q'), 'Search', 0, 100);
+  const selectedState = text(scalar('state'), 'State', 0, 40);
+  const parse = (key, fallback, max) => {
+    const value = scalar(key);
+    if (!value) return fallback;
+    if (!/^\d+$/.test(value)) throw bad(key + ' must be a positive integer');
+    return number(Number(value), key, 1, max);
+  };
+  const page = parse('page', 1, 1000),
+    pageSize = parse('pageSize', 20, 50);
+  const gate = publicWhere(),
+    parts = [gate.sql],
+    params = [...gate.params];
+  if (selectedState) {
+    parts.push('l.state=?');
+    params.push(state(selectedState));
+  }
+  if (q) {
+    parts.push("(l.company_name LIKE ? ESCAPE '\\' OR l.location LIKE ? ESCAPE '\\' OR l.title LIKE ? ESCAPE '\\')");
+    const term = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+    params.push(term, term, term);
+  }
+  const where = parts.join(' AND ');
+  const total = get('SELECT COUNT(DISTINCT l.employer_id) AS n' + publicJoin + 'WHERE ' + where, ...params).n;
+  const ids = all(
+    'SELECT l.employer_id' +
+      publicJoin +
+      'WHERE ' +
+      where +
+      ' GROUP BY l.employer_id ORDER BY MAX(o.activated_at) DESC,l.employer_id DESC LIMIT ? OFFSET ?',
+    ...params,
+    pageSize,
+    (page - 1) * pageSize
+  ).map((row) => row.employer_id);
+  const grouped = new Map(ids.map((employerId) => [employerId, []]));
+  if (ids.length) for (const row of companyRows(ids, gate)) grouped.get(row.employer_id).push(row);
+  return {
+    companies: ids.map((employerId) => companyOut(grouped.get(employerId))),
+    total,
+    page,
+    pageSize,
+    pages: Math.ceil(total / pageSize)
+  };
+}
+function publicCompanyProfile(employerId) {
+  const rows = companyRows([id(employerId)], publicWhere());
+  if (!rows.length) throw new HttpError(404, 'not_found', 'Company not found');
+  return companyOut(rows);
+}
 const inquirySelect =
   'SELECT i.*,u.name AS applicant_name,u.email AS applicant_email FROM employer_listing_inquiries i JOIN users u ON u.id=i.user_id';
 function inquiryOut(r) {
@@ -719,6 +810,8 @@ module.exports = {
   config,
   search,
   publicJob,
+  searchPublicCompanies,
+  publicCompanyProfile,
   employerDashboard,
   saveProfile,
   createListing,
