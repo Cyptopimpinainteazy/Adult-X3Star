@@ -363,5 +363,11 @@ const ARTICLES = [
   }
 ];
 
+const NEW_ARTICLES = [
+  ...require('./journal-creators'),
+  ...require('./journal-affiliates'),
+  ...require('./journal-hiring')
+];
+ARTICLES.push(...NEW_ARTICLES);
 const getArticle = (slug) => ARTICLES.find(article => article.slug === slug);
-module.exports = { ARTICLES, getArticle };
+module.exports = { ARTICLES, NEW_ARTICLES, getArticle };

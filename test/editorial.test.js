@@ -5,8 +5,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { ARTICLES } = require('../server/content/articles');
+const visibleText = html => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<[^>]*>/g, ' ').replace(/&(amp|lt|gt|quot|#39);/g, (_, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[name])).replace(/\s+/g, ' ');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'x3-editorial-'));
-Object.assign(process.env, { DATA_DIR: dir, SITE_URL: 'https://creators.example', SEED_DEMO: '0', DEMO_TRAFFIC: '0', ADMIN_PASSWORD: 'editorial-test-only-123', COOKIE_SECURE: '0' });
+Object.assign(process.env, { DATA_DIR: dir, DB_FILE: path.join(dir, 'editorial.db'), SITE_URL: 'https://creators.example', SEED_DEMO: '0', DEMO_TRAFFIC: '0', ADMIN_EMAIL: 'editorial-admin@example.test', ADMIN_PASSWORD: 'editorial-test-only-123', COOKIE_SECURE: '0' });
 require('../server/seed').seed({ quiet: true });
 const { start } = require('../server/index');
 let server, base;
@@ -60,11 +62,17 @@ test('journal articles are full HTML with visible metadata matching BlogPosting'
   assert.equal(res.status, 200);
   const html = await res.text();
   const slugs = [...new Set([...html.matchAll(/href="\/blog\/([a-z0-9-]+)"/g)].map(m => m[1]))];
-  assert.equal(slugs.length, 8);
+  assert.equal(slugs.length, 58);
   for (const slug of slugs) {
     const page = await fetch(base + '/blog/' + slug + '?utm_source=test');
     assert.equal(page.status, 200, slug);
     const body = await page.text();
+    const authored = ARTICLES.find(article => article.slug === slug);
+    const displayed = visibleText(body);
+    assert.ok(displayed.includes(authored.title), slug + ' visible title');
+    for (const section of authored.sections) for (const text of [section.heading, ...section.paragraphs, ...(section.list || [])]) {
+      assert.ok(displayed.includes(text.replace(/\s+/g, ' ')), slug + ' visible authored content');
+    }
     const schemas = JSON.parse(body.match(/<script type="application\/ld\+json">([^]*?)<\/script>/)[1]);
     const article = schemas.find(s => s['@type'] === 'BlogPosting');
     assert.equal(article.url, 'https://creators.example/blog/' + slug);
@@ -78,11 +86,38 @@ test('journal articles are full HTML with visible metadata matching BlogPosting'
   assert.equal((await fetch(base + '/blog/__proto__')).status, 404);
 });
 
+test('journal audiences, search and recruitment actions match the reader', async () => {
+  const cases = [['creators', 26, '/casting?utm_content=', '/casting#apply'], ['affiliates', 16, '/partners?utm_content=', '/partners#inquire'], ['hiring', 16, '/employers', '/employers']];
+  for (const [audience, expected, action, headerAction] of cases) {
+    const response = await fetch(base + '/blog?audience=' + audience);
+    assert.equal(response.status, 200);
+    const body = await response.text();
+    const slugs = [...new Set([...body.matchAll(/<h3><a href="\/blog\/([a-z0-9-]+)"/g)].map(match => match[1]))];
+    assert.equal(slugs.length, expected, audience);
+    assert.ok(body.match(/<header class="top">[\s\S]*?<\/header>/)[0].includes(headerAction), audience + ' header action');
+    assert.match(body, /content="noindex,follow"/);
+    assert.match(body, /rel="canonical" href="https:\/\/creators\.example\/blog"/);
+    const current = slugs.find(slug => !['creator-application-checklist', 'x3star-or-partner-application', 'protect-your-creator-identity', 'starter-streaming-equipment', 'first-month-creator-budget', 'test-your-streaming-schedule', 'secure-your-creator-accounts', 'first-stream-rehearsal'].includes(slug));
+    const article = await (await fetch(base + '/blog/' + current)).text();
+    assert.ok(article.includes(action), current + ' relevant action');
+    assert.ok(article.match(/<header class="top">[\s\S]*?<\/header>/)[0].includes(action), current + ' header action');
+  }
+  const searched = await (await fetch(base + '/blog?audience=affiliates&q=proposal')).text();
+  assert.match(searched, /write-a-publisher-partnership-proposal/);
+  const hostile = await (await fetch(base + '/blog?q=' + encodeURIComponent('<script>alert(1)</script>'))).text();
+  assert.match(hostile, /No guides match/);
+  assert.ok(!hostile.includes('<script>alert(1)</script>'));
+  assert.match(hostile, /value="&lt;script&gt;alert\(1\)&lt;\/script&gt;"/);
+  for (const query of ['audience=unknown', 'q=one&q=two', 'q[x]=search', 'q=' + 'a'.repeat(101)]) {
+    assert.equal((await fetch(base + '/blog?' + query)).status, 400, query);
+  }
+});
+
 test('sitemap lists canonical indexable pages with maintained content dates', async () => {
   const response = await fetch(base + '/sitemap.xml', { headers: { host: 'untrusted.example' } });
   assert.equal(response.status, 200);
   const xml = await response.text();
-  assert.equal((xml.match(/<loc>/g) || []).length, 18);
+  assert.equal((xml.match(/<loc>/g) || []).length, 69);
   assert.match(xml, /<loc>https:\/\/creators\.example\/casting\/colorado<\/loc><lastmod>2026-11-27<\/lastmod>/);
   assert.doesNotMatch(xml, /casting\/alabama|untrusted\.example|utm_|\/go\//);
   const robots = await (await fetch(base + '/robots.txt')).text();
@@ -99,7 +134,7 @@ test('duplicate trailing slashes redirect permanently and preserve attribution',
 });
 
 test('paused partners disappear from the funnel and outbound links keep attribution', async () => {
-  const login = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'admin@x3star.local', password: 'editorial-test-only-123' }) });
+  const login = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'editorial-admin@example.test', password: 'editorial-test-only-123' }) });
   assert.equal(login.status, 200);
   const cookie = login.headers.get('set-cookie').split(';')[0];
   const before = await (await fetch(base + '/casting/colorado?utm_campaign=creator_launch')).text();
@@ -117,4 +152,30 @@ test('paused partners disappear from the funnel and outbound links keep attribut
   assert.equal(pause.status, 200);
   const after = await (await fetch(base + '/casting/colorado')).text();
   assert.doesNotMatch(after, /data-partner|\/go\/p\/apply_broadcaster/);
+});
+
+test('publisher readers have a dedicated private inquiry path into the existing review queue', async () => {
+  const response = await fetch(base + '/partners');
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /data-kind="agent"/);
+  assert.match(html, /name="audience"/);
+  assert.match(html, /name="website"/);
+  assert.match(html, /name="adult"/);
+  assert.match(html, /type="submit" disabled/);
+  assert.match(html, /rel="canonical" href="https:\/\/creators\.example\/partners"/);
+  assert.doesNotMatch(html, /<iframe|<video|\/assets\/game\.js/);
+  const submitted = await fetch(base + '/api/apply', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'agent', stage: 'Example Publisher', email: 'publisher@example.test', adult: true, hours: 0, note: 'Publisher/referral inquiry\nWebsite: https://publisher.example\nAudience: Adult creator professionals\nProposal: Original equipment guides.', campaign: { utm_source: 'search', utm_content: 'write-a-publisher-partnership-proposal' } }) });
+  assert.equal(submitted.status, 201);
+  assert.deepEqual(await submitted.json(), { ok: true });
+  const login = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'editorial-admin@example.test', password: 'editorial-test-only-123' }) });
+  const cookie = login.headers.get('set-cookie').split(';')[0];
+  const queue = await (await fetch(base + '/api/admin/applications', { headers: { cookie } })).json();
+  const inquiry = queue.rows.find(row => row.email === 'publisher@example.test');
+  assert.equal(inquiry.kind, 'agent');
+  assert.equal(inquiry.status, 'pending');
+  assert.match(inquiry.data.note, /Publisher\/referral inquiry/);
+  assert.equal(inquiry.data.campaign.utm_content, 'write-a-publisher-partnership-proposal');
+  assert.ok(!html.includes('publisher@example.test'), 'private inquiry does not become page content');
+  assert.equal((await fetch(base + '/api/admin/applications')).status, 401);
 });

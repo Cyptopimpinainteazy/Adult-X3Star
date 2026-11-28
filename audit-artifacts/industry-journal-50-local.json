@@ -1,0 +1,1022 @@
+{
+  "task": "fifty-industry-recruitment-blog-posts",
+  "objective": "write 50 blog post about this industry to recrute to gain affiliates to find models ect...",
+  "recorded_at": "2026-11-27T20:16:13.562584+00:00",
+  "branch": "feat/industry-journal-50",
+  "git_head_at_verification": "faf018885d02a1f962f7832839245c7b9df7f863",
+  "source_state": "scoped working changes over recorded parent; unrelated collaborative casting/live documents and wiki/IDE files preserved and excluded",
+  "versions": {
+    "node": "v24.22.1",
+    "sqlite": "3.53.4"
+  },
+  "content_audit": {
+    "newArticles": 50,
+    "totalArticles": 58,
+    "totalNewBodyWords": 34579,
+    "minimumWords": 653,
+    "maximumWords": 766,
+    "coverage": {
+      "creators": 18,
+      "affiliates": 16,
+      "hiring": 16
+    },
+    "originalEightUnchanged": true,
+    "mostSimilarFiveWordShingles": {
+      "slugs": [
+        "find-models-for-your-production-team",
+        "manage-inbound-casting-applications"
+      ],
+      "jaccard": 0.00988593155893536
+    },
+    "similarityBoundary": "Lexical overlap diagnostic, not a substitute for full independent editorial review",
+    "articles": [
+      {
+        "slug": "adult-content-creator-career-fit",
+        "title": "Is adult content creation a fit for the work you want?",
+        "audience": "creators",
+        "words": 697,
+        "minutes": 4,
+        "path": "/blog/adult-content-creator-career-fit",
+        "bodySha256": "a03897722244812bb2004a38e3f35543369beb96be2d2fe7a91468235751ea6d"
+      },
+      {
+        "slug": "build-a-creator-portfolio",
+        "title": "Build a creator portfolio that explains what you can do",
+        "audience": "creators",
+        "words": 694,
+        "minutes": 4,
+        "path": "/blog/build-a-creator-portfolio",
+        "bodySha256": "f05b1323911dc0d08efed607287f152a4d14a90bb06525ed44c1798443a20381"
+      },
+      {
+        "slug": "write-a-creator-bio",
+        "title": "Write a creator bio that helps the right people contact you",
+        "audience": "creators",
+        "words": 687,
+        "minutes": 4,
+        "path": "/blog/write-a-creator-bio",
+        "bodySha256": "b9add10d2a4e481a34980a6bc16b697295dcd7e0e5d3f68d27c6a87ebc79a459"
+      },
+      {
+        "slug": "choose-creator-profile-photos",
+        "title": "Choose profile photos that represent your creator work",
+        "audience": "creators",
+        "words": 700,
+        "minutes": 4,
+        "path": "/blog/choose-creator-profile-photos",
+        "bodySha256": "2520bf6e61c40213a755544a7e7f28e5dbad86e3139625f0ad8bd2c9777c777b"
+      },
+      {
+        "slug": "plan-first-creator-introduction",
+        "title": "Plan a clear introduction for a creator profile or application",
+        "audience": "creators",
+        "words": 674,
+        "minutes": 4,
+        "path": "/blog/plan-first-creator-introduction",
+        "bodySha256": "edec71b3b6e5fb173d783f7082cb502d51ee618e64afe823537324021aaefc7b"
+      },
+      {
+        "slug": "read-a-casting-call",
+        "title": "Read a casting call before you decide to apply",
+        "audience": "creators",
+        "words": 673,
+        "minutes": 4,
+        "path": "/blog/read-a-casting-call",
+        "bodySha256": "470e926c952750ac093b860933cad9d08e53684237184593d808dd8276251c18"
+      },
+      {
+        "slug": "questions-before-joining-a-creator-platform",
+        "title": "Questions to ask before joining a creator platform",
+        "audience": "creators",
+        "words": 686,
+        "minutes": 4,
+        "path": "/blog/questions-before-joining-a-creator-platform",
+        "bodySha256": "a91bb01246a2e2f3c69fca2fbb364e58df648e9ef1e04f0c42732c0576d38037"
+      },
+      {
+        "slug": "freelance-editor-to-adult-industry",
+        "title": "Bring freelance editing skills into the adult industry",
+        "audience": "creators",
+        "words": 677,
+        "minutes": 4,
+        "path": "/blog/freelance-editor-to-adult-industry",
+        "bodySha256": "1a9cb04132086a7002c532e6075d2736ffee0e397b90f47da6f7524176936313"
+      },
+      {
+        "slug": "creator-moderator-teamwork",
+        "title": "Work with a moderator without losing control of your room",
+        "audience": "creators",
+        "words": 682,
+        "minutes": 4,
+        "path": "/blog/creator-moderator-teamwork",
+        "bodySha256": "f0cca75eee1ac7ead7c19ebbce353e827df2f0b19e9798146cfbb7ecd47a6b25"
+      },
+      {
+        "slug": "write-available-for-work-post",
+        "title": "Write an available-for-work post people can act on",
+        "audience": "creators",
+        "words": 700,
+        "minutes": 4,
+        "path": "/blog/write-available-for-work-post",
+        "bodySha256": "72bcabfc034e7cd9ce225ec9c3fe65f10232626edb5d74c3608069c7165007a1"
+      },
+      {
+        "slug": "set-collaboration-boundaries",
+        "title": "Agree collaboration boundaries before a project starts",
+        "audience": "creators",
+        "words": 691,
+        "minutes": 4,
+        "path": "/blog/set-collaboration-boundaries",
+        "bodySha256": "b47a467a8a7acfe431b76ab14c58a5ed874f256746f6d087a499119ba692e96b"
+      },
+      {
+        "slug": "prepare-a-remote-creator-meeting",
+        "title": "Prepare for a remote meeting with a creator team",
+        "audience": "creators",
+        "words": 682,
+        "minutes": 4,
+        "path": "/blog/prepare-a-remote-creator-meeting",
+        "bodySha256": "9c78705af73fed13fbebc57d6eed8be9396aaeb70a3ab7138463f2e7079c8056"
+      },
+      {
+        "slug": "maintain-a-creator-content-calendar",
+        "title": "Build a creator content calendar you can maintain",
+        "audience": "creators",
+        "words": 714,
+        "minutes": 4,
+        "path": "/blog/maintain-a-creator-content-calendar",
+        "bodySha256": "30f7a92da0b52bdcfc377811a9c279522fb0c7593282e49df25e8c3bbaf996e4"
+      },
+      {
+        "slug": "handle-creator-enquiries",
+        "title": "Turn a vague creator enquiry into a useful brief",
+        "audience": "creators",
+        "words": 698,
+        "minutes": 4,
+        "path": "/blog/handle-creator-enquiries",
+        "bodySha256": "620f698a0f0fb23bdfea8f356d282de0d3678df523c6c27b48b8dd5ca756035a"
+      },
+      {
+        "slug": "return-after-a-creator-break",
+        "title": "Return to creator work after a break",
+        "audience": "creators",
+        "words": 713,
+        "minutes": 4,
+        "path": "/blog/return-after-a-creator-break",
+        "bodySha256": "4d046bf35ff3e20cd786f3c0495dc9dbbdbd7e0dae1c0cdd76ff1676c0814a0a"
+      },
+      {
+        "slug": "build-a-creator-media-kit",
+        "title": "Build a media kit for creator partnerships",
+        "audience": "creators",
+        "words": 678,
+        "minutes": 4,
+        "path": "/blog/build-a-creator-media-kit",
+        "bodySha256": "195ad44410b3f243c03ef1eb190cb95964ec524bd6209be4ef64db1c7bf9a4e6"
+      },
+      {
+        "slug": "track-creator-business-decisions",
+        "title": "Keep a useful record of your creator business decisions",
+        "audience": "creators",
+        "words": 662,
+        "minutes": 4,
+        "path": "/blog/track-creator-business-decisions",
+        "bodySha256": "8e7f41dccfbe0af89eb38b5a1dc6e0652096a33d0d4c620f5e592c176db9ed13"
+      },
+      {
+        "slug": "creator-platform-move-checklist",
+        "title": "Plan a creator platform move without losing your records",
+        "audience": "creators",
+        "words": 698,
+        "minutes": 4,
+        "path": "/blog/creator-platform-move-checklist",
+        "bodySha256": "bafc23001a99a4d57ec6c9f46991e3c9a8e429f7c345af2748520b35f3af9139"
+      },
+      {
+        "slug": "affiliate-marketing-adult-industry-basics",
+        "title": "How affiliate marketing works in the adult industry",
+        "audience": "affiliates",
+        "words": 712,
+        "minutes": 4,
+        "path": "/blog/affiliate-marketing-adult-industry-basics",
+        "bodySha256": "e3f65da868111f7178cc94700ad07332dab2cb8dfed90ee1baa9f252e1373d1e"
+      },
+      {
+        "slug": "compare-adult-affiliate-program-terms",
+        "title": "Compare affiliate program terms before you promote",
+        "audience": "affiliates",
+        "words": 703,
+        "minutes": 4,
+        "path": "/blog/compare-adult-affiliate-program-terms",
+        "bodySha256": "7069d7910774cd85c162594c7a810659d83777fdabbc8d9148f5a586599ab496"
+      },
+      {
+        "slug": "affiliate-disclosure-examples",
+        "title": "Write affiliate disclosures readers can understand",
+        "audience": "affiliates",
+        "words": 716,
+        "minutes": 4,
+        "path": "/blog/affiliate-disclosure-examples",
+        "bodySha256": "bf09ea97af2898f13216bd946f1f564457bf3340f02ffbcb77af6eaf1b669e7d"
+      },
+      {
+        "slug": "build-adult-affiliate-review-site",
+        "title": "Plan an affiliate review site with useful original content",
+        "audience": "affiliates",
+        "words": 715,
+        "minutes": 4,
+        "path": "/blog/build-adult-affiliate-review-site",
+        "bodySha256": "87d31ab789313f4a8d23c860ef8df4ac9ded6d47b8ac13d5b342d08744afd5ae"
+      },
+      {
+        "slug": "write-creator-platform-comparison",
+        "title": "Write a creator-platform comparison you can support",
+        "audience": "affiliates",
+        "words": 691,
+        "minutes": 4,
+        "path": "/blog/write-creator-platform-comparison",
+        "bodySha256": "d6c636e41b3e5c17a1cea150ac2ee895eea3fb12666a9f7c62f2e2bb324c22a9"
+      },
+      {
+        "slug": "affiliate-tracking-links-explained",
+        "title": "Understand affiliate tracking links and what they measure",
+        "audience": "affiliates",
+        "words": 709,
+        "minutes": 4,
+        "path": "/blog/affiliate-tracking-links-explained",
+        "bodySha256": "c96e9f845476ebd33729bddfbeeeb511f1389f071881a3e67cd5e668d1ef56bd"
+      },
+      {
+        "slug": "affiliate-content-for-search-readers",
+        "title": "Write affiliate content for the person doing the search",
+        "audience": "affiliates",
+        "words": 714,
+        "minutes": 4,
+        "path": "/blog/affiliate-content-for-search-readers",
+        "bodySha256": "f847462003c8fa90762df8a43450f5a64775798c0c5d83b03698954ac3d235e7"
+      },
+      {
+        "slug": "newsletter-for-adult-industry-audience",
+        "title": "Plan an opt-in newsletter for an adult-industry audience",
+        "audience": "affiliates",
+        "words": 726,
+        "minutes": 4,
+        "path": "/blog/newsletter-for-adult-industry-audience",
+        "bodySha256": "c2e449f0ac480b99194df7c171ad2dd35b190ef5082b7a5f74bc25e0ee3d67dc"
+      },
+      {
+        "slug": "promote-creator-opportunities-with-permission",
+        "title": "Promote creator opportunities in communities with permission",
+        "audience": "affiliates",
+        "words": 715,
+        "minutes": 4,
+        "path": "/blog/promote-creator-opportunities-with-permission",
+        "bodySha256": "6c7f1a2fb855b806a45ad9370eea1b61ed2c12255e3ac54184d8468840d84136"
+      },
+      {
+        "slug": "affiliate-landing-page-brief",
+        "title": "Write a brief for a clear affiliate landing page",
+        "audience": "affiliates",
+        "words": 766,
+        "minutes": 4,
+        "path": "/blog/affiliate-landing-page-brief",
+        "bodySha256": "4e958b43395743d146ba46e45635accaccfac0fe44464e16d2b7bc4e6a63d62f"
+      },
+      {
+        "slug": "plan-an-affiliate-content-calendar",
+        "title": "Plan an affiliate publishing calendar around real questions",
+        "audience": "affiliates",
+        "words": 737,
+        "minutes": 4,
+        "path": "/blog/plan-an-affiliate-content-calendar",
+        "bodySha256": "486eee6abbbc93c592b0e744f826f21437abe46c02e09fd909aca97735e36fb9"
+      },
+      {
+        "slug": "review-affiliate-performance",
+        "title": "Review affiliate performance beyond the click count",
+        "audience": "affiliates",
+        "words": 707,
+        "minutes": 4,
+        "path": "/blog/review-affiliate-performance",
+        "bodySha256": "1afb07905d0db6c7ebd9788b6252046f8093550ad4e9d9afea550ead0c3ecee1"
+      },
+      {
+        "slug": "recruit-publisher-partners",
+        "title": "Find publisher partners whose readers fit the opportunity",
+        "audience": "affiliates",
+        "words": 701,
+        "minutes": 4,
+        "path": "/blog/recruit-publisher-partners",
+        "bodySha256": "3de67f4eeba4f1a3b80684f31485dc5961f759dfc4bf4e7a615f417282e39401"
+      },
+      {
+        "slug": "write-a-publisher-partnership-proposal",
+        "title": "Write a publisher partnership proposal people can evaluate",
+        "audience": "affiliates",
+        "words": 702,
+        "minutes": 4,
+        "path": "/blog/write-a-publisher-partnership-proposal",
+        "bodySha256": "9b624b9e48f0bf4cdae83eb01703c2e58dd28a74f0733e1beab31f60af765deb"
+      },
+      {
+        "slug": "affiliate-creative-permissions",
+        "title": "Check permission before using affiliate creative assets",
+        "audience": "affiliates",
+        "words": 726,
+        "minutes": 4,
+        "path": "/blog/affiliate-creative-permissions",
+        "bodySha256": "1124d0ba4a8d13ed973bb4ab934f007193b278882d656fe91dac5e36b1624d4c"
+      },
+      {
+        "slug": "affiliate-link-maintenance",
+        "title": "Keep affiliate links and recommendations current",
+        "audience": "affiliates",
+        "words": 711,
+        "minutes": 4,
+        "path": "/blog/affiliate-link-maintenance",
+        "bodySha256": "c8e0a749c07a0a53e735be5b9fc49d27a0891cbfe0b1c30d4a29dc03b9b7ba37"
+      },
+      {
+        "slug": "write-adult-industry-job-description",
+        "title": "Write an adult-industry job description with a clear scope",
+        "audience": "hiring",
+        "words": 657,
+        "minutes": 3,
+        "path": "/blog/write-adult-industry-job-description",
+        "bodySha256": "1fcb7759ec1d93ab0b00db58c9fec3e2cb0f7899805095a53f7201e39e931a6d"
+      },
+      {
+        "slug": "find-models-for-your-production-team",
+        "title": "Find models for a production team through clear opportunities",
+        "audience": "hiring",
+        "words": 666,
+        "minutes": 4,
+        "path": "/blog/find-models-for-your-production-team",
+        "bodySha256": "ba7b9edacd31a40c21352aeecd894d8082a4aa64f9dabd05ea0f7540f82658d4"
+      },
+      {
+        "slug": "casting-call-vs-job-listing",
+        "title": "Choose between a casting call, a job listing and a collaboration post",
+        "audience": "hiring",
+        "words": 672,
+        "minutes": 4,
+        "path": "/blog/casting-call-vs-job-listing",
+        "bodySha256": "addb3fcef964fae74a810921096793380a24f6cf4ba143a54c0ac87c69b0855b"
+      },
+      {
+        "slug": "evaluate-a-model-portfolio-respectfully",
+        "title": "Review a model portfolio using the needs of the project",
+        "audience": "hiring",
+        "words": 664,
+        "minutes": 4,
+        "path": "/blog/evaluate-a-model-portfolio-respectfully",
+        "bodySha256": "d0d6d6efee24279de4aa98ed923995098de17c13eb9e9f364faf5d7e2d6bf3f0"
+      },
+      {
+        "slug": "plan-a-creator-casting-interview",
+        "title": "Plan a useful creator casting interview",
+        "audience": "hiring",
+        "words": 663,
+        "minutes": 4,
+        "path": "/blog/plan-a-creator-casting-interview",
+        "bodySha256": "8ca91601d0ccac7eced082498251d64baee905d52f01dbacf650a493f8ef6494"
+      },
+      {
+        "slug": "compensate-creator-test-projects",
+        "title": "Scope and compensate a creator test project",
+        "audience": "hiring",
+        "words": 675,
+        "minutes": 4,
+        "path": "/blog/compensate-creator-test-projects",
+        "bodySha256": "b7901c2c5cb8324e4a263faa59a75fac204f9a007982bab95ceb5106c4aee749"
+      },
+      {
+        "slug": "hire-a-video-editor-for-creators",
+        "title": "Hire a video editor for a creator team",
+        "audience": "hiring",
+        "words": 676,
+        "minutes": 4,
+        "path": "/blog/hire-a-video-editor-for-creators",
+        "bodySha256": "0565e3488e99d859d7d1d2c9117b72a38c4f01d6bdd4cc153ffa62ff229da2dc"
+      },
+      {
+        "slug": "hire-a-community-moderator",
+        "title": "Hire a community moderator with a clear escalation plan",
+        "audience": "hiring",
+        "words": 678,
+        "minutes": 4,
+        "path": "/blog/hire-a-community-moderator",
+        "bodySha256": "e7f53d709a99154e63e3d9d2597ccc986a577ffc3a58b1fd02c74f2255a2295e"
+      },
+      {
+        "slug": "brief-a-creator-photographer",
+        "title": "Brief a photographer for creator profile images",
+        "audience": "hiring",
+        "words": 665,
+        "minutes": 4,
+        "path": "/blog/brief-a-creator-photographer",
+        "bodySha256": "0498bcd781a1c79f3e0377c6b914fd783e0a76eb3b216b9ef8501def6f08f6f6"
+      },
+      {
+        "slug": "creator-agency-vs-independent-work",
+        "title": "Compare agency support with independent creator work",
+        "audience": "hiring",
+        "words": 679,
+        "minutes": 4,
+        "path": "/blog/creator-agency-vs-independent-work",
+        "bodySha256": "dc1049c748c1b67f1072a029e26d6884178353f714e93aa4d614ef3de2d4c614"
+      },
+      {
+        "slug": "manage-inbound-casting-applications",
+        "title": "Manage casting applications without losing track of people",
+        "audience": "hiring",
+        "words": 653,
+        "minutes": 3,
+        "path": "/blog/manage-inbound-casting-applications",
+        "bodySha256": "68a1b89ee73f076db924a7ca56a8f7f6ffdaf41f0d48b40108a2520cc23ab20e"
+      },
+      {
+        "slug": "follow-up-with-creator-applicants",
+        "title": "Write useful follow-ups to creator applicants",
+        "audience": "hiring",
+        "words": 670,
+        "minutes": 4,
+        "path": "/blog/follow-up-with-creator-applicants",
+        "bodySha256": "aee12ac6e4704bc3d8a9d2c77fbc3224701fe51f82c75bc373434031f9284311"
+      },
+      {
+        "slug": "onboard-a-creator-collaborator",
+        "title": "Onboard a creator collaborator with clear responsibilities",
+        "audience": "hiring",
+        "words": 661,
+        "minutes": 4,
+        "path": "/blog/onboard-a-creator-collaborator",
+        "bodySha256": "3f9f8733402d82c441f6a5636d1f794ad7aefcc77a71ffe8551fb7e9f2007651"
+      },
+      {
+        "slug": "write-a-production-brief",
+        "title": "Write a production brief everyone can work from",
+        "audience": "hiring",
+        "words": 674,
+        "minutes": 4,
+        "path": "/blog/write-a-production-brief",
+        "bodySha256": "5a920af1d20f7e94a2604ffdae8f08cbaf4d9e785db941a089060625fb8f0648"
+      },
+      {
+        "slug": "plan-a-remote-creator-team",
+        "title": "Organize a remote creator team around clear handoffs",
+        "audience": "hiring",
+        "words": 673,
+        "minutes": 4,
+        "path": "/blog/plan-a-remote-creator-team",
+        "bodySha256": "6a300ed571a929b12ed6a961312635f078d5b3327a1e2cfc88d31f8adee566ab"
+      },
+      {
+        "slug": "renew-close-a-casting-listing",
+        "title": "Keep casting listings current from opening to closure",
+        "audience": "hiring",
+        "words": 696,
+        "minutes": 4,
+        "path": "/blog/renew-close-a-casting-listing",
+        "bodySha256": "b2ba91654ab5b5c11c1d18ae1177b8b5210cce487d057fdbd9a299940728e5ab"
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "requirement": "50 new complete original posts",
+      "evidence": "NEW_ARTICLES exact50; assigned brief slugs match; source lengths653-766 body words; all50 verified live with complete authored content visible",
+      "result": "passed"
+    },
+    {
+      "requirement": "Industry recruitment, affiliate and model-finding purpose",
+      "evidence": "18 creator/model,16 affiliate/publisher,16 recruiter/employer posts; distinct examples reviewed in full by independent peers; audience-matched header and article CTAs",
+      "result": "passed"
+    },
+    {
+      "requirement": "Retain existing material",
+      "evidence": "All8 original records serialized identically to basefaf0188 and all58 article URLs returned200",
+      "result": "passed"
+    },
+    {
+      "requirement": "Working reader destinations and discoverable pages",
+      "evidence": "Audience/search journal filters, 69 canonical sitemap entries, correct BlogPosting metadata and related links; creator/publisher/employer workflows tested",
+      "result": "passed"
+    },
+    {
+      "requirement": "Publisher inquiry is real private review rather than an invented program",
+      "evidence": "Actual temporary SQLite/HTTP submission stores pending agent-kind review with campaign context; anonymousqueue401; no account/commission/payment or email on receipt",
+      "result": "passed"
+    }
+  ],
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 127,
+      "pass": 127,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check server/shared/public/assets/test/scripts JavaScript",
+      "files": 67,
+      "exit_code": 0
+    },
+    {
+      "command": "vm.Script parse source/standalone inline scripts",
+      "scripts": 8,
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "review": {
+    "full_article_cross_review": {
+      "creator_posts": 18,
+      "affiliate_posts": 16,
+      "hiring_posts": 16,
+      "original_guides_compared": 8
+    },
+    "independent_focused_tests_passed": 13,
+    "remaining_findings": 0,
+    "resolved": [
+      "audience-specific sticky header actions",
+      "content-test allowance for developed paragraph-plus-list structure"
+    ]
+  },
+  "live_readback": [
+    {
+      "path": "/blog/creator-application-checklist",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/x3star-or-partner-application",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/protect-your-creator-identity",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/starter-streaming-equipment",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/first-month-creator-budget",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/test-your-streaming-schedule",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/secure-your-creator-accounts",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/first-stream-rehearsal",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": false
+    },
+    {
+      "path": "/blog/adult-content-creator-career-fit",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/build-a-creator-portfolio",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-a-creator-bio",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/choose-creator-profile-photos",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/plan-first-creator-introduction",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/read-a-casting-call",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/questions-before-joining-a-creator-platform",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/freelance-editor-to-adult-industry",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/creator-moderator-teamwork",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-available-for-work-post",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/set-collaboration-boundaries",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/prepare-a-remote-creator-meeting",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/maintain-a-creator-content-calendar",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/handle-creator-enquiries",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/return-after-a-creator-break",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/build-a-creator-media-kit",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/track-creator-business-decisions",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/creator-platform-move-checklist",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-marketing-adult-industry-basics",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/compare-adult-affiliate-program-terms",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-disclosure-examples",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/build-adult-affiliate-review-site",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-creator-platform-comparison",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-tracking-links-explained",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-content-for-search-readers",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/newsletter-for-adult-industry-audience",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/promote-creator-opportunities-with-permission",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-landing-page-brief",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/plan-an-affiliate-content-calendar",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/review-affiliate-performance",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/recruit-publisher-partners",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-a-publisher-partnership-proposal",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-creative-permissions",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/affiliate-link-maintenance",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-adult-industry-job-description",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/find-models-for-your-production-team",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/casting-call-vs-job-listing",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/evaluate-a-model-portfolio-respectfully",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/plan-a-creator-casting-interview",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/compensate-creator-test-projects",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/hire-a-video-editor-for-creators",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/hire-a-community-moderator",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/brief-a-creator-photographer",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/creator-agency-vs-independent-work",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/manage-inbound-casting-applications",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/follow-up-with-creator-applicants",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/onboard-a-creator-collaborator",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/write-a-production-brief",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/plan-a-remote-creator-team",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog/renew-close-a-casting-listing",
+      "status": 200,
+      "authoredBodyVisible": true,
+      "metadataMatches": true,
+      "newArticle": true
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "articles": 58
+    },
+    {
+      "path": "/blog?audience=creators",
+      "status": 200,
+      "articles": 26
+    },
+    {
+      "path": "/blog?audience=affiliates",
+      "status": 200,
+      "articles": 16
+    },
+    {
+      "path": "/blog?audience=hiring",
+      "status": 200,
+      "articles": 16
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "canonicalEntries": 69,
+      "allFiftyNewArticlesPresent": true
+    },
+    {
+      "path": "/partners",
+      "status": 200,
+      "publisherFormPresent": true,
+      "noStore": true,
+      "realInquirySubmitted": false
+    },
+    {
+      "path": "/api/admin/applications",
+      "anonymousStatus": 401
+    }
+  ],
+  "limitations": {
+    "browser_visual_checks": "not performed; full text and metadata verified through actual HTTP",
+    "search_rankings_or_leads_acquired": "not claimed",
+    "production_deployment": "not performed",
+    "real_outreach_email_or_external_program_enrollment": "not performed",
+    "real_local_inquiry_in_readback": "not submitted; inquiry integration exercised in disposable test database"
+  },
+  "source_sha256": {
+    "README.md": "4b5784c0427f2b9448a69c044becb4a1234b01c5d2069a4de09bce3961b21bde",
+    "docs/API.md": "2063ffe91ffdfcdca6dda0c5355343f5595f622171efd39904951499720c1688",
+    "docs/BLOG_CONTENT_BRIEF.md": "d07c1c01b74755be85b7395c08f98fa67c853010755dacaca869f8c3544ee746",
+    "public/assets/casting.js": "8e7b5db045f3c6646cc830a90b250d460ba4ea31b889099adae466b0f010a96a",
+    "public/assets/editorial.css": "84d9c3514facf1081c065be0014eb6673d04cf90c21da356d335df1b00bcc582",
+    "server/content/articles.js": "5b1f0d6e99aaa995f9bc5a6a3cb8d9ab7e2d41a014a1527f702925d057949f2a",
+    "server/content/journal-creators.js": "87f11557a293322a631b34d80b05b2fa319d1a2e54ebf4d720806cbf2679b3f2",
+    "server/content/journal-affiliates.js": "2e884ef9d59d243f55fe4121de4506d409d883f9cf4f5b34a6e4bda944e983b4",
+    "server/content/journal-hiring.js": "37eb529ee852ccfc2dd434fba3c2bfce3ce03b9fa605a08fffc210b80aa82155",
+    "server/pages/editorial.js": "df4b6ec18e6dce7bd86fcf7dbe7a671d3ec957700fb5ef347bb91394018541b8",
+    "server/routes/editorial.js": "3fab8db88c135bab692b48f395ecc4a02e3621d32b0c82819176b67b82f9dca9",
+    "test/editorial.test.js": "b228398b1dce23fc5175c21b4bfa302f0f65261368dab6de294085e131abf831",
+    "test/casting-client.test.js": "aa2ef1c768e1eb5047274dedd6e28a055a5980a03a2f05f759fd678f6f13c798",
+    "test/journal-content.test.js": "67b0c1f7858b452f44edfafba3317cd803bf11425aabd7fad43ecba3cb13c1f5"
+  }
+}
