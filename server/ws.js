@@ -75,10 +75,22 @@ function demoTick() {
 }
 
 /* ---------------- connection handling ---------------- */
+function verifyOrigin({ origin, req }, done) {
+  if (!origin) return done(true); // Non-browser clients may omit Origin.
+  try {
+    const source = new URL(origin);
+    let protocol = req.socket.encrypted ? 'https' : 'http';
+    if (cfg.TRUST_PROXY && req.headers['x-forwarded-proto']) protocol = req.headers['x-forwarded-proto'].split(',')[0].trim();
+    const expected = cfg.SITE_URL || `${protocol}://${req.headers.host}`;
+    done(['http:', 'https:'].includes(source.protocol) && source.origin === expected, 403);
+  } catch { done(false, 403); }
+}
+
 function init(server) {
-  wss = new WebSocketServer({ server, path: '/ws', maxPayload: 8 * 1024 });
+  wss = new WebSocketServer({ server, path: '/ws', maxPayload: 8 * 1024, verifyClient: verifyOrigin });
   wss.on('connection', (ws, req) => {
-    const user = userForToken(parseCookies(req.headers.cookie)[COOKIE]);
+    const token = parseCookies(req.headers.cookie)[COOKIE];
+    const user = userForToken(token);
     ws.user = user ? { id: user.id, name: user.name } : null;
     ws.room = null; ws.lastChat = 0; ws.alive = true;
     clients.add(ws);
@@ -92,19 +104,19 @@ function init(server) {
       if (m.type === 'join') {
         const room = typeof m.room === 'string' && get("SELECT id FROM creators WHERE id = ? AND status = 'approved'", m.room) ? m.room : null;
         ws.room = room;
-        if (room && ws.user) {
-          const u = get('SELECT * FROM users WHERE id = ?', ws.user.id); if (!u || u.banned) return;
+        const u = userForToken(token);
+        if (room && u) {
           const ident = S.chatIdentity(u);
           if (ident.entrance || ident.vip) broadcast({ type: 'enter', id: id(), site: 'X3', room, user: u.name, level: ident.level, vip: ident.vip, entrance: ident.entrance || `ent_vip${ident.vip}`, ts: Date.now() });
         }
         return;
       }
       if (m.type === 'chat') {
-        if (!ws.user) return send(ws, { type: 'error', code: 'auth_required', message: 'Sign in to chat' });
+        const u = userForToken(token);
+        if (!u) return send(ws, { type: 'error', code: 'auth_required', message: 'Sign in to chat' });
         const now = Date.now(); if (now - ws.lastChat < 900) return send(ws, { type: 'error', code: 'rate_limited', message: 'Slow down' });
         const text = String(m.text || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 280); if (!text) return;
         const room = typeof m.room === 'string' && get("SELECT id FROM creators WHERE id = ? AND status = 'approved'", m.room) ? m.room : null;
-        const u = get('SELECT * FROM users WHERE id = ?', ws.user.id); if (!u || u.banned) return;
         ws.lastChat = now;
         let ident;
         try { S.withEcon(u.id, 'chat_xp', (s, c, t) => S.E.chatXp(s, c, t)); ident = S.chatIdentity(get('SELECT * FROM users WHERE id = ?', u.id)); } catch { ident = S.chatIdentity(u); }

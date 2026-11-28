@@ -272,7 +272,7 @@ let depth = 0;
 /** Run fn inside a transaction (nested calls join the outer one). */
 function tx(fn) {
   if (depth > 0) return fn();
-  depth++; db.exec('BEGIN IMMEDIATE');
+  db.exec('BEGIN IMMEDIATE'); depth++;
   try { const out = fn(); db.exec('COMMIT'); return out; }
   catch (e) { try { db.exec('ROLLBACK'); } catch {} throw e; }
   finally { depth--; }
