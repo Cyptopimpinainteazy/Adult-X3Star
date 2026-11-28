@@ -47,11 +47,12 @@ const yes = (v) => v === true || v === 1 || /^(1|true|yes|on)$/i.test(String(v |
 const word = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9 _-]/g, '').trim().replace(/\s+/g, '-').slice(0, 24);
 
 /** Normalise one API room to the grid's room shape; null if it must not be shown. */
-function normalize(r, { affiliateId } = {}) {
+function normalize(r, { affiliateId, publicOnly = false } = {}) {
   if (!r || !ROOM_RE.test(String(r.username || ''))) return null;
   const age = Number(r.display_age);
   if (r.display_age != null && r.display_age !== '' && Number.isFinite(age) && age < 18) return null;
   const status = String(r.status || '').toLowerCase(), chat = String(r.chat_status || '').toLowerCase();
+  if (publicOnly && (status !== 'online' || chat !== 'public')) return null;
   if (/offline|away|hidden/.test(status) || /offline|away|hidden/.test(chat)) return null;
   const show = /priv/.test(chat) ? 'private' : /group/.test(chat) ? 'group' : /vip/.test(chat) ? 'vip' : 'public';
   const subject = cleanText(r.turns_on, 140);
@@ -88,26 +89,26 @@ function roomList(data) {
   return null;
 }
 
-async function fetchFresh(affiliateId) {
+async function fetchFresh(affiliateId, publicOnly) {
   const q = new URLSearchParams({ c: affiliateId, type: 'api', api_v: '1', limit: String(FETCH_LIMIT), api_type: 'json' });
   const res = await fetcher(`${API}?${q}`, { headers: { 'User-Agent': 'x3STAR/1.0 (+https://x3star.live)', Accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`BongaCams API ${res.status}`);
   const list = roomList(await res.json());
   if (!list) throw new Error('Unexpected BongaCams API response');
   const seen = new Set(), rooms = [];
-  for (const r of list) { const n = normalize(r, { affiliateId }); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
+  for (const r of list) { const n = normalize(r, { affiliateId, publicOnly }); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
   rooms.sort((a, b) => (a.show === 'public' ? 0 : 1) - (b.show === 'public' ? 0 : 1) || b.viewers - a.viewers);
   return rooms;
 }
 
 /** Live rooms, optionally filtered by gender (f|m|c|t). Returns { rooms, stale, error }. */
-async function liveRooms({ affiliateId, gender }) {
+async function liveRooms({ affiliateId, gender, publicOnly = false }) {
   if (!ID_RE.test(String(affiliateId || ''))) return { rooms: [], stale: false, error: 'No BongaCams affiliate ID set' };
   const g = genderOf(gender);
-  const key = String(affiliateId), hit = cache.get(key);
+  const key = String(affiliateId) + '|' + (publicOnly ? 'public' : 'legacy'), hit = cache.get(key);
   const pick = (rooms) => (g ? rooms.filter(r => r.gender === g) : rooms);
   if (hit && Date.now() - hit.at < TTL_MS) return { rooms: pick(hit.rooms), stale: false, error: null };
-  if (!inflight.has(key)) inflight.set(key, fetchFresh(key).then(rooms => { cache.set(key, { at: Date.now(), rooms }); return rooms; }).finally(() => inflight.delete(key)));
+  if (!inflight.has(key)) inflight.set(key, fetchFresh(String(affiliateId), publicOnly).then(rooms => { cache.set(key, { at: Date.now(), rooms }); return rooms; }).finally(() => inflight.delete(key)));
   try { return { rooms: pick(await inflight.get(key)), stale: false, error: null }; }
   catch (e) {
     if (hit && Date.now() - hit.at < STALE_MS) return { rooms: pick(hit.rooms), stale: true, error: null };

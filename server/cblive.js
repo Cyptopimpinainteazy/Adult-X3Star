@@ -73,10 +73,11 @@ function embedSrc(r, { program, campaign } = {}) {
 }
 
 /** Normalise one API room; null if it must not be shown. */
-function normalize(r, opts) {
+function normalize(r, opts = {}) {
   if (!r || !ROOM_RE.test(String(r.username || ''))) return null;
   const age = Number(r.age);
   if (r.age != null && r.age !== '' && !(age >= 18)) return null;
+  if (opts.publicOnly && String(r.current_show || '').toLowerCase() !== 'public') return null;
   const show = String(r.current_show || 'public').toLowerCase();
   if (show === 'away' || show === 'hidden' || show === 'offline') return null;
   const subject = cleanText(r.room_subject, 140);
@@ -98,7 +99,7 @@ function normalize(r, opts) {
   };
 }
 
-async function fetchFresh({ campaign, program, gender, tag, ip }) {
+async function fetchFresh({ campaign, program, gender, tag, ip, publicOnly }) {
   const q = new URLSearchParams({ wm: campaign, format: 'json', limit: String(FETCH_LIMIT), client_ip: ip });
   if (gender) q.set('gender', gender);
   if (tag) q.set('tag', tag);
@@ -108,7 +109,7 @@ async function fetchFresh({ campaign, program, gender, tag, ip }) {
   const list = Array.isArray(data) ? data : Array.isArray(data && data.results) ? data.results : null;
   if (!list) throw new Error('Unexpected Chaturbate API response');
   const seen = new Set(), rooms = [];
-  for (const r of list) { const n = normalize(r, { program, campaign }); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
+  for (const r of list) { const n = normalize(r, { program, campaign, publicOnly }); if (n && !seen.has(n.room)) { seen.add(n.room); rooms.push(n); } }
   rooms.sort((a, b) => (a.show === 'public' ? 0 : 1) - (b.show === 'public' ? 0 : 1) || b.viewers - a.viewers);
   return rooms;
 }
@@ -117,16 +118,16 @@ async function fetchFresh({ campaign, program, gender, tag, ip }) {
  * Live rooms for a filter. Returns { rooms, stale, error }.
  * gender: f|m|c|t (or words), tag: one Chaturbate tag, ip: visitor IP.
  */
-async function liveRooms({ campaign, program, gender, tag, ip }) {
+async function liveRooms({ campaign, program, gender, tag, ip, publicOnly = false }) {
   const g = GENDERS[String(gender || '').toLowerCase()] || '';
   const t = TAG_RE.test(String(tag || '').toLowerCase()) ? String(tag).toLowerCase() : '';
   const apiGender = g === 't' ? 's' : g;   // the affiliate API still uses "s" for trans
   const cip = clientIp(ip);
-  const key = `${campaign}|${program || ''}|${g}|${t}|${cip}`;
+  const key = `${campaign}|${program || ''}|${g}|${t}|${cip}|${publicOnly ? 'public' : 'legacy'}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return { rooms: hit.rooms, stale: false, error: null };
   if (!inflight.has(key)) {
-    inflight.set(key, fetchFresh({ campaign, program, gender: apiGender, tag: t, ip: cip })
+    inflight.set(key, fetchFresh({ campaign, program, gender: apiGender, tag: t, ip: cip, publicOnly })
       .then(rooms => { remember(key, rooms); return rooms; })
       .finally(() => inflight.delete(key)));
   }

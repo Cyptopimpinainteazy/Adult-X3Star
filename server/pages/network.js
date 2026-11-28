@@ -1,5 +1,5 @@
 'use strict';
-/* Connected, non-graphic discovery. Public metadata only; contact stays on existing boards. */
+/* Connected discovery with approved photos and opt-in room previews; contact stays on existing boards. */
 const { layout, esc } = require('./editorial');
 const { STATES, getState } = require('../content/states');
 const { CATEGORIES: EMPLOYER_CATEGORIES, MODES } = require('./directory');
@@ -73,10 +73,10 @@ function header(active) {
   const links = [['network', '/network', 'Network'], ['talent', '/talent', 'Talent'], ['opportunities', '/opportunities', 'Free opportunities'], ['companies', '/companies', 'Companies'], ['live', '/#profiles', 'Live app ↗']];
   return `<header class="network-top"><div class="wrap network-top-row"><a class="brand" href="/network" aria-label="x3STAR network">x3<span>STAR</span><i>✦</i></a><nav aria-label="Network">${links.map(([key, href, label]) => `<a href="${href}"${active === key ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</nav><a class="button small network-top-action" href="/employers">Post an employer job <span aria-hidden="true">↗</span></a></div></header>`;
 }
-function page({ title, description, path, origin, active, content, indexable = false, crumbs = [] }) {
+function page({ title, description, path, origin, active, content, indexable = false, crumbs = [], previews = false }) {
   // Keep shared canonical/social/schema/footer behavior while giving discovery its own compact header.
   return layout({ title, description, path, origin, content, indexable, crumbs })
-    .replace('</head>', '<link rel="stylesheet" href="/assets/network.css"></head>')
+    .replace('</head>', '<link rel="stylesheet" href="/assets/network.css">' + (previews ? '<script src="/assets/talent-previews.js" defer></script>' : '') + '</head>')
     .replace('<body>', '<body class="network-page">')
     .replace(/<header class="top">[\s\S]*?<\/header>/, header(active));
 }
@@ -84,13 +84,18 @@ function page({ title, description, path, origin, active, content, indexable = f
 function talentCard(creator) {
   const location = region(creator.networkCity, creator.networkState);
   const available = count(creator.availableCount), hiring = count(creator.hiringCount);
-  return `<article class="network-person">
-    <div class="network-person-top"><span class="network-avatar" aria-hidden="true">${esc(initials(creator.name))}</span><div><span class="eyebrow">${esc(creator.niche || 'Creator')}</span><h3><a href="${esc(talentUrl(creator))}">${esc(creator.name)}</a></h3></div>${demoLabel(creator.demo)}</div>
+  const photo = creator.photo, previewId = 'talent-preview-' + encodeURIComponent(creator.id);
+  const presence = creator.live ? creator.previewUrl ? 'Check live room' : 'Preview unavailable' : 'Offline';
+  return `<article class="network-person talent-card" data-talent-card data-creator-name="${esc(creator.name)}"${creator.previewUrl ? ` data-preview-url="${esc(creator.previewUrl)}"` : ''}>
+    <div class="talent-media"><div class="talent-photo${photo ? '' : ' photo-unavailable'}"><span aria-hidden="true">${esc(initials(creator.name))}</span>${photo ? `<img data-talent-photo loading="lazy" decoding="async" width="132" height="132" src="${esc(photo.url)}" alt="${esc(photo.alt || creator.name)}">` : ''}<small>Photo unavailable</small></div>
+      ${creator.previewUrl ? `<div class="talent-preview-stage" id="${esc(previewId)}" data-preview-stage hidden></div><div class="talent-preview-controls"><button type="button" data-preview-toggle aria-controls="${esc(previewId)}" aria-expanded="false" hidden>Preview room</button><p class="talent-preview-status" data-preview-status role="status" aria-live="polite"></p><a class="talent-preview-room" data-preview-room target="_blank" rel="sponsored noopener noreferrer" hidden>Open room ↗</a><span class="talent-preview-disclosure">Partner room · x3STAR may earn a referral commission</span></div>` : ''}
+    </div>
+    <div class="network-person-top"><div><span class="eyebrow">${esc(creator.niche || 'Creator')}</span><h3><a href="${esc(talentUrl(creator))}">${esc(creator.name)}</a></h3></div>${demoLabel(creator.demo)}</div>
     <p class="network-location">${esc(location || 'Location not shared')}</p>
     <p class="network-bio">${esc(excerpt(creator.bio || 'Explore this creator’s current profile and free opportunities.'))}</p>
     <div class="network-tags">${(creator.tags || []).slice(0, 4).map(tag => `<span>${esc(tag)}</span>`).join('')}</div>
     <div class="network-post-counts">${available ? `<span>${plural(available, 'available-work post')}</span>` : ''}${hiring ? `<span>${plural(hiring, 'hiring post')}</span>` : ''}${!available && !hiring ? '<span>No open profile posts</span>' : ''}</div>
-    <div class="network-card-foot"><a class="text-link" href="${esc(talentUrl(creator))}">View profile <span aria-hidden="true">↗</span></a><span class="network-presence${creator.live ? ' live' : ''}">${creator.live ? 'Live now' : 'Offline'}</span></div>
+    <div class="network-card-foot"><a class="text-link" href="${esc(talentUrl(creator))}">View profile <span aria-hidden="true">↗</span></a><span class="network-presence" data-preview-presence>${presence}</span></div>
   </article>`;
 }
 function opportunityCard(job) {
@@ -145,7 +150,7 @@ function renderNetwork({ origin, talent = [], opportunities = [], companies = []
   <section>${heading('Paid employer directory', 'The team behind the work.', '/jobs', 'All employer jobs', plural(employerJobs.length, 'opening') + ' shown')}<p class="network-section-copy">Employers purchase directory placement after review. Applicants browse and inquire for free. Development test listings are labeled individually.</p><div class="network-grid two">${employerJobs.length ? employerJobs.map(employerJobCard).join('') : empty('No open employer jobs yet.', 'Employers can prepare an opening and submit it for review.', '/employers', 'Post an employer job')}</div></section>
   <section>${heading('Companies', 'Find the people hiring.', '/companies', 'Explore companies')}<div class="network-grid two">${companies.length ? companies.map(companyCard).join('') : empty('No active company listings yet.', 'Companies appear while they have a current public employer listing.', '/employers', 'Create an employer listing')}</div></section>
   <section class="network-next"><div><span class="eyebrow">Start where you are</span><h2>New here?<br>Make a considered start.</h2><p>Explore creator applications and practical guides, or discover talent who choose to share their state.</p><div class="actions"><a class="button" href="/casting">Creator casting ↗</a><a class="text-link" href="/blog">Read the creator journal ↗</a></div></div><form class="network-state-jump" action="/talent" method="get"><label for="network-state">Explore talent by U.S. state</label><select id="network-state" name="state">${stateOptions('', 'Choose a state or see all')}</select><p class="fine">Locations are optional and self-declared. A state does not imply an office or an in-person audition.</p><button class="button primary" type="submit">Explore talent ↗</button></form></section>`;
-  return page({ title: 'Creator talent, opportunities and companies', description: 'Discover x3STAR creator profiles, free star opportunities and employer openings in one connected adult professional network.', path: '/network', origin, active: 'network', content, indexable: realContent });
+  return page({ title: 'Creator talent, opportunities and companies', description: 'Discover x3STAR creator profiles, free star opportunities and employer openings in one connected adult professional network.', path: '/network', origin, active: 'network', content, indexable: realContent, previews: true });
 }
 
 function renderTalent({ origin, result, query = {} }) {
@@ -155,12 +160,12 @@ function renderTalent({ origin, result, query = {} }) {
       <form class="network-filters talent" action="/talent" method="get">${pageSizeField(values)}${field('Search talent', 'q', values.q, 'Name, niche or skill')}${stateSelect(values.state)}${select('Open profile posts', 'intent', KINDS, values.intent, 'Any intent')}<div class="network-filter-actions"><button class="button primary" type="submit">Find talent</button><a class="text-link" href="/talent">Clear filters</a></div></form>
       <div class="network-result-heading"><h2>Find your people.</h2><p class="meta">${plural(result.total, 'profile')} match</p></div><div class="network-grid people">${result.talent.length ? result.talent.map(talentCard).join('') : empty('No matching talent profiles.', 'Try another name, skill or state, or clear your filters.', '/talent', 'See all talent')}</div>${pagination('/talent', result, values)}
     </section>`;
-  return page({ title: 'Find creator talent', description: 'Search approved x3STAR creator metadata profiles by name, skills, public state and open hiring or available-work posts.', path: '/talent', origin, active: 'talent', content, crumbs: [['Network', '/network'], ['Talent', '/talent']] });
+  return page({ title: 'Find creator talent', description: 'Search approved x3STAR creator metadata profiles by name, skills, public state and open hiring or available-work posts.', path: '/talent', origin, active: 'talent', content, previews: true, crumbs: [['Network', '/network'], ['Talent', '/talent']] });
 }
 
 function renderTalentProfile({ origin, creator, jobs = [] }) {
   const location = region(creator.networkCity, creator.networkState), path = talentUrl(creator);
-  const content = `<section class="network-profile-hero"><div class="network-avatar large" aria-hidden="true">${esc(initials(creator.name))}</div><div><span class="eyebrow">Creator profile · ${esc(creator.niche || 'Creator')}</span><h1>${esc(creator.name)}</h1><div class="network-profile-status">${demoLabel(creator.demo)}<span class="network-presence${creator.live ? ' live' : ''}">${creator.live ? 'Live now on x3STAR' : 'Currently offline'}</span></div><p class="network-location">${esc(location || 'Location not shared')}${location ? '<span>Self-declared public location</span>' : ''}</p><div class="network-tags">${(creator.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('')}</div><div class="actions"><a class="button primary" href="#opportunities">View free opportunities ↗</a><a class="button" href="/#member-${encodeURIComponent(creator.id)}">Open member profile ↗</a></div></div></section>
+  const content = `<section class="network-profile-hero"><div class="network-avatar large" aria-hidden="true">${esc(initials(creator.name))}</div><div><span class="eyebrow">Creator profile · ${esc(creator.niche || 'Creator')}</span><h1>${esc(creator.name)}</h1><div class="network-profile-status">${demoLabel(creator.demo)}<span class="network-presence">${creator.live ? 'Marked live by creator' : 'Currently offline'}</span></div><p class="network-location">${esc(location || 'Location not shared')}${location ? '<span>Self-declared public location</span>' : ''}</p><div class="network-tags">${(creator.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('')}</div><div class="actions"><a class="button primary" href="#opportunities">View free opportunities ↗</a><a class="button" href="/#member-${encodeURIComponent(creator.id)}">Open member profile ↗</a></div></div></section>
     <section class="network-profile-content"><article><span class="eyebrow">About</span><h2>A little introduction.</h2><p class="network-full-bio">${esc(creator.bio || 'This creator has not added an introduction yet.')}</p></article><aside class="network-profile-aside"><span class="eyebrow">Their free board</span><h3>Make the first connection.</h3><p>${plural(jobs.length, 'current post')} from this creator. Read the scope and compensation, then use the existing board to send a private inquiry.</p><a class="text-link" href="${esc(boardUrl(creator))}">Open the full star board ↗</a><p class="fine">Your account name, email, message and optional portfolio link are shared with the listing owner and authorized administrators when you send an inquiry.</p></aside></section>
     <section id="opportunities">${heading('Free star opportunities', 'Ways to work together.', boardUrl(creator), 'Open this star’s board', plural(jobs.length, 'current post'))}<div class="network-grid two">${jobs.length ? jobs.map(job => opportunityCard({ ...job, creator })).join('') : empty('No open profile posts right now.', 'This creator has no current hiring or available-work posts. You can explore opportunities from other stars.', '/opportunities', 'Browse free opportunities')}</div></section>`;
   return page({ title: `${creator.name} — creator profile`, description: excerpt(`${creator.name}. ${creator.niche || 'Creator'}. ${creator.bio || 'Explore current free profile opportunities and ways to work together.'}`, 160), path, origin, active: 'talent', content, indexable: !creator.demo, crumbs: [['Network', '/network'], ['Talent', '/talent'], [creator.name, path]] });
