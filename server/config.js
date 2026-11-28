@@ -19,9 +19,16 @@ const bool = (v, d) => (v === undefined || v === '' ? d : /^(1|true|yes|on)$/i.t
 const num = (v, d) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? d : Number(v));
 
 const DATA_DIR = path.resolve(ROOT, process.env.DATA_DIR || 'data');
+let SITE_URL = '';
+if (process.env.SITE_URL) {
+  const site = new URL(process.env.SITE_URL);
+  if (!['https:', 'http:'].includes(site.protocol) || site.username || site.password || site.pathname !== '/' || site.search || site.hash) throw new Error('SITE_URL must be an http(s) origin without a path, credentials or query');
+  SITE_URL = site.origin;
+}
 
 module.exports = {
   ROOT,
+  SITE_URL,
   PUBLIC_DIR: path.join(ROOT, 'public'),
   SHARED_DIR: path.join(ROOT, 'shared'),
   DATA_DIR,

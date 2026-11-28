@@ -99,14 +99,14 @@ footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:13px;color
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><a class="logo" href="/"><b>x3</b>STAR<i>✦</i></a><a class="btn pri" href="/#creators">Apply — it's free</a></div></header>
+<header class="top"><div class="wrap"><a class="logo" href="/"><b>x3</b>STAR<i>✦</i></a><a class="btn pri" href="/casting#apply">Apply — it's free</a></div></header>
 
 <main>
 <div class="hero"><div class="wrap">
   <span class="eyebrow">Creator guide · updated ${new Date().toISOString().slice(0, 7)}</span>
   <h1>How to become a <em>cam model</em>.</h1>
   <p class="lead">A straight-talking guide to starting out: the gear you actually need, how to build a persona, how money moves from a fan's gift to your bank, and how to stay safe while you do it.</p>
-  <div class="row"><a class="btn pri" href="/#creators">Apply to stream on x3STAR</a><a class="btn" href="#earn">See how payouts work</a></div>
+  <div class="row"><a class="btn pri" href="/casting#apply">Apply to stream on x3STAR</a><a class="btn" href="#earn">See how payouts work</a></div>
   <div class="facts">
     <div class="fact"><b>${usd(f.beanUsd)}</b><span>per bean you earn</span></div>
     <div class="fact"><b>${num(f.perDiamond)} : 1</b><span>beans per gifted diamond</span></div>
@@ -235,7 +235,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:13px;color
 <div class="cta">
   <h2>Ready to take the <em>floor</em>?</h2>
   <p>Applications take a few minutes and are reviewed by a person. Once approved, you'll verify your ID, set up your profile in Creator Studio and go live.</p>
-  <a class="btn pri" href="/#creators">Apply now — it's free</a>
+  <a class="btn pri" href="/casting#apply">Apply now — it's free</a>
 </div>
 
 </article>
@@ -244,7 +244,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 50px;font-size:13px;color
 
 <footer><div class="wrap">
   <span>© ${new Date().getFullYear()} x3STAR. All performers are 18 or older and age-verified. Earnings vary; nothing on this page is a promise of income.</span>
-  <span><a href="/">Home</a> · <a href="/#legal-terms">Terms</a> · <a href="/#legal-privacy">Privacy</a> · <a href="/#legal-2257">2257</a> · <a href="/#legal-dmca">DMCA</a></span>
+  <span><a href="/casting">Casting by state</a> · <a href="/blog">Creator journal</a> · <a href="/">Home</a> · <a href="/#legal-terms">Terms</a> · <a href="/#legal-privacy">Privacy</a> · <a href="/#legal-2257">2257</a> · <a href="/#legal-dmca">DMCA</a></span>
 </div></footer>
 <script>
 (function () {

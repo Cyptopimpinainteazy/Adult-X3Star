@@ -58,7 +58,7 @@ On first start the server creates the admin account. With `SEED_DEMO=1` it also 
 The demo password is `DEMO_PASSWORD`, or a random one printed in the console. Every demo row is flagged `demo=1`.
 
 ```bash
-npm test                    # 22 tests: economy engine + end-to-end API
+npm test                    # economy, affiliate, casting/editorial and end-to-end API tests
 npm run dev                 # restart on file changes
 npm run build:standalone    # dist/x3star-standalone.html — fan app as one offline file
 ```
@@ -106,6 +106,30 @@ All economy values (prices, odds, rewards, payout rates, affiliate links) are ed
 ### Site verification files
 
 Affiliate networks and search consoles often ask you to upload a file (e.g. `commission-factory-<token>.html`) so it's reachable at `https://www.x3star.live/<file>`. Put it in `data/site-files/` on the server (`~/x3star/data/site-files/` with the setup script); it's served at the site root right away, survives updates (it lives with your data, not in git), and never shadows the app's own pages. Allowed: plain file names ending in .html, .htm, .txt, .xml or .json.
+
+### Online casting and public creator journal
+
+- `/casting` is the online recruiting hub, with an application form and links to all **50 US state pages** (`/casting/colorado`, for example).
+- Applicants choose **x3STAR review** or a clearly labeled **independent partner application**. The x3STAR form uses the existing Admin → Applications queue. Partner choices come from active placements in the `apply` slot, respect paused/disabled settings, disclose the referral relationship, and use the existing tracked `/go/` redirects. An outbound click is not a confirmed partner registration.
+- The form saves the applicant's selected state separately from the casting entry page. It retains bounded session campaign attribution across the public journal and casting pages. The Admin application card shows State, Entry page and campaign fields. No IDs, photos or payment information are requested by this form; review and later verification remain separate.
+- `/blog` and `/blog/<slug>` publish **eight original creator guides** on applications, comparing platforms, identity/privacy, starter equipment, planning a first-month budget, testing schedules, account security and rehearsing a first session. Full article HTML, bylines and dates are available without JavaScript.
+- Casting and editorial pages load their own local CSS/JavaScript and do not automatically load the live-room app, partner media or external fonts.
+
+**Search configuration:** set `SITE_URL` to the verified canonical public origin, such as `https://your-domain.example` (no path/query/credentials), before publishing. It controls canonical tags, social metadata, guide URLs, robots and sitemap origins. Leave it blank for local request-based URLs. It is not a deployment command and does not change DNS.
+
+**State publishing policy:** California, Colorado, Florida, Nevada, New York and Texas have developed state guidance with official planning resources and are initially indexable. The other 44 state conversion pages work for visitors and campaigns but carry `noindex,follow` and stay outside the sitemap until their local editorial material is developed. All remain crawlable so search engines can read those directives. This is an editorial rollout policy, not a guarantee of Google indexing or rankings. To develop another state, update its entry in `server/content/states.js`, verify its resources and guidance, then change `indexable` and `updated` after review.
+
+`/sitemap.xml` lists 18 canonical URLs: the app, creator guide, casting hub, journal hub, six developed state guides and eight articles. Editorial `lastmod` values use maintained content dates; routes without a trustworthy modification date omit it. Article `BlogPosting` and breadcrumb metadata match visible content. General casting pages do not claim to be specific job vacancies or use `JobPosting` markup. [Primary-source SEO research](docs/SEO_RESEARCH.md) explains the search and SafeSearch considerations; informational pages on the same adult-content host may still be affected by host classification.
+
+For local checks:
+
+```bash
+node --test test/editorial.test.js test/casting-apply.test.js
+npm test
+npm run build:standalone
+```
+
+The standalone artifact remains the fan-app demo; the new casting/journal routes require the Node server. This feature adds local page/application behavior, not deployment, email delivery, a payment provider or a live-media service.
 
 ### Cam model guide (`/cam-model-guide`)
 

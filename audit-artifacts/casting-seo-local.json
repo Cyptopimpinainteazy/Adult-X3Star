@@ -1,0 +1,80 @@
+{
+  "task": "casting-seo",
+  "recorded_at": "2026-11-27T07:32:11.586050+00:00",
+  "branch": "feat/casting-seo",
+  "base_commit": "87d419aced1aecb8d102a9a47ff9fd4b4acf53f6",
+  "source_state": "task changes present over base; pre-existing wiki and IDE files excluded",
+  "node": "v24.22.1",
+  "sqlite": "3.53.4",
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check (all server, shared, public/assets and test JavaScript)",
+      "files": 38,
+      "exit_code": 0
+    }
+  ],
+  "tests": {
+    "total": 55,
+    "passed": 55,
+    "failed": 0,
+    "database": "real temporary SQLite",
+    "http": "real localhost servers"
+  },
+  "pages": {
+    "state_routes": 50,
+    "indexable_state_profiles": 6,
+    "nonindexable_state_pages": 44,
+    "articles": 8,
+    "sitemap_urls": 18
+  },
+  "review": {
+    "independent_reviewers": 2,
+    "blocking_findings_remaining": 0,
+    "fixed": [
+      "State-page header Apply retains page context",
+      "Submit disabled before client initialization",
+      "Explicit successful receipt required"
+    ]
+  },
+  "browser": {
+    "status": "blocked",
+    "evidence": "cua_repl returned: The browser access host is unavailable",
+    "desktop_mobile_rendering_verified": false,
+    "actual_browser_submission_verified": false
+  },
+  "deployment": "not performed",
+  "search_indexing": "not verified",
+  "partner_registrations": "not verified",
+  "source_sha256": {
+    ".env.example": "1e081541da34bd6a8a94abc12098049912114ffb643f8992d0348d72803916b1",
+    "README.md": "ea76b4d620a7769dd8bae505a93f11f617597a08db2d2b17b0514c4c6279cb74",
+    "docs/API.md": "ee95725cdde6b39234dec800c715107fe54324313f015eb197fe736c62c2cab5",
+    "public/index.html": "c874243619568c0b9262e2dc063f867c91861517ec8b87f9fa86d62079597ff4",
+    "server/config.js": "b6190303c0957630f455c0af94af582717bcb9fda79b8accf39a4c0cf6b4f06f",
+    "server/index.js": "e4983a4cedad4aac7f1b27b5673b8bf6b7ebb8514f0732417d9741094ee23f7d",
+    "server/routes/public.js": "1fa673a93f1049f5230c9ff256497e181bcaf0a0bdcefd5c69441693899353f2",
+    "server/pages/guide.js": "54a18befdebd37e386af29dc08e8ea7cbd060b0f2ff11f18901900b7d099d463",
+    "public/assets/admin.js": "b956bfc8df487df169096f4e1ed237d7f15897db2020303dfa1596abe8f38aa9",
+    "test/api.test.js": "2dffd1564ec7bc5ad2e5b724f617aace6f9ea70950f7b55b4696fa68a43c3422",
+    "server/content/states.js": "aa840cd69f287f304439c3643b14eb97784362d0463146eeac4ffb43ed780f61",
+    "server/content/articles.js": "d5c9204b1ec0557663b4dd79c2eda05df2e84de3efdd0a7c2b1d4cbe73d65204",
+    "server/pages/editorial.js": "8bcdf537fe52d5744ea6359fe52afb57821ae6d355fce8776ca6a2a3666e2bf0",
+    "server/routes/editorial.js": "2fecd22b012d8e9c6ad9e21ca241a43fd9b3b65173cef1747d294bd67143c2dc",
+    "public/assets/editorial.css": "ed10645c1ef35d0a743b24c234869e64b719a59c2e630733414bd4999072d91f",
+    "public/assets/casting.js": "b25ef285659382ebe2a64e323163435a92683fe0afdae8338b2a902fe4838b5e",
+    "test/editorial.test.js": "fb13d6eba21516d4ff63db575eb82d37d5b82f6b4a022609e9380a98ecb57e89",
+    "test/casting-apply.test.js": "1ea32edbb913f8b37dec6817db661470fdfe3fe0b90493fb0282892222546024"
+  }
+}

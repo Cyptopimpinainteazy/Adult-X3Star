@@ -1071,7 +1071,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
   </div>
 </header>
 <nav class="mnav" id="mnav" aria-label="Mobile">
-  <a href="#live">Live <span>01</span></a><a href="#profiles">Profiles <span>02</span></a><a href="#niches">Niches <span>03</span></a><a href="#chat">Chat <span>04</span></a><a href="#exchange">Exchange <span>05</span></a><a href="#store">Store <span>06</span></a><a href="#earn">Earn <span>07</span></a><a href="#leaderboard">Leaderboard <span>08</span></a><a href="#blog">Journal <span>09</span></a><a href="#creators">For creators <span>10</span></a><a href="#account">Account <span>11</span></a><a href="#rewards">💎 Rewards <span>12</span></a><a href="#clips">Clips <span>13</span></a><a href="#families">Families <span>14</span></a>
+  <a href="#live">Live <span>01</span></a><a href="#profiles">Profiles <span>02</span></a><a href="#niches">Niches <span>03</span></a><a href="#chat">Chat <span>04</span></a><a href="#exchange">Exchange <span>05</span></a><a href="#store">Store <span>06</span></a><a href="#earn">Earn <span>07</span></a><a href="#leaderboard">Leaderboard <span>08</span></a><a href="/blog">Journal <span>09</span></a><a href="/casting">For creators <span>10</span></a><a href="#account">Account <span>11</span></a><a href="#rewards">💎 Rewards <span>12</span></a><a href="#clips">Clips <span>13</span></a><a href="#families">Families <span>14</span></a>
 </nav>
 
 <main id="main">
@@ -1394,7 +1394,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
     <div class="wrap">
       <div class="section-head">
         <div><span class="eyebrow reveal">08 — Journal</span><h2 id="h-blog" class="reveal" style="--d:.06s">After <em>hours</em>.</h2></div>
-        <p class="reveal" style="--d:.1s">Creator diaries, market notes and member threads.</p>
+        <p class="reveal" style="--d:.1s">Demo creator stories and member threads. <a href="/blog" style="color:var(--pink-2)">Read the public creator journal ↗</a></p>
       </div>
       <div class="blog-cats" id="blogCats"></div>
       <div class="blog-grid" id="blogGrid" data-stagger></div>
@@ -1492,7 +1492,7 @@ body:not([data-route="blog"]) .blog-cats{display:none}
       </div>
       <div class="section-head" style="margin-top:90px">
         <div><span class="eyebrow reveal">Apply</span><h2 class="reveal" style="--d:.06s">Take the <em>floor</em>.</h2></div>
-        <p class="reveal" style="--d:.1s">Applications are reviewed by a person. Government ID and age verification are required before your first stream. New to camming? Read the <a href="/cam-model-guide" style="color:var(--pink-2)">cam model guide</a>.</p>
+        <p class="reveal" style="--d:.1s">Applications are reviewed by a person. Government ID and age verification are required before your first stream. Explore <a href="/casting" style="color:var(--pink-2)">casting by state and partner applications</a>, or read the <a href="/cam-model-guide" style="color:var(--pink-2)">cam model guide</a>.</p>
       </div>
       <form class="panel apply reveal" id="applyForm" novalidate>
         <label class="f">Stage name<input class="txt" name="stage" required maxlength="40" placeholder="How fans will know you"></label>
@@ -1541,8 +1541,8 @@ body:not([data-route="blog"]) .blog-cats{display:none}
         <p>Live creators, creator coins and creator stores on one floor. Built on X3 Chain.</p>
         <div class="campaign" id="campaign"></div>
       </div>
-      <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#videos">Videos</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="#blog">Journal</a></li></ul></div>
-      <div><h5>Creators</h5><ul><li><a href="#creators">Become a creator</a></li><li><a href="/cam-model-guide">Cam model guide</a></li><li><a href="#creators">Launch your coin</a></li><li><a href="#creators">Open a store</a></li><li><a href="#chat">Multi-site chat</a></li><li><a href="#account">My account</a></li></ul></div>
+      <div><h5>Platform</h5><ul><li><a href="#live">Live floor</a></li><li><a href="#rewards">Rewards</a></li><li><a href="#clips">Clips</a></li><li><a href="#videos">Videos</a></li><li><a href="#families">Families</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="#exchange">Exchange</a></li><li><a href="#store">Stores</a></li><li><a href="#earn">Earn</a></li><li><a href="/blog">Journal</a></li></ul></div>
+      <div><h5>Creators</h5><ul><li><a href="/casting">Become a creator</a></li><li><a href="/cam-model-guide">Cam model guide</a></li><li><a href="#creators">Launch your coin</a></li><li><a href="#creators">Open a store</a></li><li><a href="#chat">Multi-site chat</a></li><li><a href="#account">My account</a></li></ul></div>
       <div class="foot-partners" id="footPartners" hidden><h5 id="footPartnerHead">More live cams</h5><ul></ul><small id="footPartnerNames">Partner links</small></div>
       <div><h5>Legal</h5><ul><li><a href="#legal-terms">Terms of service</a></li><li><a href="#legal-privacy">Privacy</a></li><li><a href="#legal-2257">18 U.S.C. 2257</a></li><li><a href="#legal-dmca">DMCA &amp; content removal</a></li></ul></div>
     </div>
@@ -3472,7 +3472,7 @@ function wireApply() {
     const btn = $('button', f); btn.disabled = true; btn.textContent = 'Submitting…';
     const res = await hooks.apply(data); btn.disabled = false; btn.textContent = 'Submit application';
     track('creator_apply', { ok: res.ok, niche: data.niche });
-    if (res.ok) { f.reset(); msg.innerHTML = '<span class="up">Application received — we\'ll email you within 48 hours.</span>'; }
+    if (res.ok) { f.reset(); msg.innerHTML = '<span class="up">Application received — it is now in the review queue.</span>'; }
     else msg.textContent = res.reason && res.reason !== 'not_configured' ? res.reason : 'Applications aren\'t connected yet — wire X3STAR.hooks.apply to your backend. Nothing was sent.';
   };
 }

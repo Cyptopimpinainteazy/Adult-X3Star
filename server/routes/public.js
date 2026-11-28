@@ -134,6 +134,39 @@ r.get('/me/history', A.requireUser, (req, res) => {
 });
 
 /* ---------- applications (creator / agent) ---------- */
+const CAMPAIGN_FIELDS = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref', 'source', 'medium', 'campaign', 'content', 'term']);
+function applicationCampaign(value) {
+  if (value === undefined) return {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw bad('Campaign must be an object');
+  const campaign = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'first_seen') {
+      if (!Number.isSafeInteger(entry) || entry < 0) throw bad('Campaign first_seen must be a valid timestamp');
+    } else if (!CAMPAIGN_FIELDS.has(key) || typeof entry !== 'string' || entry.length > 160) {
+      throw bad('Campaign fields must be supported text values of at most 160 characters');
+    }
+    campaign[key] = entry;
+  }
+  return campaign;
+}
+function applicationLocation(body) {
+  const { getState } = require('../content/states');
+  let state = '', landingPath = '';
+  if (body.state !== undefined && body.state !== '') {
+    if (typeof body.state !== 'string' || body.state.length > 40) throw bad('Choose a valid state');
+    const selected = getState(body.state);
+    if (!selected) throw bad('Choose a valid state');
+    state = selected.slug;
+  }
+  if (body.landingPath !== undefined && body.landingPath !== '') {
+    if (typeof body.landingPath !== 'string' || body.landingPath.length > 80 || !/^\/casting(?:\/[a-z-]+)?$/.test(body.landingPath)) throw bad('Entry page must be a casting page');
+    const slug = body.landingPath.slice('/casting/'.length);
+    const entryState = getState(slug);
+    if (body.landingPath !== '/casting' && (!entryState || entryState.slug !== slug)) throw bad('Entry page must be a known casting page');
+    landingPath = body.landingPath;
+  }
+  return { state, landingPath };
+}
 r.post('/apply', A.rateLimit('apply', 5, 3600000), (req, res) => {
   const b = req.body || {};
   const kind = b.kind === 'agent' ? 'agent' : 'creator';
@@ -142,8 +175,9 @@ r.post('/apply', A.rateLimit('apply', 5, 3600000), (req, res) => {
   const data = {
     stage: str(b.stage, 'Stage name', 2, 40), niche: NICHES.includes(b.niche) ? b.niche : 'Other',
     hours: Math.max(0, Math.min(80, Number(b.hours) || 0)), sites: (Array.isArray(b.sites) ? b.sites : []).filter(s => SITES.includes(s)),
-    note: str(b.note || '', 'Note', 0, 1000), campaign: b.campaign && typeof b.campaign === 'object' ? JSON.parse(JSON.stringify(b.campaign)) : {},
-    agentCode: typeof b.agentCode === 'string' ? b.agentCode.toUpperCase().slice(0, 16) : ''
+    note: str(b.note || '', 'Note', 0, 1000), campaign: applicationCampaign(b.campaign),
+    agentCode: typeof b.agentCode === 'string' ? b.agentCode.toUpperCase().slice(0, 16) : '',
+    ...applicationLocation(b)
   };
   if (get("SELECT 1 FROM applications WHERE email = ? AND status = 'pending'", email)) throw new HttpError(409, 'pending_exists', 'An application for this email is already under review');
   run('INSERT INTO applications (kind, email, data, user_id, created_at) VALUES (?,?,?,?,?)', kind, email, JSON.stringify(data), req.user ? req.user.id : null, Date.now());
