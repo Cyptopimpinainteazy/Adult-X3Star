@@ -5,7 +5,8 @@ const S = require('../services');
 const { STATES, getState } = require('../content/states');
 const { ARTICLES, getArticle } = require('../content/articles');
 const { TOPICS, getTopic } = require('../content/journal-topics');
-const { renderCasting, renderBlog, renderTopic, renderPartners, UPDATED, esc } = require('../pages/editorial');
+const { DENVER_CASTING } = require('../content/casting-campaigns');
+const { renderCasting, renderDenverCasting, renderBlog, renderTopic, renderPartners, UPDATED, esc } = require('../pages/editorial');
 const { bad } = require('./common');
 const r = express.Router();
 const originFor = req => cfg.SITE_URL || new URL(`${req.protocol}://${req.get('host')}`).origin;
@@ -25,6 +26,11 @@ function casting(req, res) {
   res.type('html').send(renderCasting({ state, origin: originFor(req), partners: S.partnerPlacements(), campaign: typeof req.query.utm_campaign === 'string' ? req.query.utm_campaign : '' }));
 }
 r.get('/casting', casting);
+r.get(DENVER_CASTING.path, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, follow');
+  res.type('html').send(renderDenverCasting({ origin: originFor(req), partners: S.partnerPlacements(), campaign: typeof req.query.utm_campaign === 'string' ? req.query.utm_campaign : '' }));
+});
 r.get('/casting/:state', casting);
 r.get('/blog', (req, res) => {
   if (Object.keys(req.query).some(key => /[\[\]]/.test(key))) throw bad('Invalid journal filters');

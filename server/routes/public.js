@@ -159,6 +159,8 @@ function applicationLocation(body) {
     state = selected.slug;
   }
   if (body.landingPath !== undefined && body.landingPath !== '') {
+    const campaignLanding = require('../content/casting-campaigns').DENVER_CASTING.path;
+    if (body.landingPath === campaignLanding) return { state, landingPath: campaignLanding };
     if (typeof body.landingPath !== 'string' || body.landingPath.length > 80 || !/^\/casting(?:\/[a-z-]+)?$/.test(body.landingPath)) throw bad('Entry page must be a casting page');
     const slug = body.landingPath.slice('/casting/'.length);
     const entryState = getState(slug);
