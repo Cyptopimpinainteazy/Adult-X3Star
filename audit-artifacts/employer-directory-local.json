@@ -1,0 +1,138 @@
+{
+  "task": "paid-employer-directory",
+  "recorded_at": "2026-11-27T08:24:23.152110+00:00",
+  "branch": "feat/paid-jobs-directory",
+  "base_commit": "cc822670282be60e338a75aba5cacabe5fedf39f",
+  "source_state": "scoped changes over base; unrelated wiki/IDE/live-QA files and private local configuration excluded",
+  "node": "v24.22.1",
+  "sqlite": "3.53.4",
+  "gates": [
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 90,
+      "pass": 90,
+      "fail": 0
+    },
+    {
+      "command": "npm run build:standalone",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check server/shared/public/assets/test/scripts JavaScript",
+      "files": 53,
+      "exit_code": 0
+    },
+    {
+      "command": "vm.Script parse source/standalone inline scripts",
+      "scripts": 8,
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "billing": {
+    "local_mode": "test",
+    "price_cents": 4900,
+    "currency": "USD",
+    "duration_days": 30,
+    "real_charge_performed": false,
+    "real_refund_performed": false,
+    "live_card_checkout": "not connected",
+    "manual_receipt_boundary": "audited Admin attestation of off-platform payment, not automatic processor proof"
+  },
+  "real_http_sqlite_checks": {
+    "employer_groups": 12,
+    "directory_html_tests": 3,
+    "restart": true,
+    "mode_transition_and_production_test_rejection": true,
+    "immutable_price_and_instructions": true,
+    "payment_and_review_gate": true,
+    "content_bound_review_token": true,
+    "refund_and_replay": true,
+    "history_records": 205,
+    "exact_admin_lookup": true
+  },
+  "isolated_jobs_client_tests": {
+    "pass": 9,
+    "boundary": "limited DOM/API fixture; not a real browser"
+  },
+  "review": {
+    "blocking_findings_remaining": 0,
+    "independent_reviewers": 2
+  },
+  "live_readback": [
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/jobs",
+      "status": 200
+    },
+    {
+      "path": "/employers",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/jobs",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "path": "/assets/employer.js",
+      "status": 200
+    },
+    {
+      "path": "/assets/directory.css",
+      "status": 200
+    },
+    {
+      "path": "/api/employer",
+      "anonymous_status": 401
+    },
+    {
+      "path": "/api/admin/employer-directory",
+      "anonymous_status": 401
+    },
+    {
+      "admin_readback": {
+        "billingMode": "test",
+        "priceCents": 4900,
+        "currency": "USD",
+        "durationDays": 30,
+        "liveRevenueCents": 0,
+        "testRevenueCents": 0
+      }
+    }
+  ],
+  "browser": {
+    "status": "blocked",
+    "evidence": "apps=[], browsers=[], The browser access host is unavailable",
+    "actual_desktop_mobile_verified": false
+  },
+  "deployment": "not performed",
+  "source_sha256": {
+    ".env.example": "00f0eee8809a814a8631ae3f81914f6433db52f942b022a49b27546fd58844a9",
+    "README.md": "caefdeeb9ce7f8c2df424adbfc8e385c61346000a750ec2ab70252398c525b79",
+    "docs/API.md": "7b31f2199f4494ffdbbc587da61ea94a1108e7634056f35a6273c54b25cf7427",
+    "public/assets/admin.js": "99cd4c58743a2384296858bf85e9e88e7d1407b40f594d81c939bcea02c67ec4",
+    "public/assets/jobs.js": "bc399b357db7b9d4b37d63e1ae06ae358a6037964cd244d6f838f04b2d416823",
+    "public/index.html": "cd2ff4cdc86a443ebc42ce42d01d132498b36deaa9197950e1fdac5613db81b3",
+    "server/config.js": "e96b298c86eb340412897522a78f95b46cc8c9c68d5bd3db732dda6f66b9b41b",
+    "server/db.js": "f5ded105efc0fec519916f3ef092a9262a970d3de557cb6fa2589c6c115924ff",
+    "server/index.js": "54aec36582e96b0a6adb70b9c1029defb4b5f973c96a7e9aed7649034db2e1b7",
+    "server/pages/editorial.js": "c21741e72166ca7aea1c2a0ebfa4450e9a6eb1423cc491d5c02987e1edacf753",
+    "test/jobs-client.test.js": "bb5849129c19f8b58c60b9c90e4939c88881245e4c2d65b2b8889501df77c425",
+    "public/assets/directory.css": "32f2159789ab16ef1af3377afa6a83b532580f4969fd323aff2af585541d0afd",
+    "public/assets/employer.js": "3971c135bd63eadef2822518851742ac9273b5e38108ccd11bddd8a801324e0e",
+    "public/employers.html": "64b6c28e04a2f3a194615ca9347dac19c976fe2e09103e69893926f9a28ba25b",
+    "server/employer-directory.js": "e4ff4bde2fc91c9108224851be94d65f913105e39ab377a3897b5ecba4dcf015",
+    "server/pages/directory.js": "0a469f64bca716660cbceb2cba1fa80d5b7ce21e8e74ff1ec771cef32c26cba3",
+    "server/routes/employer-directory.js": "b9ce3a078a8f4f45e6fc3bae8636849bdf6032dd3b0c9913a3bc25b2861e2a4c",
+    "test/directory-pages.test.js": "3604cefb102237d291a9c6121867a7d0d66c044ca41596e9e2aa0f861b65283c",
+    "test/employer-directory.test.js": "7780831815e4cfaee738777e054492e4acbd5d6941d2290f221a57f2a6e50890"
+  }
+}

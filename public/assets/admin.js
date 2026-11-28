@@ -22,14 +22,14 @@ async function refreshCounts() {
   try { const o = await X3API.get('/api/admin/overview'); Q = o.queues; ['applications', 'uploads', 'payouts', 'reports'].forEach(k => { const n = $(`[data-cnt="${k}"]`); if (n) { n.textContent = Q[k] || ''; n.hidden = !Q[k]; } }); return o; } catch { return null; }
 }
 function shell() {
-  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['affiliates', 'Affiliates'], ['traffic', 'Traffic'], ['partners', 'Partners'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
+  const nav = [['overview', 'Overview'], ['applications', 'Applications', 'applications'], ['users', 'Users'], ['creators', 'Creators'], ['employer-jobs', 'Employer directory'], ['moderation', 'Moderation', 'uploads'], ['payouts', 'Payouts', 'payouts'], ['reports', 'Reports', 'reports'], ['affiliates', 'Affiliates'], ['traffic', 'Traffic'], ['partners', 'Partners'], ['economy', 'Economy'], ['ledger', 'Ledger'], ['audit', 'Audit log']];
   app.innerHTML = `<div class="shell"><aside class="side" id="side"><div class="brand">x3<span>STAR</span><small>Admin</small></div>
     ${nav.map(([k, l, c]) => `<a class="nav" href="#${k}" data-v="${k}">${l}${c ? `<span class="cnt" data-cnt="${c}" hidden></span>` : ''}</a>`).join('')}
     <div class="foot"><span>${esc(me.name)} · admin</span><a href="/" target="_blank" rel="noopener">Open fan app ↗</a><a href="/studio" target="_blank" rel="noopener">Creator Studio ↗</a><button class="btn sm" id="out">Sign out</button></div></aside>
     <button class="btn burger" id="burger" aria-label="Menu">☰</button><main class="main" id="main"></main></div>`;
   $('#out').onclick = async () => { await X3API.post('/api/auth/logout'); location.href = '/'; };
   $('#burger').onclick = () => $('#side').classList.toggle('open');
-  router({ overview, applications, users, creators, moderation, payouts, reports, affiliates, traffic, partners, economy, ledger, audit }, 'overview');
+  router({ overview, applications, users, creators, 'employer-jobs': employerDirectory, moderation, payouts, reports, affiliates, traffic, partners, economy, ledger, audit }, 'overview');
   refreshCounts(); setInterval(refreshCounts, 30000);
 }
 const main = () => $('#main');
@@ -367,6 +367,90 @@ async function economy() {
   };
   $('#saveJ').onclick = () => { let ov; try { ov = JSON.parse($('#ov').value || '{}'); } catch (e) { return toast('JSON error: ' + e.message, 'err'); } save(ov); };
   $('#showEff').onclick = () => { const m = modal(`<h3>Effective config</h3><textarea class="inp code" readonly>${esc(JSON.stringify(effective, null, 2))}</textarea><button class="btn" data-x>Close</button>`); m.root.style.width = 'min(900px,100%)'; $('[data-x]', m.root).onclick = m.close; };
+}
+
+/* ---------------- paid employer directory ---------------- */
+let employerView = 0;
+async function employerDirectory() {
+  const version = ++employerView;
+  main().innerHTML = head('Employer <em>directory</em>', 'Listing pricing, review and invoice receipts.') + '<div class="panel pad" role="status">Loading directory controls…</div>';
+  try {
+    const data = await X3API.get('/api/admin/employer-directory');
+    if (version !== employerView || location.hash !== '#employer-jobs') return;
+    const settings = data.settings, listings = data.listings || [], orders = data.orders || [], employers = data.employers || [], metrics = data.metrics || {};
+    const money = cents => fmt.usd(Number(cents || 0) / 100);
+    main().innerHTML = head('Employer <em>directory</em>', 'Paid directory placement is separate from free star profile boards and diamond purchases.', '<a class="btn" href="/jobs" target="_blank" rel="noopener">Open directory ↗</a>') + `
+      <div class="grid g3"><div class="panel kpi"><small>Recorded live employer fees</small><b>${money(metrics.liveRevenueCents)}</b><span>Off-platform payments recorded by Admin</span></div><div class="panel kpi"><small>Test employer fees</small><b>${money(metrics.testRevenueCents)}</b><span>Simulated receipts · no money charged</span></div><div class="panel kpi"><small>Billing mode</small><b style="font-size:22px">${esc(settings.billingMode)}</b><span>${settings.available ? 'Invoice creation available' : 'Invoice creation unavailable'}</span></div></div>
+      <form class="panel pad" id="employer-settings" style="margin-top:20px"><h3>New listing price</h3><div class="grid g3"><label class="field"><span>Price (USD)</span><input class="inp" name="price" type="number" min="1" max="100000" step="0.01" value="${(settings.priceCents / 100).toFixed(2)}" required></label><label class="field"><span>Display period (days)</span><input class="inp" name="days" type="number" min="1" max="180" step="1" value="${settings.durationDays}" required></label><label class="row"><input name="enabled" type="checkbox"${settings.enabled ? ' checked' : ''}> Accept new listing orders</label></div><label class="field"><span>Manual invoice instructions</span><textarea class="inp" name="instructions" maxlength="2000" rows="4" placeholder="Provide your approved off-platform payment instructions; do not put credentials here.">${esc(settings.invoiceInstructions || '')}</textarea></label><p class="note">Existing invoices retain their original amount and duration. Billing mode is configured on the server. Manual mode needs payment instructions; test mode never charges real money. Live card checkout is not connected.</p><p class="note" role="alert" id="employer-settings-error"></p><button class="btn pri" type="submit">Save future pricing</button></form>
+      <form class="panel pad" id="employer-record-lookup" style="margin-top:20px"><h3>Find any directory record</h3><p class="note">Open a listing, invoice or employer by ID, including records outside the recent queues.</p><div class="row" style="align-items:end;flex-wrap:wrap"><label class="field"><span>Record type</span><select class="inp" name="type"><option value="listing">Listing</option><option value="order">Invoice</option><option value="employer">Employer account</option></select></label><label class="field" style="flex:1"><span>Record ID</span><input class="inp mono" name="record" required maxlength="160" placeholder="Listing/company number or ad_ invoice ID"></label><button class="btn" type="submit">Find record</button></div><p class="note" role="alert" id="employer-lookup-error"></p></form>
+      <section style="margin-top:28px"><h2 style="font:500 28px var(--serif)">Listing review</h2>${listings.length ? `<div class="grid g2">${listings.map(job => `<article class="panel pad"><div class="row" style="justify-content:space-between"><b>${esc(job.companyName)}</b><span class="tag">${esc(job.reviewStatus)}</span></div><h3>${esc(job.title)}</h3><p class="note">${esc(job.category)} · ${esc(job.workMode)} · ${[job.location, job.state].filter(Boolean).map(esc).join(' / ') || 'Location not specified'} · ${esc(job.status)}</p><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(job.description)}</p><p><b>${esc(job.compensation)}</b></p>${job.reviewNote ? `<p class="note">Review note: ${esc(job.reviewNote)}</p>` : ''}<div class="row" style="flex-wrap:wrap"><button class="btn grn sm" data-job-review="${job.id}" data-decision="approved">Approve content</button><button class="btn red sm" data-job-review="${job.id}" data-decision="rejected">Reject content</button></div><p class="note">Approval alone does not publish an unpaid listing. Publication also requires an active paid entitlement.</p></article>`).join('')}</div>` : '<div class="panel empty">No employer listings submitted yet.</div>'}</section>
+      <section style="margin-top:28px"><h2 style="font:500 28px var(--serif)">Invoices and receipts</h2>${orders.length ? `<div class="panel tbl-wrap"><table class="tbl"><thead><tr><th>Invoice</th><th>Listing</th><th>Price / term</th><th>Status</th><th>Reference</th><th></th></tr></thead><tbody>${orders.map(order => `<tr><td class="mono">${esc(order.id)}</td><td>#${order.listingId}</td><td>${money(order.priceCents)} ${esc(order.currency)} · ${order.durationDays} days</td><td><span class="tag">${esc(order.status)}</span>${order.test ? ' <span class="tag demo">TEST · no charge</span>' : ''}</td><td class="mono" style="overflow-wrap:anywhere">${esc(order.reference || '—')}</td><td>${order.status === 'pending' && !order.test && settings.billingMode === 'manual' ? `<button class="btn sm" data-invoice-confirm="${esc(order.id)}">Record received payment</button>` : ''}${order.status === 'paid' ? `<button class="btn sm red" data-invoice-refund="${esc(order.id)}">Record full refund</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="panel empty">No listing invoices yet.</div>'}<p class="note">Recording a receipt is an Admin attestation of an off-platform payment. Recording a refund revokes that invoice’s placement entitlement; it does not send money through a bank or processor.</p></section>
+      <section style="margin-top:28px"><h2 style="font:500 28px var(--serif)">Employer accounts</h2>${employers.length ? `<div class="panel tbl-wrap"><table class="tbl"><thead><tr><th>Company</th><th>State</th><th>Status</th><th></th></tr></thead><tbody>${employers.map(company => `<tr><td>${esc(company.companyName)}</td><td>${esc(company.state || '—')}</td><td>${esc(company.status)}</td><td><button class="btn sm ${company.status === 'active' ? 'red' : ''}" data-employer-status="${company.id}" data-next-status="${company.status === 'active' ? 'suspended' : 'active'}">${company.status === 'active' ? 'Suspend directory access' : 'Restore access'}</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="panel empty">No employer accounts yet.</div>'}</section>`;
+    $('#employer-settings').onsubmit = async e => {
+      e.preventDefault(); const form = e.target, f = form.elements, button = $('button[type=submit]', form);
+      if (button.disabled || !form.reportValidity()) return;
+      button.disabled = true; $('#employer-settings-error').textContent = '';
+      try { const saved = await X3API.put('/api/admin/employer-directory/settings', { priceCents: Math.round(Number(f.price.value) * 100), currency: 'USD', durationDays: Number(f.days.value), invoiceInstructions: f.instructions.value, enabled: f.enabled.checked }); if (!saved || !saved.settings) throw new Error('The updated pricing was not confirmed.'); toast('Future listing pricing saved', 'ok'); if (location.hash === '#employer-jobs') employerDirectory(); }
+      catch (error) { if (form.isConnected) { $('#employer-settings-error').textContent = error.message; button.disabled = false; } }
+    };
+    const reviewFromUI = async (button, job, done = () => {}) => {
+      const fields = await promptBox(button.dataset.decision === 'approved' ? 'Approve listing content' : 'Reject listing content', [{ name: 'note', label: 'Review note', type: 'textarea', value: '' }], 'Save review');
+      if (!fields) return;
+      try {
+        const reviewed = await X3API.post('/api/admin/employer-directory/listings/' + job.id + '/review', { decision: button.dataset.decision, note: fields.note, reviewToken: job.reviewToken });
+        if (!reviewed || !reviewed.listing || reviewed.listing.id !== job.id || reviewed.listing.reviewStatus !== button.dataset.decision) throw new Error('The listing review was not confirmed.');
+        done(); toast('Review saved', 'ok'); if (location.hash === '#employer-jobs') employerDirectory();
+      } catch (error) { toast(error.message, 'err'); if (error.code === 'review_changed') { done(); if (location.hash === '#employer-jobs') employerDirectory(); } }
+    };
+    $$('[data-job-review]').forEach(button => button.onclick = () => reviewFromUI(button, listings.find(job => String(job.id) === button.dataset.jobReview)));
+    const receipt = (order, refund) => {
+      const m = modal(`<form id="receipt-form"><h3>${refund ? order.test ? 'Record test refund / revoke' : 'Record full off-platform refund' : 'Record received payment'}</h3>${order.test ? '<p class="tag demo">TEST INVOICE · no real money charged or refunded</p>' : ''}<p>Invoice <b>${esc(order.id)}</b> · <b>${money(order.priceCents)} ${esc(order.currency)}</b> · ${order.durationDays} days</p><label class="field"><span>${refund ? 'Refund' : 'Payment'} receipt / reference</span><input class="inp" name="reference" required minlength="3" maxlength="160"></label>${refund ? '<label class="field"><span>Note</span><textarea class="inp" name="note" maxlength="1000" rows="3"></textarea></label>' : ''}<label class="row"><input name="verified" type="checkbox" required> ${refund ? order.test ? 'I am recording a test receipt reversal only. No real payment or refund is represented.' : 'I have verified that the full invoice amount was refunded outside x3STAR. This action records that refund and does not transfer money.' : 'I have verified receipt of the full invoice amount outside x3STAR.'}</label><p class="note" role="alert" id="receipt-error"></p><div class="row" style="justify-content:flex-end"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn ${refund ? 'red' : 'pri'}" type="submit">${refund ? 'Record and revoke entitlement' : 'Record payment received'}</button></div></form>`);
+      $('[data-cancel]', m.root).onclick = m.close;
+      $('#receipt-form', m.root).onsubmit = async event => {
+        event.preventDefault(); const form = event.target, f = form.elements, button = $('button[type=submit]', form);
+        if (button.disabled || !form.reportValidity()) return;
+        button.disabled = true; $('#receipt-error', m.root).textContent = '';
+        const body = refund ? { reference: f.reference.value, note: f.note.value } : { reference: f.reference.value, amountCents: order.priceCents, currency: order.currency };
+        try { const recorded = await X3API.post('/api/admin/employer-directory/orders/' + encodeURIComponent(order.id) + (refund ? '/refund' : '/confirm'), body); if (!recorded || !recorded.order || String(recorded.order.id) !== String(order.id) || recorded.order.status !== (refund ? 'refunded' : 'paid')) throw new Error('The receipt was not confirmed by the server.'); m.close(); toast(refund ? 'Full refund recorded; invoice entitlement revoked' : 'Payment receipt recorded', 'ok'); if (location.hash === '#employer-jobs') employerDirectory(); }
+        catch (error) { if (m.root.isConnected) { $('#receipt-error', m.root).textContent = error.message; button.disabled = false; } }
+      };
+    };
+    $$('[data-invoice-confirm]').forEach(button => button.onclick = () => receipt(orders.find(order => String(order.id) === button.dataset.invoiceConfirm), false));
+    $$('[data-invoice-refund]').forEach(button => button.onclick = () => receipt(orders.find(order => String(order.id) === button.dataset.invoiceRefund), true));
+    const changeEmployer = async (button, company, done = () => {}) => {
+      const status = button.dataset.nextStatus;
+      if (!await confirmBox(status === 'suspended' ? 'Suspend this employer?' : 'Restore this employer?', status === 'suspended' ? 'Its directory ads will be hidden and new publication blocked. Payment history remains available.' : 'Eligible paid and reviewed ads can become visible again.', 'Confirm', status === 'suspended')) return;
+      try {
+        const changed = await X3API.post('/api/admin/employer-directory/employers/' + company.id + '/status', { status });
+        if (!changed || !changed.profile || changed.profile.id !== company.id || changed.profile.status !== status) throw new Error('The employer status was not confirmed.');
+        done(); toast('Employer status updated', 'ok'); if (location.hash === '#employer-jobs') employerDirectory();
+      } catch (error) { toast(error.message, 'err'); }
+    };
+    $$('[data-employer-status]').forEach(button => button.onclick = () => changeEmployer(button, employers.find(company => String(company.id) === button.dataset.employerStatus)));
+    $('#employer-record-lookup').onsubmit = async event => {
+      event.preventDefault(); const form = event.target, button = $('button[type=submit]', form);
+      if (button.disabled || !form.reportValidity()) return;
+      const type = form.elements.type.value, id = form.elements.record.value.trim();
+      button.disabled = true; $('#employer-lookup-error').textContent = '';
+      try {
+        const result = await X3API.get('/api/admin/employer-directory/lookup?' + new URLSearchParams({ type, id }));
+        const record = result && (type === 'listing' ? result.listing : type === 'order' ? result.order : result.profile);
+        if (!record || record.id === undefined) throw new Error('The requested record was not confirmed.');
+        if (!form.isConnected) return;
+        const details = type === 'listing' ? `<p class="note">Listing #${record.id} · Employer #${record.employerId} · ${esc(record.status)} / ${esc(record.reviewStatus)}</p><h3>${esc(record.title)}</h3><p><b>${esc(record.companyName)}</b></p><p class="note">${esc(record.category)} · ${esc(record.workMode)} · ${[record.location, record.state].filter(Boolean).map(esc).join(' / ') || 'Location not specified'}</p><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(record.description)}</p><p><b>${esc(record.compensation)}</b></p><p class="note">Invoice: ${esc(record.activeOrderId || 'none')}</p>${record.status !== 'archived' ? '<div class="row"><button class="btn grn" data-lookup-review="approved">Approve content</button><button class="btn red" data-lookup-review="rejected">Reject content</button></div>' : ''}` : type === 'order' ? `<p class="mono" style="overflow-wrap:anywhere">${esc(record.id)}</p><p>Listing #${record.listingId} · ${money(record.priceCents)} ${esc(record.currency)} · ${record.durationDays} days</p><p>Status: ${esc(record.status)} ${record.test ? '· TEST / no real charge' : ''}</p><p class="note">Receipt: ${esc(record.reference || 'none')}</p><div class="row">${record.status === 'pending' && !record.test && settings.billingMode === 'manual' ? '<button class="btn pri" data-lookup-receipt="payment">Record received payment</button>' : ''}${record.status === 'paid' ? '<button class="btn red" data-lookup-receipt="refund">Record full refund</button>' : ''}</div>` : `<h3>${esc(record.companyName)}</h3><p>Employer #${record.id} · ${esc(record.status)}</p><p class="note">${esc(record.state || record.location || 'Location not specified')}</p><button class="btn ${record.status === 'active' ? 'red' : ''}" data-lookup-company data-next-status="${record.status === 'active' ? 'suspended' : 'active'}">${record.status === 'active' ? 'Suspend directory access' : 'Restore access'}</button>`;
+        const m = modal(`<h3>Directory record</h3>${details}<div class="row" style="justify-content:flex-end;margin-top:20px"><button class="btn" data-close-lookup>Done</button></div>`);
+        $('[data-close-lookup]', m.root).onclick = m.close;
+        $$('[data-lookup-review]', m.root).forEach(action => { action.dataset.decision = action.dataset.lookupReview; action.onclick = () => reviewFromUI(action, record, m.close); });
+        $$('[data-lookup-receipt]', m.root).forEach(action => action.onclick = () => { m.close(); receipt(record, action.dataset.lookupReceipt === 'refund'); });
+        const company = $('[data-lookup-company]', m.root); if (company) company.onclick = () => changeEmployer(company, record, m.close);
+      } catch (error) { if (form.isConnected) $('#employer-lookup-error').textContent = error.message; }
+      finally { if (form.isConnected) button.disabled = false; }
+    };
+  } catch (error) {
+    if (version !== employerView || location.hash !== '#employer-jobs') return;
+    main().innerHTML = head('Employer <em>directory</em>', '') + `<div class="panel pad"><p role="alert">${esc(error.message)}</p><button class="btn" id="retry-employer-admin">Try again</button></div>`;
+    $('#retry-employer-admin').onclick = employerDirectory;
+  }
 }
 
 /* ---------------- ledger + audit ---------------- */

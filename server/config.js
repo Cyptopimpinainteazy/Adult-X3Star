@@ -19,6 +19,8 @@ const bool = (v, d) => (v === undefined || v === '' ? d : /^(1|true|yes|on)$/i.t
 const num = (v, d) => (v === undefined || v === '' || Number.isNaN(Number(v)) ? d : Number(v));
 
 const DATA_DIR = path.resolve(ROOT, process.env.DATA_DIR || 'data');
+const JOB_BILLING_MODE = process.env.JOB_BILLING_MODE || 'disabled';
+if (!['disabled', 'manual', 'test'].includes(JOB_BILLING_MODE)) throw new Error('JOB_BILLING_MODE must be disabled, manual or test');
 let SITE_URL = '';
 if (process.env.SITE_URL) {
   const site = new URL(process.env.SITE_URL);
@@ -29,6 +31,7 @@ if (process.env.SITE_URL) {
 module.exports = {
   ROOT,
   SITE_URL,
+  JOB_BILLING_MODE,
   PUBLIC_DIR: path.join(ROOT, 'public'),
   SHARED_DIR: path.join(ROOT, 'shared'),
   DATA_DIR,

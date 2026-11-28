@@ -54,6 +54,40 @@ Every response includes `econ`: the full economy summary (balance, level, VIP, d
 ## Creator Studio (`/api/studio`, role creator; admins can pass `?as=<creatorId>`)
 `GET /` (profile, uploads, products, payouts, analytics) · `PUT /profile` · `POST /live { live }` (needs KYC) · `POST /upload` (multipart `file`, `kind`: avatar\|cover\|gallery\|story\|product, `caption`) · `PATCH /upload/:id { caption }` · `DELETE /upload/:id` · `POST|PUT|DELETE /products[/:id]` · `POST /pin { productId }` · `POST /convert { beans }` · `POST /payout { beans, method }` (needs KYC; minimum and weekly cap apply)
 
+## Paid employer directory
+
+Public: `GET /api/directory/jobs?q=&category=&state=&workMode=&page=&pageSize=` → `{jobs,total,page,pageSize,pages}`; `GET /api/directory/jobs/:id` → `{job}`. Results require approved/open content, active employer/nonbanned owner, paid unrefunded order, activation and future expiry. Test ads appear only in explicit development test mode. Applicants browse and send `POST /api/directory/jobs/:id/inquiries {message,portfolioUrl?}` free while signed in. Duplicate/self/closed/unavailable and unsafe portfolio requests are rejected; contact/message data stays private.
+
+Employer capability is separate from `users.role`; a normal signed-in account can create a company profile:
+
+| Method | Path | Body / response |
+| --- | --- | --- |
+| GET | `/api/employer` | `{profile,listings,orders,plan,billingMode}`; private no-store |
+| PUT | `/api/employer/profile` | `{companyName,website?,location?,state?}` → `{profile}` |
+| POST | `/api/employer/listings` | `{title,description,category,workMode,location,state,compensation}` → `{listing}` draft |
+| PUT | `/api/employer/listings/:id` | Listing fields → `{listing}`; resets content review |
+| POST | `/api/employer/listings/:id/submit` · `/close` | Request review / hide listing → `{listing}` |
+| DELETE | `/api/employer/listings/:id` | Archive, retain inquiry history → `{ok:true}` |
+| POST | `/api/employer/listings/:id/orders` | Approved submitted listing → `{order}` at server price; caller price/payment/expiry flags ignored |
+| POST | `/api/employer/orders/:id/test-pay` | Explicit development test receipt only → `{order}` |
+| POST | `/api/employer/orders/:id/cancel` | Owner's unpaid invoice only → `{order}`; no funds moved |
+| GET | `/api/employer/listings/:id/inquiries` | Owner-private `{inquiries}` |
+| PATCH | `/api/employer/listings/:id/inquiries/:inquiryId` | `{status:new|reviewing|closed}` → `{inquiry}` |
+
+Admin-only routes under `/api/admin/employer-directory`:
+
+- `GET /` → `{settings,employers,listings,orders,metrics}` with separate recorded live/test fees and bounded actionable queues.
+- `GET /lookup?type=listing|order|employer&id=...` retrieves any exact historical/current record for Admin action beyond those queues, returning `{listing}`, `{order}` or `{profile}`.
+- `PUT /settings {priceCents,currency:'USD',durationDays,invoiceInstructions,enabled}` changes future invoices; billing mode comes from server configuration.
+- `POST /listings/:id/review {decision:'approved'|'rejected',note?,reviewToken}` binds approval to the current reviewed content hash; missing/stale token fails.
+- `POST /orders/:id/confirm {reference,amountCents,currency}` records a manual-mode live receipt matching the immutable invoice snapshot. Unique reference and idempotent replay; not a card charge.
+- `POST /orders/:id/refund {reference,note?}` records an off-platform full refund and removes that invoice’s paid access; no automatic transfer.
+- `POST /employers/:id/status {status:'active'|'suspended'}` controls employer directory access.
+
+Plan fields include `priceCents,currency,durationDays,invoiceInstructions,enabled,billingMode,available,testPaymentsAllowed`. `available` governs **new orders**; `testPaymentsAllowed` separately governs existing test receipts. Order fields include immutable `priceCents,currency,durationDays,invoiceInstructions`, status/test/reference, and activation/expiry. Employer listing statuses are draft/open/closed/archived with separate pending/approved/rejected review. Invoice statuses are pending/paid/cancelled/refunded. Current pending/active records are prioritized within bounded owner/Admin views. Listing term starts once payment and approval permit initial publication; replays, edits, reapproval and reopening do not extend it. New order after expiry is a renewal. Old test orders are hidden and replaced appropriately when switching to manual billing.
+
+HTML routes: `/jobs`, `/jobs/:id` and `/employers`. No applicant fee, mail delivery, automatic acceptance, hosted card checkout or automatic refund is performed.
+
 ## Per-star jobs boards
 
 Public fields: `{ id, creatorId, kind, title, description, category, workMode, location, compensation, status, expiresAt, createdAt, updatedAt }`. `kind` is `hiring` or `available`. Categories: `editing`, `moderation`, `design`, `photography`, `collaboration`, `other`. `workMode`: `remote`, `hybrid`, `onsite`. No public response includes applicant contacts or messages.
